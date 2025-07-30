@@ -1,829 +1,1100 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>Duración Musical Pro</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f9fafb; /* Light gray background */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh; /* Ensure it takes full viewport height */
-            padding: 0.2rem; /* Even more reduced padding for mobile */
-            box-sizing: border-box;
-            overflow-y: auto; /* Allow scrolling if content is slightly larger than screen */
-        }
-        .calculator-card {
-            background-color: #ffffff;
-            border-radius: 1.25rem; /* Slightly less rounded corners to save space */
-            box-shadow: 0 15px 20px -3px rgba(0, 0, 0, 0.1), 0 8px 8px -4px rgba(0, 0, 0, 0.04); /* Slightly smaller shadow */
-            padding: 0.8rem; /* Reduced padding inside the card */
-            max-width: 98%; /* Keep max-width for better use of space */
-            width: 450px; /* Slightly smaller max width for desktop */
-            text-align: center;
-            border: 1px solid #e5e7eb; /* Subtle border */
-            display: flex; /* Use flexbox for vertical layout */
-            flex-direction: column;
-            justify-content: space-between; /* Distribute space */
-            flex-shrink: 0; /* Prevent shrinking */
-            position: relative; /* For notification positioning */
-        }
-        @media (min-width: 768px) { /* Adjust padding for larger screens */
-            .calculator-card {
-                padding: 1.25rem;
-            }
-        }
-        .input-group label {
-            display: block;
-            text-align: left;
-            margin-bottom: 0.1rem; /* Further reduced margin-bottom */
-            font-weight: 500;
-            color: #334155; /* Darker text for labels */
-            font-size: 0.85rem; /* Smaller font for labels */
-        }
-        .input-group input { /* Apply to all input types */
-            width: 100%;
-            padding: 0.4rem 0.6rem; /* Further reduced padding for input fields */
-            border: 1px solid #d1d5db; /* Light gray border */
-            border-radius: 0.5rem; /* Slightly less rounded input fields */
-            font-size: 0.85rem; /* Smaller font for input */
-            color: #1f2937; /* Dark text for input */
-            background-color: #ffffff; /* White background for input */
-            transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s, color 0.2s; /* Added color transition */
-        }
-        .input-group input:focus {
-            outline: none;
-            border-color: #10b981; /* Emerald focus border */
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); /* Light emerald shadow on focus */
-        }
-        .input-group input:disabled {
-            background-color: #f3f4f6; /* Lighter background for disabled input */
-            color: #6b7280; /* Grayer text for disabled input */
-            cursor: not-allowed;
-        }
+import React, { useState, useEffect } from 'react';
 
-        /* Style for active input fields (where user should type) */
-        .active-input {
-            background-color: #e6f7ff; /* Very light blue */
-            border-color: #91d5ff; /* Light blue border */
-        }
+// Importar iconos de lucide-react
+import { BookOpen, Calendar, Target, Activity, Music, Users, Award, ChevronRight, ChevronLeft, Home, Lightbulb, ClipboardList, CheckCircle, GraduationCap, SwatchBook, Clock } from 'lucide-react';
 
-        /* New style for highlighted result text */
-        .input-result {
-            color: #ff0000; /* Intense Red color for results */
-            font-weight: 700;
-        }
+// --- Datos del Cronograma ---
+// Estos datos definen el contenido de cada semana para ambos cursos.
 
-        /* Styling for the selectable boxes (radio buttons) */
-        .radio-option {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0.4rem; /* Further reduced padding */
-            border: 2px solid #d1d5db;
-            border-radius: 0.5rem; /* Slightly less rounded */
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            background-color: #ffffff;
-            color: #4b5563;
-            font-weight: 500;
-            text-align: center;
-            min-height: 50px; /* Reduced min-height */
-            font-size: 0.85rem; /* Smaller font */
-        }
-        .radio-option:hover {
-            border-color: #6ee7b7; /* Lighter emerald on hover */
-            background-color: #ecfdf5; /* Very light emerald background */
-        }
-        .radio-option input[type="radio"] {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .radio-option input[type="radio"]:checked + .radio-label {
-            border-color: #10b981;
-            background-color: #ecfdf5;
-            color: #065f46;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
-        }
-        .radio-label {
-            display: block;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-        }
+// Datos del cronograma para Conceptos de Música del Siglo XX y XXI I (MUS 4000)
+const scheduleDataI = [
+  {
+    week: 1,
+    title: "El Crepúsculo Tonal y el Amanecer Modal",
+    objectives: [
+      "Introducir el contexto musical de finales del siglo XIX.",
+      "Comprender el concepto de transición de la tonalidad.",
+      "Familiarizarse con los rudimentos teóricos de acordes y escalas modales."
+    ],
+    activities: [
+      "Clase magistral: Presentación de lineamientos técnico-teóricos.",
+      "Taller: Ejercicios de identificación de escalas y acordes modales básicos.",
+      "Audición dirigida: Ejemplos de obras con elementos de transición tonal."
+    ],
+    independentWork: [
+      "Lectura: Capítulo introductorio sobre la armonía de finales del siglo XIX y principios del XX (Persichetti, Ulehla).",
+      "Ejercicios de escritura: Identificación de modos y construcción de acordes modales."
+    ],
+    repertoire: [
+      "Richard Wagner: Preludio de Tristán e Isolda",
+      "Franz Liszt: Nuages gris",
+      "Modest Mussorgsky: Cuadros de una exposición (original para piano)"
+    ]
+  },
+  {
+    week: 2,
+    title: "Debussy: La Paleta Sonora del Impresionismo",
+    objectives: [
+      "Analizar las características armónicas y melódicas de la música de Debussy.",
+      "Comprender el cuartalismo y el modalismo en su obra."
+    ],
+    activities: [
+      "Clase magistral: Análisis de obras clave de Debussy (ej. Preludios, La Mer).",
+      "Taller: Ejercicios de composición corta aplicando cuartalismo y modalismo debussyniano.",
+      "Discusión crítica: Sobre la ruptura con la tonalidad tradicional en Debussy."
+    ],
+    independentWork: [
+      "Audición dirigida (con score): Análisis de 2-3 piezas de Debussy, identificando elementos modales y cuartales.",
+      "Composición: Pequeña pieza de 8-16 compases en estilo impresionista."
+    ],
+    repertoire: [
+      "Claude Debussy: Préludes (Libro I y II, selecciones como 'Voiles', 'La Cathédrale engloutie')",
+      "Claude Debussy: Estampes ('Pagodes', 'La soirée dans Grenade', 'Jardins sous la pluie')",
+      "Claude Debussy: Children's Corner ('Golliwogg's Cakewalk')"
+    ]
+  },
+  {
+    week: 3,
+    title: "Ravel: Claridad y Brillo Impresionista",
+    objectives: [
+      "Distinguir las características de Ravel en comparación con Debussy."
+    ],
+    activities: [
+      "Clase magistral: Análisis comparativo de obras de Ravel (ej. Daphnis et Chloé, Bolero).",
+      "Simulacro de examen: Avance de composición realizada con contenidos de las semanas anteriores."
+    ],
+    independentWork: [
+      "Lectura: Sección sobre Ravel en textos de armonía del siglo XX (Persichetti).",
+      "Audición: Escuchar obras de Ravel, prestando atención a la instrumentación."
+    ],
+    repertoire: [
+      "Maurice Ravel: Miroirs ('Noctuelles', 'Oiseaux tristes', 'Une barque sur l'océan')",
+      "Maurice Ravel: Gaspard de la Nuit ('Ondine', 'Le Gibet', 'Scarbo')",
+      "Maurice Ravel: Valses nobles et sentimentales"
+    ]
+  },
+  {
+    week: 4,
+    title: "Bartók: Folclore y el Sistema de Ejes",
+    objectives: [
+      "Comprender el concepto de nacionalismo musical en Europa del Este.",
+      "Analizar el Sistema de Ejes de Béla Bartók."
+    ],
+    activities: [
+      "Clase magistral: Explicación del sistema de ejes y análisis de obras de Bartók (ej. Mikrokosmos, Cuartetos de cuerda).",
+      "Taller: Ejercicios de escritura aplicando el sistema de ejes.",
+      "Audición dirigida: Obras de Bartók."
+    ],
+    independentWork: [
+      "Lectura: La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX (Antokoletz, Lendvai).",
+      "Composición: Pequeña pieza en estilo de ejes Bartok."
+    ],
+    repertoire: [
+      "Béla Bartók: Mikrokosmos (selecciones, especialmente piezas con elementos modales o de ejes)",
+      "Béla Bartók: Allegro Barbaro",
+      "Béla Bartók: Seis Danzas Rumanas (versión para piano)"
+    ]
+  },
+  {
+    week: 5,
+    title: "Stravinsky y Hindemith: El Retorno a la Forma",
+    objectives: [
+      "Identificar las características del Neoclasicismo musical.",
+      "Analizar las obras de Stravinsky y Hindemith dentro de este estilo."
+    ],
+    activities: [
+      "Clase magistral: Análisis de obras clave de Stravinsky (ej. Pulcinella, Sinfonía de los Salmos) y Hindemith (ej. Ludus Tonalis).",
+      "Taller: Ejercicios de escritura con elementos neoclásicos.",
+      "Discusión crítica: Sobre la estética neoclásica."
+    ],
+    independentWork: [
+      "Audición dirigida (con score): Obras neoclásicas.",
+      "Preparación para Parcial I."
+    ],
+    repertoire: [
+      "Igor Stravinsky: Pulcinella Suite (versión de concierto)",
+      "Igor Stravinsky: Octeto para instrumentos de viento",
+      "Paul Hindemith: Sonata para piano No. 2",
+      "Paul Hindemith: Ludus Tonalis (selecciones de fugas e interludios)"
+    ]
+  },
+  {
+    week: 6,
+    title: "Prokofiev y Contrastes Estilísticos / EXAMEN PARCIAL I",
+    objectives: [
+      "Continuar el análisis del Neoclasicismo con Prokofiev.",
+      "Establecer comparaciones estilísticas entre los compositores vistos hasta ahora."
+    ],
+    activities: [
+      "Clase magistral: Análisis de obras de Prokofiev (ej. Sinfonía Clásica).",
+      "Taller: Ejercicios de análisis comparativo de fragmentos musicales.",
+      "Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."
+    ],
+    independentWork: [
+      "Revisión de los temas para el parcial."
+    ],
+    repertoire: [
+      "Sergei Prokofiev: Sinfonía Clásica (Movimientos selectos)",
+      "Sergei Prokofiev: Visions Fugitives (selecciones)",
+      "Comparación: Johann Sebastian Bach (ej. una invención a dos voces) y Arnold Schönberg (ej. una de las Seis pequeñas piezas para piano, Op. 19)"
+    ]
+  },
+  {
+    week: 7,
+    title: "Los Seis: La Vanguardia Francesa",
+    objectives: [
+      "Conocer a los miembros y la filosofía del Grupo de Los Seis.",
+      "Analizar la politonalidad de Darius Milhaud y su influencia."
+    ],
+    activities: [
+      "Clase magistral: Presentación de los compositores y sus ideas estéticas.",
+      "Taller: Ejercicios de escritura con elementos politonales simples.",
+      "Audición dirigida: Obras representativas de Los Seis."
+    ],
+    independentWork: [
+      "Lectura: Sobre el Grupo de Los Seis.",
+      "Composición: Pequeño ejercicio explorando la bitonalidad."
+    ],
+    repertoire: [
+      "Darius Milhaud: Scaramouche (para dos pianos o saxofón y piano)",
+      "Francis Poulenc: Les Biches (Suite de ballet)",
+      "Arthur Honegger: Pacific 231",
+      "Erik Satie: Gymnopédies y Gnossiennes"
+    ]
+  },
+  {
+    week: 8,
+    title: "Ragtime y New Orleans: Cuna del Jazz",
+    objectives: [
+      "Comprender los orígenes del Jazz.",
+      "Analizar las características del Ragtime y el Estilo New Orleans."
+    ],
+    activities: [
+      "Clase magistral: Historia y evolución del Jazz temprano.",
+      "Audición dirigida: Obras de Scott Joplin y grabaciones de New Orleans Jazz.",
+      "Discusión crítica: Sobre la importancia de la improvisación en el Jazz."
+    ],
+    independentWork: [
+      "Audición: Escuchar más ejemplos de Ragtime y New Orleans Jazz.",
+      "Investigación: Breve biografía de Scott Joplin."
+    ],
+    repertoire: [
+      "Scott Joplin: 'Maple Leaf Rag', 'The Entertainer'",
+      "Original Dixieland Jazz Band: 'Livery Stable Blues'",
+      "Jelly Roll Morton: 'King Porter Stomp'"
+    ]
+  },
+  {
+    week: 9,
+    title: "Chicago Jazz y el Legado de Louis Armstrong",
+    objectives: [
+      "Analizar la evolución del Jazz hacia el Estilo Chicago.",
+      "Reconocer la figura de Louis Armstrong y su impacto."
+    ],
+    activities: [
+      "Clase magistral: Análisis de grabaciones de Louis Armstrong.",
+      "Taller: Transcripción de solos sencillos de Jazz temprano.",
+      "Simulacro de examen: Avance de composición o análisis de obras."
+    ],
+    independentWork: [
+      "Audición: Comparar grabaciones de New Orleans y Chicago Jazz.",
+      "Preparación para Parcial II."
+    ],
+    repertoire: [
+      "Louis Armstrong & His Hot Five/Seven: 'West End Blues', 'Potato Head Blues', 'Cornet Chop Suey'",
+      "Bix Beiderbecke: 'Singin' the Blues'"
+    ]
+  },
+  {
+    week: 10,
+    title: "Modalismo en el Jazz y Armonías Cuartales",
+    objectives: [
+      "Comprender la aplicación del modalismo en el Jazz.",
+      "Analizar las arquitecturas acordales cuartales en el Jazz."
+    ],
+    activities: [
+      "Clase magistral: Ejemplos de Jazz modal y uso de acordes cuartales.",
+      "Taller: Ejercicios de escritura de progresiones modales y acordes cuartales en un contexto de Jazz.",
+      "Audición dirigida: Ejemplos de Jazz con estas características."
+    ],
+    independentWork: [
+      "Lectura: Modal Jazz Composition & Harmony Volumen 1 (Miller).",
+      "Ejercicios de improvisación sobre vamps modales."
+    ],
+    repertoire: [
+      "Miles Davis: 'So What' (del álbum Kind of Blue) - para modalismo",
+      "Herbie Hancock: 'Maiden Voyage' - para acordes cuartales",
+      "McCoy Tyner: 'Passion Dance' - para acordes cuartales"
+    ]
+  },
+  {
+    week: 11,
+    title: "Pianistas del Jazz Temprano I",
+    objectives: [
+      "Reconocer las características interpretativas de los primeros pianistas de Jazz.",
+      "Analizar su estilo de improvisación."
+    ],
+    activities: [
+      "Clase magistral: Presentación de los pianistas y sus estilos.",
+      "Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."
+    ],
+    independentWork: [
+      "Audición: Escuchar grabaciones de los pianistas estudiados.",
+      "Preparar análisis de improvisaciones."
+    ],
+    repertoire: [
+      "Scott Joplin: Grabaciones de sus rags.",
+      "Jelly Roll Morton: Grabaciones de sus solos.",
+      "James P. Johnson: 'Carolina Shout'",
+      "Willie 'The Lion' Smith: Grabaciones de su estilo Stride.",
+      "Earl Hines: 'Fifty-Seven Varieties'"
+    ]
+  },
+  {
+    week: 12,
+    title: "Pianistas del Jazz Temprano II / EXAMEN PARCIAL II",
+    objectives: [
+      "Continuar el reconocimiento de pianistas clave.",
+      "Consolidar la comprensión de los conceptos de Jazz y la escuela francesa."
+    ],
+    activities: [
+      "Clase magistral: Continuación de la presentación de pianistas.",
+      "Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."
+    ],
+    independentWork: [
+      "Revisión de los temas para el parcial."
+    ],
+    repertoire: [
+      "Fats Waller: 'Honeysuckle Rose'",
+      "Teddy Wilson: Grabaciones con Billie Holiday o Benny Goodman.",
+      "Duke Ellington (solos de piano): 'Solitude', 'Mood Indigo'",
+      "Art Tatum: 'Tiger Rag', 'Tea for Two'",
+      "Meade Lux Lewis: 'Honky Tonk Train Blues'",
+      "Pete Johnson: 'Roll 'Em Pete'",
+      "Jimmy Yancey: Grabaciones de boogie-woogie."
+    ]
+  },
+  {
+    week: 13,
+    title: "Armonía Funcional, Motivo y Conjunto en el Siglo XX",
+    objectives: [
+      "Revisar y aplicar conceptos de armonía funcional en un contexto ampliado.",
+      "Comprender el uso del motivo y el conjunto en la música del siglo XX."
+    ],
+    activities: [
+      "Clase magistral: Ejemplos de análisis de obras que demuestran el uso de motivo y conjunto.",
+      "Taller: Ejercicios de desarrollo motívico.",
+      "Discusión crítica: Sobre la persistencia de elementos tradicionales en la música moderna."
+    ],
+    independentWork: [
+      "Lectura: Armonía funcional (Gabis).",
+      "Análisis de partituras: Identificación de motivos y su desarrollo."
+    ],
+    repertoire: [
+      "Arnold Schoenberg: Pierrot Lunaire (selecciones, para motivo y conjunto atonal)",
+      "Alban Berg: Wozzeck (fragmentos, para leitmotivs y conjuntos)",
+      "Anton Webern: Sinfonía, Op. 21 (para serialismo y organización motívica)"
+    ]
+  },
+  {
+    week: 14,
+    title: "Aplicación de Materiales en Composición: Forma Binaria y Ternaria",
+    objectives: [
+      "Aplicar los materiales armónicos y melódicos aprendidos en composiciones formales.",
+      "Realizar composiciones cortas en forma binaria y/o ternaria."
+    ],
+    activities: [
+      "Clase magistral: Revisión de las formas binaria y ternaria.",
+      "Taller: Sesión de composición guiada, trabajando en la estructura de las piezas.",
+      "Simulacro de examen: Presentación de avances de composición."
+    ],
+    independentWork: [
+      "Composición: Desarrollo de una pieza corta en forma binaria o ternaria, aplicando los conceptos vistos."
+    ],
+    repertoire: [
+      "Ejemplos de piezas cortas del siglo XX que utilizan estas formas con lenguajes modernos (ej. Béla Bartók Mikrokosmos, Paul Hindemith Ludus Tonalis)."
+    ]
+  },
+  {
+    week: 15,
+    title: "Análisis de Repertorio Modal y Preparación Final",
+    objectives: [
+      "Realizar un análisis profundo de repertorio modal.",
+      "Consolidar todos los conocimientos adquiridos a lo largo del semestre."
+    ],
+    activities: [
+      "Clase magistral: Análisis de obras complejas que integren varios conceptos.",
+      "Taller: Sesión de preguntas y respuestas, resolución de dudas.",
+      "Audición dirigida (con score): Análisis en clase."
+    ],
+    independentWork: [
+      "Repaso general para el examen final.",
+      "Pulir la composición final."
+    ],
+    repertoire: [
+      "Olivier Messiaen: Quatuor pour la fin du temps (selecciones, para modos de transposición limitada)",
+      "Béla Bartók: Concierto para Orquesta (movimientos selectos, para integración de elementos folclóricos y modales)",
+      "Jazz modal avanzado: John Coltrane 'Giant Steps' (aunque complejo, para entender la progresión modal rápida), Bill Evans 'Waltz for Debby'."
+    ]
+  },
+  {
+    week: 16,
+    title: "EXAMEN FINAL y Presentación de Proyectos",
+    objectives: [
+      "Evaluar la comprensión global de los conceptos del curso.",
+      "Presentar y sustentar el proceso creativo de la composición final."
+    ],
+    activities: [
+      "Examen Parcial III (25%): Evaluación final de los contenidos del curso.",
+      "Presentación de composiciones: Cada estudiante sustentará su proceso creativo."
+    ],
+    independentWork: [
+      "Finalización de la composición y preparación de la sustentación."
+    ],
+    repertoire: [
+      "N/A"
+    ]
+  }
+];
+
+// Datos del cronograma para Conceptos de Música del Siglo XX y XXI II (MUS 4005)
+const scheduleDataII = [
+  {
+    week: 1,
+    title: "Introducción a la Música del Siglo XX y XXI: Conceptos Estéticos",
+    objectives: [
+      "Introducir el contexto de la música del siglo XX y XXI.",
+      "Comprender los conceptos estéticos de indeterminación, electroacústica, mixta y estocástica.",
+      "Aproximación filosófica a conceptos estéticos de vanguardia."
+    ],
+    activities: [
+      "Clase magistral: Presentación de las corrientes estéticas y sus fundamentos filosóficos.",
+      "Audiciones dirigidas: Ejemplos de obras representativas.",
+      "Discusión crítica: Análisis de las implicaciones de estas estéticas en la creación musical."
+    ],
+    independentWork: [
+      "Lectura: Introducción a las estéticas musicales del siglo XX (Lester, Enfoques analíticos de la música del siglo XX).",
+      "Investigación: Breve reseña sobre un compositor representativo de alguna de estas estéticas."
+    ],
+    repertoire: [
+      "John Cage: 4'33\" (indeterminación)",
+      "Karlheinz Stockhausen: Gesang der Jünglinge (música electrónica)",
+      "Iannis Xenakis: Metastaseis (música estocástica)"
+    ]
+  },
+  {
+    week: 2,
+    title: "Ritmo, Metro y Formas de Organización en el Siglo XX",
+    objectives: [
+      "Analizar las innovaciones en ritmo y metro en la música de finales del siglo XIX y principios del XX.",
+      "Comprender la armonía modal en este periodo."
+    ],
+    activities: [
+      "Clase magistral: Ejemplos de polirritmia, cambios de compás y ritmos aditivos.",
+      "Taller: Ejercicios de escritura rítmica compleja.",
+      "Audición dirigida: Identificación de elementos rítmicos y métricos."
+    ],
+    independentWork: [
+      "Lectura: Sobre ritmo y metro en el siglo XX (Grabner, Teoría General De La Musica).",
+      "Análisis de partituras: Fragmentos con ritmos complejos."
+    ],
+    repertoire: [
+      "Igor Stravinsky: La consagración de la primavera (selecciones)",
+      "Béla Bartók: Concierto para Orquesta (movimientos rítmicos)",
+      "Olivier Messiaen: Quatuor pour la fin du temps (selecciones rítmicas)"
+    ]
+  },
+  {
+    week: 3,
+    title: "Introducción a la Teoría Post Tonal: Dodecafonismo",
+    objectives: [
+      "Comprender los fundamentos del Dodecafonismo.",
+      "Analizar la organización de alturas en la música dodecafónica."
+    ],
+    activities: [
+      "Clase magistral: Explicación de la serie de doce tonos y sus transformaciones.",
+      "Taller: Construcción de series dodecafónicas y sus formas básicas.",
+      "Audición dirigida: Ejemplos de música dodecafónica."
+    ],
+    independentWork: [
+      "Lectura: Introducción al Dodecafonismo (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).",
+      "Análisis: Identificación de series en fragmentos musicales."
+    ],
+    repertoire: [
+      "Arnold Schönberg: Suite para piano, Op. 25 (selecciones)",
+      "Anton Webern: Variaciones para piano, Ор. 27",
+      "Alban Berg: Concierto para violín (fragmentos)"
+    ]
+  },
+  {
+    week: 4,
+    title: "Teoría de Conjunto (Set Theory) I: Intervalos y Vectores",
+    objectives: [
+      "Introducir los conceptos de equivalencias interválicas y clase de intervalo.",
+      "Comprender el vector interválico."
+    ],
+    activities: [
+      "Clase magistral: Explicación de las clases de intervalos y cálculo de vectores interválicos.",
+      "Taller: Ejercicios de análisis de conjuntos de notas utilizando vectores interválicos.",
+      "Audición dirigida: Obras de Bartók."
+    ],
+    independentWork: [
+      "Lectura: Teoría de conjuntos básica (Forte, The structure of atonal music).",
+      "Análisis: Fragmentos de Mikrokosmos Vol. 5 y 6 de Bartók."
+    ],
+    repertoire: [
+      "Béla Bartók: Mikrokosmos (Vol. 5 y 6, selecciones)",
+      "Béla Bartók: Cuarteto de Cuerdas No. 4 (fragmentos)"
+    ]
+  },
+  {
+    week: 5,
+    title: "Teoría de Conjunto (Set Theory) II: Forma Normal y Forma Prima",
+    objectives: [
+      "Dominar la determinación de la forma normal y la forma prima de un conjunto.",
+      "Comprender las operaciones de transposición e inversión."
+    ],
+    activities: [
+      "Clase magistral: Demostración de cómo derivar la forma normal y prima.",
+      "Taller: Ejercicios prácticos de transposición e inversión de conjuntos.",
+      "Simulacro de examen: Presentación de compositores latinoamericanos y establecimiento del tipo de estética."
+    ],
+    independentWork: [
+      "Lectura: Forma normal y prima (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).",
+      "Análisis: Ejercicios de segmentación musical."
+    ],
+    repertoire: [
+      "Anton Webern: Cinco piezas para orquesta, Op. 10 (para análisis de conjuntos pequeños)",
+      "Alban Berg: Sonata para piano, Op. 1 (para análisis de estructuras post-tonales tempranas)"
+    ]
+  },
+  {
+    week: 6,
+    title: "Teoría de Conjunto (Set Theory) III: Relaciones entre Conjuntos / EXAMEN PARCIAL I",
+    objectives: [
+      "Comprender las relaciones Z, complemento, superconjunto y subconjunto.",
+      "Aplicar la teoría de conjunto en el análisis de obras."
+    ],
+    activities: [
+      "Clase magistral: Explicación de las relaciones entre conjuntos y su significado musical.",
+      "Taller: Ejercicios de identificación de relaciones entre conjuntos en fragmentos musicales.",
+      "Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."
+    ],
+    independentWork: [
+      "Revisión de los temas para el parcial."
+    ],
+    repertoire: [
+      "Elliott Carter: Cuarteto de Cuerdas No. 1 (fragmentos, para análisis de relaciones complejas)",
+      "Milton Babbitt: Composition for Four Instruments (para análisis serial y de conjuntos)"
+    ]
+  },
+  {
+    week: 7,
+    title: "Conceptos del Jazz de 1930 a 1980: Swing y Bebop",
+    objectives: [
+      "Comprender la evolución del Jazz desde el Swing hasta el Bebop.",
+      "Identificar las características distintivas de cada estilo."
+    ],
+    activities: [
+      "Clase magistral: Historia y desarrollo de los estilos Swing y Bebop.",
+      "Audición dirigida: Ejemplos de obras representativas.",
+      "Discusión crítica: Sobre la influencia del Bebop en la música posterior."
+    ],
+    independentWork: [
+      "Audición: Escuchar grabaciones de las eras Swing y Bebop.",
+      "Investigación: Breve biografía de un músico clave de cada estilo."
+    ],
+    repertoire: [
+      "Duke Ellington: 'Take the 'A' Train', 'Cotton Tail' (Swing)",
+      "Count Basie: 'One O'Clock Jump' (Swing)",
+      "Charlie Parker: 'Ko-Ko', 'Donna Lee' (Bebop)",
+      "Dizzy Gillespie: 'Salt Peanuts', 'A Night in Tunisia' (Bebop)"
+    ]
+  },
+  {
+    week: 8,
+    title: "Conceptos del Jazz de 1930 a 1980: Cool Jazz y Hard Bop",
+    objectives: [
+      "Analizar las características del Cool Jazz y el Hard Bop.",
+      "Distinguir las diferencias estilísticas entre ellos."
+    ],
+    activities: [
+      "Clase magistral: Presentación de los estilos y sus exponentes.",
+      "Audición dirigida: Comparación de obras de Cool Jazz y Hard Bop.",
+      "Taller: Análisis de progresiones armónicas en estos estilos."
+    ],
+    independentWork: [
+      "Audición: Escuchar más ejemplos de Cool Jazz y Hard Bop.",
+      "Preparación para Parcial II."
+    ],
+    repertoire: [
+      "Miles Davis: Birth of the Cool (Cool Jazz)",
+      "Dave Brubeck Quartet: 'Take Five' (Cool Jazz)",
+      "Art Blakey & The Jazz Messengers: 'Moanin'' (Hard Bop)",
+      "Horace Silver: 'Song for My Father' (Hard Bop)"
+    ]
+  },
+  {
+    week: 9,
+    title: "Conceptos del Jazz de 1930 a 1980: Jazz Modal y Free Jazz",
+    objectives: [
+      "Comprender el desarrollo del Jazz Modal y el Free Jazz.",
+      "Analizar las implicaciones de la improvisación modal y la libertad atonal."
+    ],
+    activities: [
+      "Clase magistral: Explicación de los conceptos y sus figuras clave.",
+      "Audición dirigida: Ejemplos de Jazz Modal y Free Jazz.",
+      "Simulacro de examen: Avance de composición o análisis de obras."
+    ],
+    independentWork: [
+      "Audición: Escuchar grabaciones de Jazz Modal y Free Jazz.",
+      "Investigación: Breve reseña sobre John Coltrane o Ornette Coleman."
+    ],
+    repertoire: [
+      "Miles Davis: 'So What' (del álbum Kind of Blue) (Jazz Modal)",
+      "John Coltrane: 'My Favorite Things' (Jazz Modal)",
+      "Ornette Coleman: Free Jazz: A Collective Improvisation (Free Jazz)",
+      "Cecil Taylor: Unit Structures (Free Jazz)"
+    ]
+  },
+  {
+    week: 10,
+    title: "Pianistas del Jazz (1930-1980) I",
+    objectives: [
+      "Reconocer las características interpretativas de los pianistas de Jazz de la segunda mitad del siglo XX.",
+      "Analizar su estilo de improvisación."
+    ],
+    activities: [
+      "Clase magistral: Presentación de los pianistas y sus estilos distintivos.",
+      "Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."
+    ],
+    independentWork: [
+      "Audición: Escuchar grabaciones de los pianistas estudiados.",
+      "Preparar análisis de improvisaciones."
+    ],
+    repertoire: [
+      "Thelonius Monk: 'Round Midnight', 'Straight, No Chaser'",
+      "Bud Powell: 'Un Poco Loco', 'Cleopatra's Dream'",
+      "Oscar Peterson: 'Hymn to Freedom', 'Canadiana Suite'",
+      "Erroll Garner: 'Misty', 'Concert by the Sea'"
+    ]
+  },
+  {
+    week: 11,
+    title: "Pianistas del Jazz (1930-1980) II",
+    objectives: [
+      "Continuar el reconocimiento de pianistas clave del Jazz.",
+      "Analizar sus aportes a la improvisación y el lenguaje armónico."
+    ],
+    activities: [
+      "Clase magistral: Continuación de la presentación de pianistas.",
+      "Audición individual dirigida: Identificación de características de improvisación."
+    ],
+    independentWork: [
+      "Audición: Escuchar grabaciones de los pianistas estudiados.",
+      "Preparar análisis de improvisaciones."
+    ],
+    repertoire: [
+      "Lennie Tristano: 'Line Up', 'Wow'",
+      "Bill Evans: 'Waltz for Debby', 'Autumn Leaves'",
+      "Clare Fischer: 'Pensativa', 'Morning'",
+      "Jimmy Rowles: Grabaciones con Billie Holiday o Stan Getz."
+    ]
+  },
+  {
+    week: 12,
+    title: "Pianistas del Jazz (1930-1980) III y EXAMEN PARCIAL II",
+    objectives: [
+      "Completar el estudio de los pianistas de Jazz de este periodo.",
+      "Consolidar la comprensión de los conceptos de Jazz y la teoría post tonal."
+    ],
+    activities: [
+      "Clase magistral: Presentación de los últimos pianistas y sus innovaciones.",
+      "Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."
+    ],
+    independentWork: [
+      "Revisión de los temas para el parcial."
+    ],
+    repertoire: [
+      "Cecil Taylor: Grabaciones de sus improvisaciones libres.",
+      "Chick Corea: 'Spain', 'La Fiesta' (fusión, latin jazz)",
+      "Keith Jarrett: The Köln Concert (improvisación solo de piano)",
+      "Richie Beirach: Grabaciones de sus trabajos en solo o con grupos."
+    ]
+  },
+  {
+    week: 13,
+    title: "Corrientes Estéticas: Minimalismo y Espectralismo",
+    objectives: [
+      "Comprender los conceptos de Minimalismo y Espectralismo.",
+      "Analizar las técnicas compositivas asociadas a estas corrientes."
+    ],
+    activities: [
+      "Clase magistral: Explicación de las filosofías y técnicas de cada corriente.",
+      "Audición dirigida: Ejemplos de obras minimalistas y espectrales.",
+      "Taller: Ejercicios de composición con repetición y procesos lentos (minimalismo)."
+    ],
+    independentWork: [
+      "Lectura: Sobre Minimalismo y Espectralismo (Lester, Enfoques analíticos de la música del siglo XX).",
+      "Análisis: Fragmentos de obras representativas."
+    ],
+    repertoire: [
+      "Steve Reich: Music for 18 Musicians",
+      "Philip Glass: Einstein on the Beach (fragmentos)",
+      "Terry Riley: In C",
+      "Gérard Grisey: Partiels (Espectralismo)",
+      "Tristan Murail: Désintégrations (Espectralismo)"
+    ]
+  },
+  {
+    week: 14,
+    title: "Corrientes Estéticas: Nueva Simplicidad y Nueva Complejidad",
+    objectives: [
+      "Distinguir entre la Nueva Simplicidad y la Nueva Complejidad.",
+      "Analizar las técnicas compositivas de estas corrientes."
+    ],
+    activities: [
+      "Clase magistral: Presentación de las ideas detrás de cada corriente y sus compositores.",
+      "Audición dirigida: Ejemplos de obras.",
+      "Discusión crítica: Debates sobre la accesibilidad y la dificultad en la música contemporánea."
+    ],
+    independentWork: [
+      "Lectura: Sobre Nueva Simplicidad y Nueva Complejidad (Lester, Enfoques analíticos de la música del siglo XX).",
+      "Composición: Pequeño ejercicio explorando una de estas estéticas."
+    ],
+    repertoire: [
+      "Henryk Górecki: Sinfonía No. 3, 'Sinfonía de las Canciones Lamentativas' (Nueva Simplicidad)",
+      "Arvo Pärt: Spiegel im Spiegel (Nueva Simplicidad)",
+      "Brian Ferneyhough: Bone Alphabet (Nueva Complejidad)",
+      "Helmut Lachenmann: Guero (Nueva Complejidad)"
+    ]
+  },
+  {
+    week: 15,
+    title: "Otros Estilos y Composición en Set Theory",
+    objectives: [
+      "Explorar otros estilos relevantes del siglo XX.",
+      "Realizar composición en set theory utilizando software de notación musical."
+    ],
+    activities: [
+      "Clase magistral: Presentación de los compositores y sus técnicas innovadoras.",
+      "Taller práctico: Creación de pequeñas piezas en FINALE aplicando set theory.",
+      "Audición dirigida: Ejemplos de obras."
+    ],
+    independentWork: [
+      "Lectura: Sobre los compositores vistos (Graetzer, La Musica Contemporánea).",
+      "Finalización de la composición en FINALE."
+    ],
+    repertoire: [
+      "Luciano Berio: Sequenza III (para voz)",
+      "Henry Cowell: The Banshee (para técnicas extendidas en piano)",
+      "Conlon Nancarrow: Estudios para piano mecánico (selecciones)"
+    ]
+  },
+  {
+    week: 16,
+    title: "EXAMEN FINAL y Presentación de Proyectos",
+    objectives: [
+      "Evaluar la comprensión global de los conceptos del curso.",
+      "Presentar y sustentar el proceso creativo de la composición final."
+    ],
+    activities: [
+      "Examen Parcial III (25%): Evaluación final de los contenidos del curso.",
+      "Presentación de composiciones: Cada estudiante sustentará su proceso creativo."
+    ],
+    independentWork: [
+      "Finalización de la composición y preparación de la sustentación."
+    ],
+    repertoire: [
+      "N/A"
+    ]
+  }
+];
+
+// Información de ambos cursos
+const courses = {
+  'MUS4000': {
+    id: 'MUS4000',
+    name: 'Conceptos de Música del Siglo XX y XXI I',
+    code: 'MUS 4000',
+    description: 'Esta asignatura es una inmersión profunda en la evolución de la música desde las postrimerías del siglo XIX hasta las vanguardias del siglo XXI. Exploraremos la fascinante **transición de la tonalidad**, desentrañando movimientos clave como el **Nacionalismo**, el **Impresionismo** y el **Neoclasicismo**. Analizaremos los innovadores **sistemas de organización musical** (como el Sistema de Ejes) y la influencia de escuelas fundamentales como la francesa ("Los Seis") y la inglesa. Además, dedicaremos un espacio vital a comprender los **orígenes y la evolución temprana del Jazz**.',
+    generalObjectives: [
+      "Conocer los sistemas de organización en la música del siglo XIX.",
+      "Establecer una línea transversal con los estilos: similitud y diferencia entre los países de Centro Europa.",
+      "Realizar composición corta en estilo modal del siglo XIX y en estilo de ejes Bartok, realizando detalle del proceso creativo.",
+      "Audición sobre compositores de finales del siglo XIX para entender y asimilar el resultado de dicho repertorio."
+    ],
+    learningOutcomes: [
+      { id: 'RA1', text: 'Analizar obras maestras del Impresionismo (Debussy, Ravel).' },
+      { id: 'RA2', text: 'Interpretar el movimiento nacionalista a través de la música de Bartok.' },
+      { id: 'RA3', text: 'Identificar y analizar obras del Neoclasicismo (Stravinsky, Hindemith, Prokofiev, Los Seis).' },
+      { id: 'RA4', text: 'Dominar los conceptos fundamentales del Jazz temprano (1890-1930).' },
+      { id: 'RA5', text: 'Reconocer el estilo interpretativo de pianistas icónicos de la primera mitad del siglo XX.' },
+      { id: 'RA6', text: 'Escribir e identificar escalas modales con precisión.' }
+    ],
+    bibliography: [
+      'Aguilar, M. d. (1989). *Estructuras de la sintaxis musical*.',
+      'Antokoletz, E. (2006). *La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX*.',
+      'Catalán, T. (2012). *Sistema Compositivo Temperado En El Siglo XX*.',
+      'Cormier, S. M. (2010). *Modal Music Composition*.',
+      'Desportes, Y., & Bernaud, A. (1995). *Manual Practico Para El Reconocimiento De Los Estilos Desde Bach A Ravel*.',
+      'Gabis, C. (2006). *Armonía funcional*.',
+      'Graetzer, G. (1980). *La Musica Contemporánea*.',
+      'Lendvai, E. (2003). *Béla Bartok: un análisis de su música*.',
+      'Miller, R. (1996). *Modal Jazz Composition & Harmony Volumen 1*.',
+      'Padilla Rincón, J. C. (2014). *Armonia 1*.',
+      'Persichetti, V. (1985). *Armonía del siglo XX*.',
+      'Ulehla, L. (1994). *Comtemporary Harmony*.',
+      'Vergés, L. (2007). *El lenguaje de la armonía: de los inicios a la actualidad*.'
+    ],
+    scheduleData: scheduleDataI
+  },
+  'MUS4005': {
+    id: 'MUS4005',
+    name: 'Conceptos de Música del Siglo XX y XXI II',
+    code: 'MUS 4005',
+    description: 'Estudia la transición de la tonalidad a la música del siglo XX apoyado en los elementos comunes en toda la música. Comparación entre J.S. Bach y A. Schönberg. Ritmo, metro, textura y timbre. El movimiento nacionalista y sistemas de organización musical (Sistema de ejes), Impresionismo (Debussy). Estructuración de alturas: altura, intervalo, melodía. Herramienta de análisis de música del siglo XX. Introducción al análisis de la música post tonal y elementos de construcción y análisis de líneas estéticas de la música del siglo XX y XXI.',
+    generalObjectives: [
+      "Conocer y dominar las técnicas de elaboración de finales del siglo XIX y primera etapa del siglo XX, en la obra de compositores de las escuelas europeas.",
+      "Realizar análisis de teoría de conjunto (set theory) en la música post tonal para potencializar la escucha y la interpretación en obras de compositores del siglo XX y XXI (Europa, América)."
+    ],
+    learningOutcomes: [
+      { id: 'RA1', text: 'Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así como sus técnicas de elaboración comprendidas en los siglos XX y XXI.' },
+      { id: 'RA2', text: 'Analizar las principales obras del repertorio de los siglos XX al XXI.' },
+      { id: 'RA3', text: 'Elaborar análisis por medio de la teoría de conjunto (set theory).' },
+      { id: 'RA4', text: 'Analizar música de Bela Bartok (microcosmos Vol 5 y 6) como introducción al análisis de teoría de conjunto (set theory).' },
+      { id: 'RA5', text: 'Reconocer segmentación musical, construcción musical (composición) a partir del set theory dentro de alguna forma tradicional.' },
+      { id: 'RA6', text: 'Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así asus técnicas de elaboración comprendidas a finales de siglo XIX y primera etapa del siglo XX.' },
+      { id: 'RA7', text: 'Elaborar análisis interpretativo teniendo en cuenta los conceptos y materiales desarrollados.' },
+      { id: 'RA8', text: 'Reconocer características interpretativas de pianistas de la segunda mitad del siglo XX hasta 1980: Thelonius Monk, Bud Powell, Oscar Peterson, Erroll Garner, Lennie Tristano, Bill Evans, Clare Fischer, Jimmy Rowles, Cecil Taylor, Chick Corea, Keith Jarrett, Richie Beirach.' }
+    ],
+    bibliography: [
+      'Aguilar, M. d. (1989). *Estructuras de la sintaxis musical*.',
+      'Antokoletz, E. (2006). *La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX*.',
+      'Brouwer, L. (1972). *Síntesis De La Armonía Contemporánea*.',
+      'Catalán, T., & Fernández Vidal, C. (2012). *Musica No Tonal. Las Propuestas de Julien Falk y Ernst Krenek*.',
+      'Catalán, T. (2012). *Sistema Compositivo Temperado En El Siglo XX*.',
+      'Forte, A. (1973). *The structure of atonal music*.',
+      'Gerou, T., & Lusk, L. (1996). *Essential Dictionary Of Music Notation*.',
+      'Gould, E. (2011). *Behind Bars*.',
+      'Grabner, H. (2001). *Teoría General De La Musica*.',
+      'Heussenstamm, G. (1987). *The Norton Manual Of Music Notation*.',
+      'Karkoschka, E. (1972). *Notation in the New Music*.',
+      'Lester, J. (2005). *Enfoques analíticos de la música del siglo XX*.',
+      'Read, G. (1979). *Music Notation. A Manual Of Modern Practice*.',
+      'Risatti, H. (1976). *New Music Vocabulary*.',
+      'Roig-Francolí, M. A. (2008). *Understanding Post-Tonal Music*.',
+      'Stone, K. (1980). *Music Notation In The Twentieth Century*.',
+      'Straus, J. N. (2004). *Introduction to Post-Tonal Theory (3rd Edition)*.',
+      'Ulehla, L. (1994). *Comtemporary Harmony*.',
+      'Villa Rojo, J. (2003). *Notacion Y Grafia Musical En El Siglo XX*.'
+    ],
+    scheduleData: scheduleDataII
+  }
+};
+
+// --- Datos de Fechas Importantes ---
+const importantDates = [
+  { event: "Inicio de clase", date: "28 de julio 2025" },
+  { event: "Fecha límite realización I parcial", date: "22 de agosto 2025" },
+  { event: "Fecha límite para el registro de notas del primer parcial", date: "29 de agosto 2025" },
+  { event: "Fecha límite realización del II parcial", date: "19 de septiembre 2025" },
+  { event: "Fecha límite registro de notas del II parcial", date: "19 de septiembre 2025" },
+  { event: "Semana de Receso", date: "Del 06 al 10 de octubre" },
+  { event: "Fecha límite registro del 40% de las notas del semestre PR. Semestre I", date: "22 de octubre 2025" },
+  { event: "Fecha límite realización del III parcial", date: "24 de octubre 2025" },
+  { event: "Fecha límite registro de nota del III parcial", date: "31 de octubre 2025" },
+  { event: "Fecha límite para retiro", date: "05 de noviembre 2025" },
+  { event: "Finalización de clases", date: "23 de noviembre 2025" },
+  { event: "Inicio Exámenes finales", date: "24 de noviembre 2025" },
+  { event: "Finalizan Exámenes Finales", date: "03 de diciembre 2025" },
+  { event: "Fecha límite registro de notas finales", date: "06 de diciembre 2025" },
+];
 
 
-        .btn-primary {
-            background-image: linear-gradient(to right, #10b981, #14b8a6);
-            color: white;
-            padding: 0.5rem 0.9rem; /* Reduced padding */
-            border-radius: 0.5rem; /* Slightly less rounded */
-            font-weight: 600;
-            font-size: 0.9rem; /* Slightly smaller font */
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border: none;
-            cursor: pointer;
-        }
-        .btn-primary:hover {
-            background-image: linear-gradient(to right, #059669, #0d9488);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-        }
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+// --- Componente para mostrar los detalles de una semana del cronograma ---
+const WeekDetail = ({ weekData }) => (
+  <div className="p-6 bg-white rounded-xl shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.005] border border-gray-100">
+    <h3 className="text-3xl font-extrabold text-blue-800 mb-4 flex items-center">
+      <Calendar className="mr-3 text-blue-600" size={32} /> Semana {weekData.week}: {weekData.title}
+    </h3>
 
-        .btn-secondary {
-            background-color: #ef4444;
-            color: white;
-            padding: 0.5rem 0.9rem; /* Reduced padding */
-            border-radius: 0.5rem; /* Slightly less rounded */
-            font-weight: 600;
-            font-size: 0.9rem; /* Slightly smaller font */
-            transition: background-color 0.2s ease-in-out;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border: none;
-            cursor: pointer;
-            margin-top: 0.4rem; /* Reduced margin-top */
-        }
-        .btn-secondary:hover {
-            background-color: #dc2626;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-        }
-        .btn-secondary:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+    <div className="space-y-6">
+      <div>
+        <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
+          <Target className="mr-2 text-green-500" size={20} /> Objetivos Clave
+        </h4>
+        <ul className="list-disc list-inside text-gray-600 space-y-1">
+          {weekData.objectives.map((obj, i) => (
+            <li key={i} className="flex items-start">
+              <CheckCircle className="text-green-400 mr-2 mt-1 flex-shrink-0" size={16} />
+              <span>{obj}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-        .error-message {
-            color: #dc2626;
-            font-weight: 500;
-            margin-top: 0.3rem; /* Reduced margin-top */
-            text-align: left;
-            font-size: 0.8rem; /* Smaller font for error messages */
-        }
-        .attribution {
-            margin-top: 0.6rem; /* Reduced margin-top for attribution */
-            font-size: 0.8rem; /* Slightly smaller font size for attribution */
-            color: #334155;
-            font-weight: 600;
-            line-height: 1.2;
-        }
+      <div>
+        <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
+          <Activity className="mr-2 text-purple-500" size={20} /> Actividades en Clase
+        </h4>
+        <ul className="list-disc list-inside text-gray-600 space-y-1">
+          {weekData.activities.map((act, i) => (
+            <li key={i} className="flex items-start">
+              <Lightbulb className="text-purple-400 mr-2 mt-1 flex-shrink-0" size={16} />
+              <span>{act}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-        /* Styles for the tutorial section (step-by-step) */
-        #tutorialSection {
-            background-color: #f0fdf4;
-            border-radius: 0.75rem;
-            margin-top: 0.6rem; /* Reduced margin-top */
-            padding: 0.4rem 0.6rem; /* Reduced padding for tutorial content */
-            border: 1px solid #d1fae5;
-            text-align: left;
-            display: none;
-        }
-        #tutorialSection.active {
-            display: block;
-        }
-        .tutorial-step {
-            display: none;
-        }
-        .tutorial-step.active {
-            display: block;
-        }
-        #tutorialSection h3 {
-            font-size: 0.9rem; /* Smaller for conciseness */
-            font-weight: 600;
-            color: #065f46;
-            margin-top: 0.4rem; /* Reduced margin */
-            margin-bottom: 0.2rem; /* Reduced margin */
-            text-align: left;
-        }
-        #tutorialSection p {
-            font-size: 0.75rem; /* Even smaller font for tutorial body */
-            color: #1f2937;
-            margin-bottom: 0.2rem; /* Reduced margin */
-            line-height: 1.2;
-        }
-        #tutorialSection strong {
-            font-weight: 700;
-        }
-        .tutorial-navigation {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 0.4rem; /* Reduced margin */
-        }
-        .tutorial-navigation button {
-            background-color: #34d399;
-            color: white;
-            padding: 0.25rem 0.5rem; /* Reduced padding */
-            border-radius: 0.3rem; /* Slightly less rounded */
-            font-weight: 500;
-            font-size: 0.75rem; /* Smaller font */
-            transition: background-color 0.2s ease-in-out;
-            border: none;
-            cursor: pointer;
-        }
-        .tutorial-navigation button:hover:not(:disabled) {
-            background-color: #10b981;
-        }
-        .tutorial-navigation button:disabled {
-            background-color: #a7f3d0;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
+      <div>
+        <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
+          <ClipboardList className="mr-2 text-orange-500" size={20} /> Desafío Independiente
+        </h4>
+        <ul className="list-disc list-inside text-gray-600 space-y-1">
+          {weekData.independentWork.map((work, i) => (
+            <li key={i} className="flex items-start">
+              <BookOpen className="text-orange-400 mr-2 mt-1 flex-shrink-0" size={16} />
+              <span>{work}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-        .tutorial-toggle-btn {
-            background-color: #34d399;
-            color: white;
-            padding: 0.4rem 0.7rem; /* Reduced padding */
-            border-radius: 0.5rem; /* Slightly less rounded */
-            font-weight: 500;
-            font-size: 0.85rem; /* Slightly smaller font */
-            transition: background-color 0.2s ease-in-out;
-            margin-top: 0.6rem; /* Reduced margin */
-            width: 100%;
-            border: none;
-            cursor: pointer;
-        }
-        .tutorial-toggle-btn:hover {
-            background-color: #10b981;
-        }
-
-        /* Highlight effect for elements */
-        .highlight-element {
-            border-color: #ffc107 !important;
-            box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.4) !important;
-            transition: all 0.3s ease-in-out;
-        }
-
-        /* Notification styles */
-        .notification {
-            position: absolute;
-            top: 0.8rem; /* Adjusted top */
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #4CAF50;
-            color: white;
-            padding: 0.6rem 1rem; /* Reduced padding */
-            border-radius: 0.6rem; /* Reduced border-radius */
-            font-size: 0.9rem; /* Reduced font size */
-            font-weight: 600;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Smaller shadow */
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out, top 0.5s ease-in-out;
-            z-index: 1000;
-            white-space: nowrap;
-        }
-        .notification.show {
-            opacity: 1;
-            top: 1.2rem; /* Slide down slightly when shown */
-        }
-    </style>
-</head>
-<body>
-    <div class="calculator-card">
-        <h1 class="text-xl font-bold text-gray-800 mb-2">Duración Musical Pro</h1> <!-- Reduced mb -->
-
-        <div class="input-group mb-2" id="pulsosPorCompasGroup"> <!-- Reduced mb -->
-            <label for="pulsosPorCompas" class="text-sm">Pulsos por compás:</label>
-            <input type="number" id="pulsosPorCompas" placeholder="Ej. 4" class="text-center" value="4" min="1" step="1">
+      {weekData.repertoire && weekData.repertoire.length > 0 && weekData.repertoire[0] !== "N/A" && (
+        <div>
+          <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
+            <Music className="mr-2 text-red-500" size={20} /> Repertorio Sugerido
+          </h4>
+          <ul className="list-disc list-inside text-gray-600 space-y-1">
+            {weekData.repertoire.map((rep, i) => (
+              <li key={i} className="flex items-start">
+                <Music className="text-red-400 mr-2 mt-1 flex-shrink-0" size={16} />
+                <span>{rep}</span>
+              </li>
+            ))}
+          </ul>
         </div>
-
-        <div class="radio-group mb-2 text-left" id="calcTypeGroup"> <!-- Reduced mb -->
-            <p class="font-medium text-gray-700 mb-1 text-sm">¿Qué quieres calcular?</p>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-1">
-                <label class="radio-option" id="calcCompasesLabel">
-                    <input type="radio" id="calcCompases" name="calcType" value="compases" class="peer" checked>
-                    <span class="radio-label">Total de compases</span>
-                </label>
-                <label class="radio-option" id="calcMinutosLabel">
-                    <input type="radio" id="calcMinutos" name="calcType" value="minutos" class="peer">
-                    <span class="radio-label">Total de minutos</span>
-                </label>
-                <label class="radio-option" id="calcBPMLabel">
-                    <input type="radio" id="calcBPM" name="calcType" value="bpm" class="peer">
-                    <span class="radio-label">BPM</span>
-                </label>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-1 mb-2" id="inputFieldsGroup"> <!-- Reduced gap and mb -->
-            <div class="input-group">
-                <label for="totalCompases">Total de compases:</label>
-                <input type="number" id="totalCompases" placeholder="Ej. 100" min="0" step="1">
-            </div>
-            <div class="input-group">
-                <label for="totalMinutos">Total de minutos:</label>
-                <input type="text" id="totalMinutos" placeholder="Ej. 5:30, 5.30 o 65">
-            </div>
-            <div class="input-group">
-                <label for="bpm">BPM:</label>
-                <input type="number" id="bpm" placeholder="Ej. 120" min="0" step="1">
-            </div>
-        </div>
-
-        <button id="calculateBtn" class="btn-primary w-full">Calcular</button>
-        <button id="clearBtn" class="btn-secondary w-full">Borrar</button>
-
-        <div id="errorMessage" class="error-message hidden"></div>
-
-        <div class="attribution">
-            Realizado por Juan Miguel Ríos Redondo
-        </div>
-
-        <button id="toggleTutorialBtn" class="tutorial-toggle-btn">Iniciar Tutorial</button>
-
-        <div id="tutorialSection">
-            <div class="tutorial-step" id="step1" data-target-id="pulsosPorCompasGroup">
-                <h3>Paso 1: Pulsos por compás</h3>
-                <p>Define cuántos pulsos hay en cada compás (ej. 4 para 4/4).</p>
-            </div>
-            <div class="tutorial-step" id="step2" data-target-id="calcTypeGroup">
-                <h3>Paso 2: ¿Qué quieres calcular?</h3>
-                <p>Elige el valor a obtener. El campo correspondiente se deshabilitará.</p>
-            </div>
-            <div class="tutorial-step" id="step3" data-target-id="calcCompasesLabel">
-                <h3>Paso 3: Calcular Compases</h3>
-                <p>Si eliges esta opción, ingresa Minutos y BPM.</p>
-            </div>
-            <div class="tutorial-step" id="step4" data-target-id="calcMinutosLabel">
-                <h3>Paso 4: Calcular Minutos</h3>
-                <p>Si eliges esta opción, ingresa Compases y BPM.</p>
-            </div>
-            <div class="tutorial-step" id="step5" data-target-id="calcBPMLabel">
-                <h3>Paso 5: Calcular BPM</h3>
-                <p>Si eliges esta opción, ingresa Compases y Minutos.</p>
-            </div>
-            <div class="tutorial-step" id="step6" data-target-id="totalCompases">
-                <h3>Paso 6: Campos de Entrada</h3>
-                <p>Ingresa el <strong>Total de Compases</strong> (número entero, no negativo).</p>
-            </div>
-            <div class="tutorial-step" id="step7" data-target-id="totalMinutos">
-                <h3>Paso 7: Campos de Entrada</h3>
-                <p>Ingresa el <strong>Total de minutos</strong>. Puedes usar <code>MM:SS</code>, <code>MM,SS</code>, <code>MM.SS</code> o solo <code>MM</code> (ej. 5:30, 65).</p>
-            </div>
-            <div class="tutorial-step" id="step8" data-target-id="bpm">
-                <h3>Paso 8: Campos de Entrada</h3>
-                <p>Ingresa el <strong>BPM</strong> (número entero positivo).</p>
-            </div>
-            <div class="tutorial-step" id="step9" data-target-id="calculateBtn">
-                <h3>Paso 9: Calcular</h3>
-                <p>Haz clic para ver el resultado.</p>
-            </div>
-            <div class="tutorial-step" id="step10" data-target-id="errorMessage">
-                <h3>Paso 10: Errores</h3>
-                <p>Aquí verás mensajes en rojo si hay problemas con tus datos.</p>
-            </div>
-            <div class="tutorial-step" id="step11" data-target-id="inputFieldsGroup">
-                <h3>Paso 11: Resultado</h3>
-                <p>Aparece en el campo correspondiente, resaltado.</p>
-            </div>
-            <div class="tutorial-step" id="step12" data-target-id="clearBtn">
-                <h3>Paso 12: Borrar</h3>
-                <p>Haz clic aquí para limpiar todos los campos y empezar un nuevo cálculo.</p>
-            </div>
-            <div class="tutorial-step" id="step13">
-                <h3>¡Listo!</h3>
-                <p>¡Disfruta tu calculadora musical!</p>
-            </div>
-
-            <div class="tutorial-navigation">
-                <button id="prevStepBtn" disabled>Anterior</button>
-                <button id="nextStepBtn">Siguiente</button>
-            </div>
-        </div>
-        <!-- Notification Element -->
-        <div id="notification" class="notification"></div>
+      )}
     </div>
+  </div>
+);
 
-    <script>
-        // Get DOM elements
-        const pulsosPorCompasInput = document.getElementById('pulsosPorCompas');
-        const totalCompasesInput = document.getElementById('totalCompases');
-        const totalMinutosInput = document.getElementById('totalMinutos');
-        const bpmInput = document.getElementById('bpm');
-        const calculateBtn = document.getElementById('calculateBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const errorMessageDiv = document.getElementById('errorMessage');
-        const radioButtons = document.querySelectorAll('input[name="calcType"]');
-        const toggleTutorialBtn = document.getElementById('toggleTutorialBtn');
-        const tutorialSection = document.getElementById('tutorialSection');
-        const prevStepBtn = document.getElementById('prevStepBtn');
-        const nextStepBtn = document.getElementById('nextStepBtn');
-        const tutorialSteps = document.querySelectorAll('.tutorial-step');
-        const notificationElement = document.getElementById('notification');
+// --- Componente principal de la aplicación (App) ---
+// Este componente gestiona la selección del curso y la navegación semanal.
+const App = () => {
+  const [selectedCourseId, setSelectedCourseId] = useState('MUS4000'); // Inicia con Conceptos I
+  const [selectedWeek, setSelectedWeek] = useState(1); // Inicia en la semana 1
 
-        // Map calculation types to their corresponding input elements
-        const inputMap = {
-            compases: totalCompasesInput,
-            minutos: totalMinutosInput,
-            bpm: bpmInput
-        };
+  // Obtiene los datos del curso y del cronograma actual según la selección.
+  const currentCourse = courses[selectedCourseId];
+  const currentScheduleData = currentCourse.scheduleData;
+  const currentWeekData = currentScheduleData.find(week => week.week === selectedWeek);
 
-        // Get groups for highlighting
-        const pulsosPorCompasGroup = document.getElementById('pulsosPorCompasGroup');
-        const calcTypeGroup = document.getElementById('calcTypeGroup');
-        const inputFieldsGroup = document.getElementById('inputFieldsGroup');
-        const calcCompasesLabel = document.getElementById('calcCompasesLabel');
-        const calcMinutosLabel = document.getElementById('calcMinutosLabel');
-        const calcBPMLabel = document.getElementById('calcBPMLabel');
-        const clearBtnElement = document.getElementById('clearBtn');
+  // Reinicia la semana seleccionada a 1 cada vez que cambia el curso.
+  useEffect(() => {
+    setSelectedWeek(1);
+  }, [selectedCourseId]);
 
+  // Manejador para navegar a la semana anterior.
+  const handlePrevWeek = () => {
+    setSelectedWeek(prev => Math.max(1, prev - 1));
+  };
 
-        // Map tutorial target IDs to their actual DOM elements
-        const tutorialTargetElements = {
-            pulsosPorCompasGroup: pulsosPorCompasGroup,
-            calcTypeGroup: calcTypeGroup,
-            calcCompasesLabel: calcCompasesLabel,
-            calcMinutosLabel: calcMinutosLabel,
-            calcBPMLabel: calcBPMLabel,
-            inputFieldsGroup: inputFieldsGroup,
-            totalCompases: totalCompasesInput,
-            totalMinutos: totalMinutosInput,
-            bpm: bpmInput,
-            calculateBtn: calculateBtn,
-            errorMessage: errorMessageDiv,
-            clearBtn: clearBtnElement
-        };
+  // Manejador para navegar a la semana siguiente.
+  const handleNextWeek = () => {
+    setSelectedWeek(prev => Math.min(currentScheduleData.length, prev + 1));
+  };
 
-        let currentTutorialStepIndex = 0;
-        let currentHighlightedElement = null;
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 font-sans text-gray-800">
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+      <style>
+        {`
+          body { font-family: 'Inter', sans-serif; }
+        `}
+      </style>
 
-        /**
-         * Displays an error message to the user.
-         * @param {string} message - The error message to display.
-         */
-        function displayError(message) {
-            errorMessageDiv.textContent = message;
-            errorMessageDiv.classList.remove('hidden');
-            hideNotification();
-        }
+      <div className="container mx-auto py-8">
+        {/* Encabezado del Curso */}
+        <header className="bg-white rounded-2xl shadow-xl p-6 mb-8 text-center border-b-4 border-blue-500">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-blue-900 mb-2 flex items-center justify-center">
+            <GraduationCap className="mr-4 text-blue-600" size={48} />
+            Cronograma: {currentCourse.name}
+          </h1>
+          <p className="text-lg text-gray-600">Profesor: Juan Miguel Ríos Redondo | Email: mrjuan@uninorte.edu.co</p>
+          <div className="mt-4 flex flex-wrap justify-center gap-4 text-gray-700 text-sm">
+            <span className="flex items-center"><Users className="mr-1 text-gray-500" size={16} /> Créditos: 2</span>
+            <span className="flex items-center"><Calendar className="mr-1 text-gray-500" size={16} /> Horas Semanales: 2h Teóricas / 2h Prácticas</span>
+            <span className="flex items-center"><Home className="mr-1 text-gray-500" size={16} /> Modalidad: Presencial</span>
+          </div>
 
-        /**
-         * Clears any displayed error messages.
-         */
-        function clearError() {
-            errorMessageDiv.classList.add('hidden');
-            errorMessageDiv.textContent = '';
-        }
+          {/* Selector de Cursos */}
+          <div className="mt-6 flex flex-wrap justify-center gap-4">
+            <button
+              onClick={() => setSelectedCourseId('MUS4000')}
+              className={`px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center
+                ${selectedCourseId === 'MUS4000'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg'
+                  : 'bg-gray-200 text-gray-700 hover:bg-blue-100'
+                }`}
+            >
+              <SwatchBook className="mr-2" size={20} /> Conceptos I
+            </button>
+            <button
+              onClick={() => setSelectedCourseId('MUS4005')}
+              className={`px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center
+                ${selectedCourseId === 'MUS4005'
+                  ? 'bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg'
+                  : 'bg-gray-200 text-gray-700 hover:bg-purple-100'
+                }`}
+            >
+              <SwatchBook className="mr-2" size={20} /> Conceptos II
+            </button>
+          </div>
+        </header>
 
-        /**
-         * Displays a temporary notification with the result.
-         * @param {string} message - The message to display in the notification.
-         */
-        function showNotification(message) {
-            notificationElement.textContent = message;
-            notificationElement.classList.add('show');
-            setTimeout(() => {
-                notificationElement.classList.remove('show');
-            }, 3000);
-        }
+        {/* Sección de Descripción y Objetivos */}
+        <section className="bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-purple-500">
+          <h2 className="text-3xl font-bold text-purple-800 mb-4 flex items-center">
+            <BookOpen className="mr-3 text-purple-600" size={30} /> Descripción General del Curso
+          </h2>
+          <p className="text-gray-700 leading-relaxed mb-6" dangerouslySetInnerHTML={{ __html: currentCourse.description }} />
 
-        /**
-         * Hides the notification.
-         */
-        function hideNotification() {
-            notificationElement.classList.remove('show');
-        }
+          <h2 className="text-3xl font-bold text-green-800 mb-4 flex items-center">
+            <Target className="mr-3 text-green-600" size={30} /> Objetivos del Curso
+          </h2>
+          <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
+            {currentCourse.generalObjectives.map((obj, i) => <li key={i}>{obj}</li>)}
+          </ul>
+        </section>
 
-        /**
-         * Resets all input fields and enables them, removing result highlighting.
-         * Also resets radio button selection and applies active-input class.
-         */
-        function resetInputFields() {
-            // Remove highlighting class from all inputs
-            totalCompasesInput.classList.remove('input-result');
-            totalMinutosInput.classList.remove('input-result');
-            bpmInput.classList.remove('input-result');
+        {/* Resultados de Aprendizaje y Evaluación */}
+        <section className="bg-white rounded-2xl shadow-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-r-4 border-red-500">
+          <div>
+            <h2 className="text-3xl font-bold text-red-800 mb-4 flex items-center">
+              <Award className="mr-3 text-red-600" size={30} /> Resultados de Aprendizaje Clave
+            </h2>
+            <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
+              {currentCourse.learningOutcomes.map((ra) => (
+                <li key={ra.id}><strong>{ra.id}:</strong> {ra.text}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h2 className="text-3xl font-bold text-indigo-800 mb-4 flex items-center">
+              <ClipboardList className="mr-3 text-indigo-600" size={30} /> Sistema de Evaluación
+            </h2>
+            <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
+              <li>**Examen Parcial I:** 25% (Cubre Semanas 1-5)</li>
+              <li>**Examen Parcial II:** 25% (Cubre Semanas 7-11)</li>
+              <li>**Examen Parcial III (Final):** 25% (Evaluación global del curso)</li>
+              <li>**Materiales (Trabajos, Tareas, Ejercicios):** 15%</li>
+              <li>**Participación (Clase, Lecturas):** 10%</li>
+              <li className="font-bold mt-2">**TOTAL: 100%**</li>
+              <li className="text-red-600 font-semibold mt-4 flex items-start">
+                <CheckCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={16} />
+                **Importante:** La inasistencia a más del 25% de las clases (más de 8 horas o 4 faltas) resultará en la pérdida del derecho a presentar el examen parcial final.
+              </li>
+            </ul>
+          </div>
+        </section>
 
-            pulsosPorCompasInput.value = '4';
-            totalCompasesInput.value = '';
-            totalMinutosInput.value = '';
-            bpmInput.value = '';
+        {/* Sección de Fechas Importantes */}
+        <section className="bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-orange-500">
+          <h2 className="text-3xl font-bold text-orange-800 mb-4 flex items-center">
+            <Clock className="mr-3 text-orange-600" size={30} /> Fechas Importantes
+          </h2>
+          <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+            <table className="min-w-full bg-white rounded-lg">
+              <thead className="bg-gray-100 border-b border-gray-200">
+                <tr>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tl-lg">Evento</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tr-lg">Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {importantDates.map((item, index) => (
+                  <tr key={index} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                    <td className="py-3 px-4 text-sm text-gray-800">{item.event}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{item.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-            // Enable all fields initially
-            totalCompasesInput.disabled = false;
-            totalMinutosInput.disabled = false;
-            bpmInput.disabled = false;
+        {/* Navegación y Contenido de Semanas */}
+        <section className="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500">
+          <h2 className="text-3xl font-bold text-blue-800 mb-6 text-center flex items-center justify-center">
+            <Calendar className="mr-3 text-blue-600" size={30} /> Cronograma Semanal
+          </h2>
 
-            // Remove active-input class from all fields
-            totalCompasesInput.classList.remove('active-input');
-            totalMinutosInput.classList.remove('active-input');
-            bpmInput.classList.remove('active-input');
+          {/* Controles de Navegación */}
+          <div className="flex justify-center items-center mb-8 space-x-4">
+            <button
+              onClick={handlePrevWeek}
+              disabled={selectedWeek === 1}
+              className="p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+              aria-label="Semana anterior"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <span className="text-2xl font-semibold text-blue-800">
+              Semana {selectedWeek} de {currentScheduleData.length}
+            </span>
+            <button
+              onClick={handleNextWeek}
+              disabled={selectedWeek === currentScheduleData.length}
+              className="p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+              aria-label="Semana siguiente"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </div>
 
-            // Reset radio button selection to default
-            document.getElementById('calcCompases').checked = true;
+          {/* Selector de Semanas (para pantallas más grandes) */}
+          <div className="hidden md:flex flex-wrap justify-center gap-2 mb-8">
+            {currentScheduleData.map((week) => (
+              <button
+                key={week.week}
+                onClick={() => setSelectedWeek(week.week)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105
+                  ${selectedWeek === week.week
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
+                  }`}
+              >
+                Semana {week.week}
+              </button>
+            ))}
+          </div>
 
-            // Apply disabled and active-input classes based on default selection
-            totalCompasesInput.disabled = true; // 'Total de compases' is the default calculated field
-            totalMinutosInput.classList.add('active-input'); // 'Total de minutos' is an active input
-            bpmInput.classList.add('active-input'); // 'BPM' is an active input
+          {/* Detalles de la Semana Actual */}
+          {currentWeekData && <WeekDetail weekData={currentWeekData} />}
+        </section>
 
-            clearError();
-            hideNotification();
-        }
+        {/* Sección de Bibliografía */}
+        <section className="bg-white rounded-2xl shadow-xl p-6 mt-8 border-b-4 border-green-500">
+          <h2 className="text-3xl font-bold text-green-800 mb-4 flex items-center">
+            <BookOpen className="mr-3 text-green-600" size={30} /> Bibliografía Recomendada
+          </h2>
+          <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
+            {currentCourse.bibliography.map((item, i) => <li key={i} dangerouslySetInnerHTML={{ __html: item }} />)}
+          </ul>
+        </section>
+      </div>
 
-        /**
-         * Parses a time string (MM:SS, MM,SS, MM.SS or MM) into total seconds.
-         * This function is now used for the 'text' type input.
-         * @param {string} timeString - The time string to parse.
-         * @returns {number|NaN} Total seconds or NaN if invalid format.
-         */
-        function parseTimeInput(timeString) {
-            timeString = timeString.trim();
-            if (timeString === '') {
-                return NaN; // Empty string is invalid
-            }
+      {/* Pie de página */}
+      <footer className="text-center text-gray-500 text-sm py-4">
+        <p>© 2025 Aplicación de Cronograma Musical. Todos los derechos reservados.</p>
+      </footer>
+    </div>
+  );
+};
 
-            // Replace comma and period with colon for consistent splitting
-            timeString = timeString.replace(/[,.]/g, ':');
-            const parts = timeString.split(':');
-
-            let totalSeconds = 0;
-
-            if (parts.length === 1) {
-                // Assume it's just minutes, convert to seconds
-                const minutes = parseInt(parts[0], 10);
-                if (!isNaN(minutes) && minutes >= 0) {
-                    totalSeconds = minutes * 60;
-                } else {
-                    return NaN; // Not a valid number
-                }
-            } else if (parts.length === 2) {
-                // Assume it's MM:SS
-                const minutes = parseInt(parts[0], 10);
-                const seconds = parseInt(parts[1], 10);
-                if (!isNaN(minutes) && !isNaN(seconds) && minutes >= 0 && seconds >= 0 && seconds < 60) {
-                    totalSeconds = (minutes * 60) + seconds;
-                } else {
-                    return NaN; // Not valid numbers or seconds out of range
-                }
-            } else {
-                return NaN; // Invalid number of parts
-            }
-
-            return totalSeconds;
-        }
-
-        /**
-         * Formats total seconds into an "MM:SS" string.
-         * @param {number} totalSeconds - The total number of seconds.
-         * @returns {string} The formatted time string "MM:SS".
-         */
-        function formatSecondsToMMSS(totalSeconds) {
-            if (isNaN(totalSeconds) || totalSeconds < 0) {
-                return "00:00";
-            }
-
-            totalSeconds = Math.round(totalSeconds);
-
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-
-            const paddedMinutes = String(minutes).padStart(2, '0');
-            const paddedSeconds = String(seconds).padStart(2, '0');
-            return `${paddedMinutes}:${paddedSeconds}`;
-        }
-
-
-        /**
-         * Handles the change event for the radio buttons.
-         * Disables the selected input field and applies active-input to others.
-         */
-        radioButtons.forEach(radio => {
-            radio.addEventListener('change', () => {
-                clearError();
-                hideNotification();
-
-                // Enable all fields and remove active-input class first
-                totalCompasesInput.disabled = false;
-                totalMinutosInput.disabled = false;
-                bpmInput.disabled = false;
-                totalCompasesInput.classList.remove('active-input');
-                totalMinutosInput.classList.remove('active-input');
-                bpmInput.classList.remove('active-input');
-
-                const selectedCalcType = document.querySelector('input[name="calcType"]:checked').value;
-
-                // Disable the selected output field and mark others as active inputs
-                if (selectedCalcType === 'compases') {
-                    totalCompasesInput.disabled = true;
-                    totalMinutosInput.classList.add('active-input');
-                    bpmInput.classList.add('active-input');
-                } else if (selectedCalcType === 'minutos') {
-                    totalMinutosInput.disabled = true;
-                    totalCompasesInput.classList.add('active-input');
-                    bpmInput.classList.add('active-input');
-                } else if (selectedCalcType === 'bpm') {
-                    bpmInput.disabled = true;
-                    totalCompasesInput.classList.add('active-input');
-                    totalMinutosInput.classList.add('active-input');
-                }
-            });
-        });
-
-        // Initialize disabled state and active-input classes on load based on default checked radio
-        window.onload = function() {
-            resetInputFields(); // Call reset to set initial state correctly
-        };
-
-        /**
-         * Handles the calculation logic when the button is clicked.
-         */
-        calculateBtn.addEventListener('click', () => {
-            clearError();
-            hideNotification();
-            // Remove highlighting from previously calculated result before new calculation
-            totalCompasesInput.classList.remove('input-result');
-            totalMinutosInput.classList.remove('input-result');
-            bpmInput.classList.remove('input-result');
-
-
-            const pulsosPorCompas = parseInt(pulsosPorCompasInput.value, 10);
-            const totalMinutosString = totalMinutosInput.value;
-            const bpm = parseInt(bpmInput.value, 10);
-
-            let totalCompases = parseInt(totalCompasesInput.value, 10);
-            let totalSegundos;
-
-            const selectedCalcType = document.querySelector('input[name="calcType"]:checked').value;
-
-            // --- Input Validations ---
-            if (isNaN(pulsosPorCompas) || pulsosPorCompas <= 0) {
-                displayError('Error: "Pulsos por compás" debe ser un número entero positivo.');
-                return;
-            }
-
-            if (selectedCalcType === 'compases' || selectedCalcType === 'bpm') {
-                totalSegundos = parseTimeInput(totalMinutosString);
-                if (isNaN(totalSegundos)) {
-                    displayError('Error: Formato de "Total de minutos" incorrecto. Usa MM:SS, MM,SS, MM.SS o solo MM. Ej: 5:30, 5,30, 5.30 o 65.');
-                    return;
-                }
-                if (totalSegundos < 0) {
-                    displayError('Error: "Total de minutos" no puede ser negativo.');
-                    return;
-                }
-            }
-
-            if (selectedCalcType === 'minutos' || selectedCalcType === 'bpm') {
-                if (isNaN(totalCompases) || totalCompases < 0) {
-                    displayError('Error: "Total de compases" debe ser un número entero no negativo.');
-                    return;
-                }
-            }
-
-            if (selectedCalcType === 'compases' || selectedCalcType === 'minutos') {
-                if (isNaN(bpm) || bpm <= 0) {
-                    displayError('Error: "BPM" debe ser un número entero positivo.');
-                    return;
-                }
-            }
-
-            // --- Calculation Logic ---
-            let result;
-            let targetInput;
-            let resultTextForNotification = "";
-
-            switch (selectedCalcType) {
-                case 'compases':
-                    targetInput = totalCompasesInput;
-                    if (bpm === 0) {
-                        displayError('Error: El "BPM" no puede ser cero para calcular compases.');
-                        return;
-                    }
-                    result = Math.round((totalSegundos / 60 * bpm) / pulsosPorCompas);
-                    resultTextForNotification = `Total de Compases: ${result}`;
-                    break;
-
-                case 'minutos':
-                    targetInput = totalMinutosInput;
-                    if (bpm === 0) {
-                        displayError('Error: El "BPM" no puede ser cero para calcular minutos.');
-                        return;
-                    }
-                    const totalPulsosForMinutes = totalCompases * pulsosPorCompas;
-                    result = formatSecondsToMMSS((totalPulsosForMinutes / bpm) * 60);
-                    resultTextForNotification = `Total de Minutos: ${result}`;
-                    break;
-
-                case 'bpm':
-                    targetInput = bpmInput;
-                    if (totalSegundos === 0) {
-                        displayError('Error: El "Total de minutos" no puede ser cero para calcular el BPM.');
-                        return;
-                    }
-                    const totalPulsosForBPM = totalCompases * pulsosPorCompas;
-                    result = Math.round((totalPulsosForBPM / totalSegundos) * 60);
-                    resultTextForNotification = `BPM: ${result}`;
-                    break;
-
-                default:
-                    displayError('Error: Selecciona qué valor quieres calcular.');
-                    return;
-            }
-
-            // Display the result in the target input field and add highlighting class
-            if (targetInput) {
-                targetInput.value = result;
-                targetInput.classList.add('input-result');
-                showNotification(`¡Cálculo Exitoso! ${resultTextForNotification}`);
-            }
-        });
-
-        // --- Tutorial Specific Functions ---
-
-        /**
-         * Shows a specific tutorial step and hides others.
-         * Also handles highlighting the corresponding element and updating navigation buttons.
-         * @param {number} index - The index of the step to show.
-         */
-        function showTutorialStep(index) {
-            // Hide all steps
-            tutorialSteps.forEach(step => step.classList.remove('active'));
-
-            // Show the current step
-            if (tutorialSteps[index]) {
-                tutorialSteps[index].classList.add('active');
-
-                // Remove previous highlight
-                if (currentHighlightedElement) {
-                    currentHighlightedElement.classList.remove('highlight-element');
-                    currentHighlightedElement = null;
-                }
-
-                // Add highlight to the target element for the current step
-                const targetId = tutorialSteps[index].dataset.targetId;
-                if (targetId && tutorialTargetElements[targetId]) {
-                    const targetElement = tutorialTargetElements[targetId];
-                    targetElement.classList.add('highlight-element');
-                    currentHighlightedElement = targetElement;
-                }
-            }
-
-            // Update navigation buttons
-            prevStepBtn.disabled = (index === 0);
-            nextStepBtn.disabled = (index === tutorialSteps.length - 1);
-        }
-
-        /**
-         * Starts or ends the tutorial.
-         */
-        toggleTutorialBtn.addEventListener('click', () => {
-            const isTutorialActive = tutorialSection.classList.contains('active');
-
-            if (isTutorialActive) {
-                // End tutorial
-                tutorialSection.classList.remove('active');
-                toggleTutorialBtn.textContent = 'Iniciar Tutorial';
-                if (currentHighlightedElement) {
-                    currentHighlightedElement.classList.remove('highlight-element');
-                    currentHighlightedElement = null;
-                }
-                // Hide all steps when tutorial ends
-                tutorialSteps.forEach(step => step.classList.remove('active'));
-            } else {
-                // Start tutorial
-                tutorialSection.classList.add('active');
-                toggleTutorialBtn.textContent = 'Finalizar Tutorial';
-                currentTutorialStepIndex = 0; // Start from the first step
-                showTutorialStep(currentTutorialStepIndex);
-            }
-        });
-
-        // Navigation buttons for tutorial
-        prevStepBtn.addEventListener('click', () => {
-            if (currentTutorialStepIndex > 0) {
-                currentTutorialStepIndex--;
-                showTutorialStep(currentTutorialStepIndex);
-            }
-        });
-
-        nextStepBtn.addEventListener('click', () => {
-            if (currentTutorialStepIndex < tutorialSteps.length - 1) {
-                currentTutorialStepIndex++;
-                showTutorialStep(currentTutorialStepIndex);
-            }
-        });
-
-        // Event listener for the new Clear button
-        clearBtn.addEventListener('click', resetInputFields);
-    </script>
-</body>
-</html>
+export default App;
 
 
