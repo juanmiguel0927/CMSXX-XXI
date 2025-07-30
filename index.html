@@ -1,1100 +1,1198 @@
-import React, { useState, useEffect } from 'react';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cronograma Musical</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        /* Estilos adicionales para la tabla de fechas importantes */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0; /* gray-200 */
+        }
+        thead th {
+            background-color: #f8fafc; /* gray-50 */
+            font-weight: 600;
+            color: #4a5568; /* gray-700 */
+        }
+        tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #fbfdff; /* slightly off-white */
+        }
+        tbody tr:hover {
+            background-color: #edf2f7; /* gray-100 */
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800">
 
-// Importar iconos de lucide-react
-import { BookOpen, Calendar, Target, Activity, Music, Users, Award, ChevronRight, ChevronLeft, Home, Lightbulb, ClipboardList, CheckCircle, GraduationCap, SwatchBook, Clock } from 'lucide-react';
-
-// --- Datos del Cronograma ---
-// Estos datos definen el contenido de cada semana para ambos cursos.
-
-// Datos del cronograma para Conceptos de Música del Siglo XX y XXI I (MUS 4000)
-const scheduleDataI = [
-  {
-    week: 1,
-    title: "El Crepúsculo Tonal y el Amanecer Modal",
-    objectives: [
-      "Introducir el contexto musical de finales del siglo XIX.",
-      "Comprender el concepto de transición de la tonalidad.",
-      "Familiarizarse con los rudimentos teóricos de acordes y escalas modales."
-    ],
-    activities: [
-      "Clase magistral: Presentación de lineamientos técnico-teóricos.",
-      "Taller: Ejercicios de identificación de escalas y acordes modales básicos.",
-      "Audición dirigida: Ejemplos de obras con elementos de transición tonal."
-    ],
-    independentWork: [
-      "Lectura: Capítulo introductorio sobre la armonía de finales del siglo XIX y principios del XX (Persichetti, Ulehla).",
-      "Ejercicios de escritura: Identificación de modos y construcción de acordes modales."
-    ],
-    repertoire: [
-      "Richard Wagner: Preludio de Tristán e Isolda",
-      "Franz Liszt: Nuages gris",
-      "Modest Mussorgsky: Cuadros de una exposición (original para piano)"
-    ]
-  },
-  {
-    week: 2,
-    title: "Debussy: La Paleta Sonora del Impresionismo",
-    objectives: [
-      "Analizar las características armónicas y melódicas de la música de Debussy.",
-      "Comprender el cuartalismo y el modalismo en su obra."
-    ],
-    activities: [
-      "Clase magistral: Análisis de obras clave de Debussy (ej. Preludios, La Mer).",
-      "Taller: Ejercicios de composición corta aplicando cuartalismo y modalismo debussyniano.",
-      "Discusión crítica: Sobre la ruptura con la tonalidad tradicional en Debussy."
-    ],
-    independentWork: [
-      "Audición dirigida (con score): Análisis de 2-3 piezas de Debussy, identificando elementos modales y cuartales.",
-      "Composición: Pequeña pieza de 8-16 compases en estilo impresionista."
-    ],
-    repertoire: [
-      "Claude Debussy: Préludes (Libro I y II, selecciones como 'Voiles', 'La Cathédrale engloutie')",
-      "Claude Debussy: Estampes ('Pagodes', 'La soirée dans Grenade', 'Jardins sous la pluie')",
-      "Claude Debussy: Children's Corner ('Golliwogg's Cakewalk')"
-    ]
-  },
-  {
-    week: 3,
-    title: "Ravel: Claridad y Brillo Impresionista",
-    objectives: [
-      "Distinguir las características de Ravel en comparación con Debussy."
-    ],
-    activities: [
-      "Clase magistral: Análisis comparativo de obras de Ravel (ej. Daphnis et Chloé, Bolero).",
-      "Simulacro de examen: Avance de composición realizada con contenidos de las semanas anteriores."
-    ],
-    independentWork: [
-      "Lectura: Sección sobre Ravel en textos de armonía del siglo XX (Persichetti).",
-      "Audición: Escuchar obras de Ravel, prestando atención a la instrumentación."
-    ],
-    repertoire: [
-      "Maurice Ravel: Miroirs ('Noctuelles', 'Oiseaux tristes', 'Une barque sur l'océan')",
-      "Maurice Ravel: Gaspard de la Nuit ('Ondine', 'Le Gibet', 'Scarbo')",
-      "Maurice Ravel: Valses nobles et sentimentales"
-    ]
-  },
-  {
-    week: 4,
-    title: "Bartók: Folclore y el Sistema de Ejes",
-    objectives: [
-      "Comprender el concepto de nacionalismo musical en Europa del Este.",
-      "Analizar el Sistema de Ejes de Béla Bartók."
-    ],
-    activities: [
-      "Clase magistral: Explicación del sistema de ejes y análisis de obras de Bartók (ej. Mikrokosmos, Cuartetos de cuerda).",
-      "Taller: Ejercicios de escritura aplicando el sistema de ejes.",
-      "Audición dirigida: Obras de Bartók."
-    ],
-    independentWork: [
-      "Lectura: La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX (Antokoletz, Lendvai).",
-      "Composición: Pequeña pieza en estilo de ejes Bartok."
-    ],
-    repertoire: [
-      "Béla Bartók: Mikrokosmos (selecciones, especialmente piezas con elementos modales o de ejes)",
-      "Béla Bartók: Allegro Barbaro",
-      "Béla Bartók: Seis Danzas Rumanas (versión para piano)"
-    ]
-  },
-  {
-    week: 5,
-    title: "Stravinsky y Hindemith: El Retorno a la Forma",
-    objectives: [
-      "Identificar las características del Neoclasicismo musical.",
-      "Analizar las obras de Stravinsky y Hindemith dentro de este estilo."
-    ],
-    activities: [
-      "Clase magistral: Análisis de obras clave de Stravinsky (ej. Pulcinella, Sinfonía de los Salmos) y Hindemith (ej. Ludus Tonalis).",
-      "Taller: Ejercicios de escritura con elementos neoclásicos.",
-      "Discusión crítica: Sobre la estética neoclásica."
-    ],
-    independentWork: [
-      "Audición dirigida (con score): Obras neoclásicas.",
-      "Preparación para Parcial I."
-    ],
-    repertoire: [
-      "Igor Stravinsky: Pulcinella Suite (versión de concierto)",
-      "Igor Stravinsky: Octeto para instrumentos de viento",
-      "Paul Hindemith: Sonata para piano No. 2",
-      "Paul Hindemith: Ludus Tonalis (selecciones de fugas e interludios)"
-    ]
-  },
-  {
-    week: 6,
-    title: "Prokofiev y Contrastes Estilísticos / EXAMEN PARCIAL I",
-    objectives: [
-      "Continuar el análisis del Neoclasicismo con Prokofiev.",
-      "Establecer comparaciones estilísticas entre los compositores vistos hasta ahora."
-    ],
-    activities: [
-      "Clase magistral: Análisis de obras de Prokofiev (ej. Sinfonía Clásica).",
-      "Taller: Ejercicios de análisis comparativo de fragmentos musicales.",
-      "Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."
-    ],
-    independentWork: [
-      "Revisión de los temas para el parcial."
-    ],
-    repertoire: [
-      "Sergei Prokofiev: Sinfonía Clásica (Movimientos selectos)",
-      "Sergei Prokofiev: Visions Fugitives (selecciones)",
-      "Comparación: Johann Sebastian Bach (ej. una invención a dos voces) y Arnold Schönberg (ej. una de las Seis pequeñas piezas para piano, Op. 19)"
-    ]
-  },
-  {
-    week: 7,
-    title: "Los Seis: La Vanguardia Francesa",
-    objectives: [
-      "Conocer a los miembros y la filosofía del Grupo de Los Seis.",
-      "Analizar la politonalidad de Darius Milhaud y su influencia."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los compositores y sus ideas estéticas.",
-      "Taller: Ejercicios de escritura con elementos politonales simples.",
-      "Audición dirigida: Obras representativas de Los Seis."
-    ],
-    independentWork: [
-      "Lectura: Sobre el Grupo de Los Seis.",
-      "Composición: Pequeño ejercicio explorando la bitonalidad."
-    ],
-    repertoire: [
-      "Darius Milhaud: Scaramouche (para dos pianos o saxofón y piano)",
-      "Francis Poulenc: Les Biches (Suite de ballet)",
-      "Arthur Honegger: Pacific 231",
-      "Erik Satie: Gymnopédies y Gnossiennes"
-    ]
-  },
-  {
-    week: 8,
-    title: "Ragtime y New Orleans: Cuna del Jazz",
-    objectives: [
-      "Comprender los orígenes del Jazz.",
-      "Analizar las características del Ragtime y el Estilo New Orleans."
-    ],
-    activities: [
-      "Clase magistral: Historia y evolución del Jazz temprano.",
-      "Audición dirigida: Obras de Scott Joplin y grabaciones de New Orleans Jazz.",
-      "Discusión crítica: Sobre la importancia de la improvisación en el Jazz."
-    ],
-    independentWork: [
-      "Audición: Escuchar más ejemplos de Ragtime y New Orleans Jazz.",
-      "Investigación: Breve biografía de Scott Joplin."
-    ],
-    repertoire: [
-      "Scott Joplin: 'Maple Leaf Rag', 'The Entertainer'",
-      "Original Dixieland Jazz Band: 'Livery Stable Blues'",
-      "Jelly Roll Morton: 'King Porter Stomp'"
-    ]
-  },
-  {
-    week: 9,
-    title: "Chicago Jazz y el Legado de Louis Armstrong",
-    objectives: [
-      "Analizar la evolución del Jazz hacia el Estilo Chicago.",
-      "Reconocer la figura de Louis Armstrong y su impacto."
-    ],
-    activities: [
-      "Clase magistral: Análisis de grabaciones de Louis Armstrong.",
-      "Taller: Transcripción de solos sencillos de Jazz temprano.",
-      "Simulacro de examen: Avance de composición o análisis de obras."
-    ],
-    independentWork: [
-      "Audición: Comparar grabaciones de New Orleans y Chicago Jazz.",
-      "Preparación para Parcial II."
-    ],
-    repertoire: [
-      "Louis Armstrong & His Hot Five/Seven: 'West End Blues', 'Potato Head Blues', 'Cornet Chop Suey'",
-      "Bix Beiderbecke: 'Singin' the Blues'"
-    ]
-  },
-  {
-    week: 10,
-    title: "Modalismo en el Jazz y Armonías Cuartales",
-    objectives: [
-      "Comprender la aplicación del modalismo en el Jazz.",
-      "Analizar las arquitecturas acordales cuartales en el Jazz."
-    ],
-    activities: [
-      "Clase magistral: Ejemplos de Jazz modal y uso de acordes cuartales.",
-      "Taller: Ejercicios de escritura de progresiones modales y acordes cuartales en un contexto de Jazz.",
-      "Audición dirigida: Ejemplos de Jazz con estas características."
-    ],
-    independentWork: [
-      "Lectura: Modal Jazz Composition & Harmony Volumen 1 (Miller).",
-      "Ejercicios de improvisación sobre vamps modales."
-    ],
-    repertoire: [
-      "Miles Davis: 'So What' (del álbum Kind of Blue) - para modalismo",
-      "Herbie Hancock: 'Maiden Voyage' - para acordes cuartales",
-      "McCoy Tyner: 'Passion Dance' - para acordes cuartales"
-    ]
-  },
-  {
-    week: 11,
-    title: "Pianistas del Jazz Temprano I",
-    objectives: [
-      "Reconocer las características interpretativas de los primeros pianistas de Jazz.",
-      "Analizar su estilo de improvisación."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los pianistas y sus estilos.",
-      "Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."
-    ],
-    independentWork: [
-      "Audición: Escuchar grabaciones de los pianistas estudiados.",
-      "Preparar análisis de improvisaciones."
-    ],
-    repertoire: [
-      "Scott Joplin: Grabaciones de sus rags.",
-      "Jelly Roll Morton: Grabaciones de sus solos.",
-      "James P. Johnson: 'Carolina Shout'",
-      "Willie 'The Lion' Smith: Grabaciones de su estilo Stride.",
-      "Earl Hines: 'Fifty-Seven Varieties'"
-    ]
-  },
-  {
-    week: 12,
-    title: "Pianistas del Jazz Temprano II / EXAMEN PARCIAL II",
-    objectives: [
-      "Continuar el reconocimiento de pianistas clave.",
-      "Consolidar la comprensión de los conceptos de Jazz y la escuela francesa."
-    ],
-    activities: [
-      "Clase magistral: Continuación de la presentación de pianistas.",
-      "Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."
-    ],
-    independentWork: [
-      "Revisión de los temas para el parcial."
-    ],
-    repertoire: [
-      "Fats Waller: 'Honeysuckle Rose'",
-      "Teddy Wilson: Grabaciones con Billie Holiday o Benny Goodman.",
-      "Duke Ellington (solos de piano): 'Solitude', 'Mood Indigo'",
-      "Art Tatum: 'Tiger Rag', 'Tea for Two'",
-      "Meade Lux Lewis: 'Honky Tonk Train Blues'",
-      "Pete Johnson: 'Roll 'Em Pete'",
-      "Jimmy Yancey: Grabaciones de boogie-woogie."
-    ]
-  },
-  {
-    week: 13,
-    title: "Armonía Funcional, Motivo y Conjunto en el Siglo XX",
-    objectives: [
-      "Revisar y aplicar conceptos de armonía funcional en un contexto ampliado.",
-      "Comprender el uso del motivo y el conjunto en la música del siglo XX."
-    ],
-    activities: [
-      "Clase magistral: Ejemplos de análisis de obras que demuestran el uso de motivo y conjunto.",
-      "Taller: Ejercicios de desarrollo motívico.",
-      "Discusión crítica: Sobre la persistencia de elementos tradicionales en la música moderna."
-    ],
-    independentWork: [
-      "Lectura: Armonía funcional (Gabis).",
-      "Análisis de partituras: Identificación de motivos y su desarrollo."
-    ],
-    repertoire: [
-      "Arnold Schoenberg: Pierrot Lunaire (selecciones, para motivo y conjunto atonal)",
-      "Alban Berg: Wozzeck (fragmentos, para leitmotivs y conjuntos)",
-      "Anton Webern: Sinfonía, Op. 21 (para serialismo y organización motívica)"
-    ]
-  },
-  {
-    week: 14,
-    title: "Aplicación de Materiales en Composición: Forma Binaria y Ternaria",
-    objectives: [
-      "Aplicar los materiales armónicos y melódicos aprendidos en composiciones formales.",
-      "Realizar composiciones cortas en forma binaria y/o ternaria."
-    ],
-    activities: [
-      "Clase magistral: Revisión de las formas binaria y ternaria.",
-      "Taller: Sesión de composición guiada, trabajando en la estructura de las piezas.",
-      "Simulacro de examen: Presentación de avances de composición."
-    ],
-    independentWork: [
-      "Composición: Desarrollo de una pieza corta en forma binaria o ternaria, aplicando los conceptos vistos."
-    ],
-    repertoire: [
-      "Ejemplos de piezas cortas del siglo XX que utilizan estas formas con lenguajes modernos (ej. Béla Bartók Mikrokosmos, Paul Hindemith Ludus Tonalis)."
-    ]
-  },
-  {
-    week: 15,
-    title: "Análisis de Repertorio Modal y Preparación Final",
-    objectives: [
-      "Realizar un análisis profundo de repertorio modal.",
-      "Consolidar todos los conocimientos adquiridos a lo largo del semestre."
-    ],
-    activities: [
-      "Clase magistral: Análisis de obras complejas que integren varios conceptos.",
-      "Taller: Sesión de preguntas y respuestas, resolución de dudas.",
-      "Audición dirigida (con score): Análisis en clase."
-    ],
-    independentWork: [
-      "Repaso general para el examen final.",
-      "Pulir la composición final."
-    ],
-    repertoire: [
-      "Olivier Messiaen: Quatuor pour la fin du temps (selecciones, para modos de transposición limitada)",
-      "Béla Bartók: Concierto para Orquesta (movimientos selectos, para integración de elementos folclóricos y modales)",
-      "Jazz modal avanzado: John Coltrane 'Giant Steps' (aunque complejo, para entender la progresión modal rápida), Bill Evans 'Waltz for Debby'."
-    ]
-  },
-  {
-    week: 16,
-    title: "EXAMEN FINAL y Presentación de Proyectos",
-    objectives: [
-      "Evaluar la comprensión global de los conceptos del curso.",
-      "Presentar y sustentar el proceso creativo de la composición final."
-    ],
-    activities: [
-      "Examen Parcial III (25%): Evaluación final de los contenidos del curso.",
-      "Presentación de composiciones: Cada estudiante sustentará su proceso creativo."
-    ],
-    independentWork: [
-      "Finalización de la composición y preparación de la sustentación."
-    ],
-    repertoire: [
-      "N/A"
-    ]
-  }
-];
-
-// Datos del cronograma para Conceptos de Música del Siglo XX y XXI II (MUS 4005)
-const scheduleDataII = [
-  {
-    week: 1,
-    title: "Introducción a la Música del Siglo XX y XXI: Conceptos Estéticos",
-    objectives: [
-      "Introducir el contexto de la música del siglo XX y XXI.",
-      "Comprender los conceptos estéticos de indeterminación, electroacústica, mixta y estocástica.",
-      "Aproximación filosófica a conceptos estéticos de vanguardia."
-    ],
-    activities: [
-      "Clase magistral: Presentación de las corrientes estéticas y sus fundamentos filosóficos.",
-      "Audiciones dirigidas: Ejemplos de obras representativas.",
-      "Discusión crítica: Análisis de las implicaciones de estas estéticas en la creación musical."
-    ],
-    independentWork: [
-      "Lectura: Introducción a las estéticas musicales del siglo XX (Lester, Enfoques analíticos de la música del siglo XX).",
-      "Investigación: Breve reseña sobre un compositor representativo de alguna de estas estéticas."
-    ],
-    repertoire: [
-      "John Cage: 4'33\" (indeterminación)",
-      "Karlheinz Stockhausen: Gesang der Jünglinge (música electrónica)",
-      "Iannis Xenakis: Metastaseis (música estocástica)"
-    ]
-  },
-  {
-    week: 2,
-    title: "Ritmo, Metro y Formas de Organización en el Siglo XX",
-    objectives: [
-      "Analizar las innovaciones en ritmo y metro en la música de finales del siglo XIX y principios del XX.",
-      "Comprender la armonía modal en este periodo."
-    ],
-    activities: [
-      "Clase magistral: Ejemplos de polirritmia, cambios de compás y ritmos aditivos.",
-      "Taller: Ejercicios de escritura rítmica compleja.",
-      "Audición dirigida: Identificación de elementos rítmicos y métricos."
-    ],
-    independentWork: [
-      "Lectura: Sobre ritmo y metro en el siglo XX (Grabner, Teoría General De La Musica).",
-      "Análisis de partituras: Fragmentos con ritmos complejos."
-    ],
-    repertoire: [
-      "Igor Stravinsky: La consagración de la primavera (selecciones)",
-      "Béla Bartók: Concierto para Orquesta (movimientos rítmicos)",
-      "Olivier Messiaen: Quatuor pour la fin du temps (selecciones rítmicas)"
-    ]
-  },
-  {
-    week: 3,
-    title: "Introducción a la Teoría Post Tonal: Dodecafonismo",
-    objectives: [
-      "Comprender los fundamentos del Dodecafonismo.",
-      "Analizar la organización de alturas en la música dodecafónica."
-    ],
-    activities: [
-      "Clase magistral: Explicación de la serie de doce tonos y sus transformaciones.",
-      "Taller: Construcción de series dodecafónicas y sus formas básicas.",
-      "Audición dirigida: Ejemplos de música dodecafónica."
-    ],
-    independentWork: [
-      "Lectura: Introducción al Dodecafonismo (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).",
-      "Análisis: Identificación de series en fragmentos musicales."
-    ],
-    repertoire: [
-      "Arnold Schönberg: Suite para piano, Op. 25 (selecciones)",
-      "Anton Webern: Variaciones para piano, Ор. 27",
-      "Alban Berg: Concierto para violín (fragmentos)"
-    ]
-  },
-  {
-    week: 4,
-    title: "Teoría de Conjunto (Set Theory) I: Intervalos y Vectores",
-    objectives: [
-      "Introducir los conceptos de equivalencias interválicas y clase de intervalo.",
-      "Comprender el vector interválico."
-    ],
-    activities: [
-      "Clase magistral: Explicación de las clases de intervalos y cálculo de vectores interválicos.",
-      "Taller: Ejercicios de análisis de conjuntos de notas utilizando vectores interválicos.",
-      "Audición dirigida: Obras de Bartók."
-    ],
-    independentWork: [
-      "Lectura: Teoría de conjuntos básica (Forte, The structure of atonal music).",
-      "Análisis: Fragmentos de Mikrokosmos Vol. 5 y 6 de Bartók."
-    ],
-    repertoire: [
-      "Béla Bartók: Mikrokosmos (Vol. 5 y 6, selecciones)",
-      "Béla Bartók: Cuarteto de Cuerdas No. 4 (fragmentos)"
-    ]
-  },
-  {
-    week: 5,
-    title: "Teoría de Conjunto (Set Theory) II: Forma Normal y Forma Prima",
-    objectives: [
-      "Dominar la determinación de la forma normal y la forma prima de un conjunto.",
-      "Comprender las operaciones de transposición e inversión."
-    ],
-    activities: [
-      "Clase magistral: Demostración de cómo derivar la forma normal y prima.",
-      "Taller: Ejercicios prácticos de transposición e inversión de conjuntos.",
-      "Simulacro de examen: Presentación de compositores latinoamericanos y establecimiento del tipo de estética."
-    ],
-    independentWork: [
-      "Lectura: Forma normal y prima (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).",
-      "Análisis: Ejercicios de segmentación musical."
-    ],
-    repertoire: [
-      "Anton Webern: Cinco piezas para orquesta, Op. 10 (para análisis de conjuntos pequeños)",
-      "Alban Berg: Sonata para piano, Op. 1 (para análisis de estructuras post-tonales tempranas)"
-    ]
-  },
-  {
-    week: 6,
-    title: "Teoría de Conjunto (Set Theory) III: Relaciones entre Conjuntos / EXAMEN PARCIAL I",
-    objectives: [
-      "Comprender las relaciones Z, complemento, superconjunto y subconjunto.",
-      "Aplicar la teoría de conjunto en el análisis de obras."
-    ],
-    activities: [
-      "Clase magistral: Explicación de las relaciones entre conjuntos y su significado musical.",
-      "Taller: Ejercicios de identificación de relaciones entre conjuntos en fragmentos musicales.",
-      "Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."
-    ],
-    independentWork: [
-      "Revisión de los temas para el parcial."
-    ],
-    repertoire: [
-      "Elliott Carter: Cuarteto de Cuerdas No. 1 (fragmentos, para análisis de relaciones complejas)",
-      "Milton Babbitt: Composition for Four Instruments (para análisis serial y de conjuntos)"
-    ]
-  },
-  {
-    week: 7,
-    title: "Conceptos del Jazz de 1930 a 1980: Swing y Bebop",
-    objectives: [
-      "Comprender la evolución del Jazz desde el Swing hasta el Bebop.",
-      "Identificar las características distintivas de cada estilo."
-    ],
-    activities: [
-      "Clase magistral: Historia y desarrollo de los estilos Swing y Bebop.",
-      "Audición dirigida: Ejemplos de obras representativas.",
-      "Discusión crítica: Sobre la influencia del Bebop en la música posterior."
-    ],
-    independentWork: [
-      "Audición: Escuchar grabaciones de las eras Swing y Bebop.",
-      "Investigación: Breve biografía de un músico clave de cada estilo."
-    ],
-    repertoire: [
-      "Duke Ellington: 'Take the 'A' Train', 'Cotton Tail' (Swing)",
-      "Count Basie: 'One O'Clock Jump' (Swing)",
-      "Charlie Parker: 'Ko-Ko', 'Donna Lee' (Bebop)",
-      "Dizzy Gillespie: 'Salt Peanuts', 'A Night in Tunisia' (Bebop)"
-    ]
-  },
-  {
-    week: 8,
-    title: "Conceptos del Jazz de 1930 a 1980: Cool Jazz y Hard Bop",
-    objectives: [
-      "Analizar las características del Cool Jazz y el Hard Bop.",
-      "Distinguir las diferencias estilísticas entre ellos."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los estilos y sus exponentes.",
-      "Audición dirigida: Comparación de obras de Cool Jazz y Hard Bop.",
-      "Taller: Análisis de progresiones armónicas en estos estilos."
-    ],
-    independentWork: [
-      "Audición: Escuchar más ejemplos de Cool Jazz y Hard Bop.",
-      "Preparación para Parcial II."
-    ],
-    repertoire: [
-      "Miles Davis: Birth of the Cool (Cool Jazz)",
-      "Dave Brubeck Quartet: 'Take Five' (Cool Jazz)",
-      "Art Blakey & The Jazz Messengers: 'Moanin'' (Hard Bop)",
-      "Horace Silver: 'Song for My Father' (Hard Bop)"
-    ]
-  },
-  {
-    week: 9,
-    title: "Conceptos del Jazz de 1930 a 1980: Jazz Modal y Free Jazz",
-    objectives: [
-      "Comprender el desarrollo del Jazz Modal y el Free Jazz.",
-      "Analizar las implicaciones de la improvisación modal y la libertad atonal."
-    ],
-    activities: [
-      "Clase magistral: Explicación de los conceptos y sus figuras clave.",
-      "Audición dirigida: Ejemplos de Jazz Modal y Free Jazz.",
-      "Simulacro de examen: Avance de composición o análisis de obras."
-    ],
-    independentWork: [
-      "Audición: Escuchar grabaciones de Jazz Modal y Free Jazz.",
-      "Investigación: Breve reseña sobre John Coltrane o Ornette Coleman."
-    ],
-    repertoire: [
-      "Miles Davis: 'So What' (del álbum Kind of Blue) (Jazz Modal)",
-      "John Coltrane: 'My Favorite Things' (Jazz Modal)",
-      "Ornette Coleman: Free Jazz: A Collective Improvisation (Free Jazz)",
-      "Cecil Taylor: Unit Structures (Free Jazz)"
-    ]
-  },
-  {
-    week: 10,
-    title: "Pianistas del Jazz (1930-1980) I",
-    objectives: [
-      "Reconocer las características interpretativas de los pianistas de Jazz de la segunda mitad del siglo XX.",
-      "Analizar su estilo de improvisación."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los pianistas y sus estilos distintivos.",
-      "Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."
-    ],
-    independentWork: [
-      "Audición: Escuchar grabaciones de los pianistas estudiados.",
-      "Preparar análisis de improvisaciones."
-    ],
-    repertoire: [
-      "Thelonius Monk: 'Round Midnight', 'Straight, No Chaser'",
-      "Bud Powell: 'Un Poco Loco', 'Cleopatra's Dream'",
-      "Oscar Peterson: 'Hymn to Freedom', 'Canadiana Suite'",
-      "Erroll Garner: 'Misty', 'Concert by the Sea'"
-    ]
-  },
-  {
-    week: 11,
-    title: "Pianistas del Jazz (1930-1980) II",
-    objectives: [
-      "Continuar el reconocimiento de pianistas clave del Jazz.",
-      "Analizar sus aportes a la improvisación y el lenguaje armónico."
-    ],
-    activities: [
-      "Clase magistral: Continuación de la presentación de pianistas.",
-      "Audición individual dirigida: Identificación de características de improvisación."
-    ],
-    independentWork: [
-      "Audición: Escuchar grabaciones de los pianistas estudiados.",
-      "Preparar análisis de improvisaciones."
-    ],
-    repertoire: [
-      "Lennie Tristano: 'Line Up', 'Wow'",
-      "Bill Evans: 'Waltz for Debby', 'Autumn Leaves'",
-      "Clare Fischer: 'Pensativa', 'Morning'",
-      "Jimmy Rowles: Grabaciones con Billie Holiday o Stan Getz."
-    ]
-  },
-  {
-    week: 12,
-    title: "Pianistas del Jazz (1930-1980) III y EXAMEN PARCIAL II",
-    objectives: [
-      "Completar el estudio de los pianistas de Jazz de este periodo.",
-      "Consolidar la comprensión de los conceptos de Jazz y la teoría post tonal."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los últimos pianistas y sus innovaciones.",
-      "Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."
-    ],
-    independentWork: [
-      "Revisión de los temas para el parcial."
-    ],
-    repertoire: [
-      "Cecil Taylor: Grabaciones de sus improvisaciones libres.",
-      "Chick Corea: 'Spain', 'La Fiesta' (fusión, latin jazz)",
-      "Keith Jarrett: The Köln Concert (improvisación solo de piano)",
-      "Richie Beirach: Grabaciones de sus trabajos en solo o con grupos."
-    ]
-  },
-  {
-    week: 13,
-    title: "Corrientes Estéticas: Minimalismo y Espectralismo",
-    objectives: [
-      "Comprender los conceptos de Minimalismo y Espectralismo.",
-      "Analizar las técnicas compositivas asociadas a estas corrientes."
-    ],
-    activities: [
-      "Clase magistral: Explicación de las filosofías y técnicas de cada corriente.",
-      "Audición dirigida: Ejemplos de obras minimalistas y espectrales.",
-      "Taller: Ejercicios de composición con repetición y procesos lentos (minimalismo)."
-    ],
-    independentWork: [
-      "Lectura: Sobre Minimalismo y Espectralismo (Lester, Enfoques analíticos de la música del siglo XX).",
-      "Análisis: Fragmentos de obras representativas."
-    ],
-    repertoire: [
-      "Steve Reich: Music for 18 Musicians",
-      "Philip Glass: Einstein on the Beach (fragmentos)",
-      "Terry Riley: In C",
-      "Gérard Grisey: Partiels (Espectralismo)",
-      "Tristan Murail: Désintégrations (Espectralismo)"
-    ]
-  },
-  {
-    week: 14,
-    title: "Corrientes Estéticas: Nueva Simplicidad y Nueva Complejidad",
-    objectives: [
-      "Distinguir entre la Nueva Simplicidad y la Nueva Complejidad.",
-      "Analizar las técnicas compositivas de estas corrientes."
-    ],
-    activities: [
-      "Clase magistral: Presentación de las ideas detrás de cada corriente y sus compositores.",
-      "Audición dirigida: Ejemplos de obras.",
-      "Discusión crítica: Debates sobre la accesibilidad y la dificultad en la música contemporánea."
-    ],
-    independentWork: [
-      "Lectura: Sobre Nueva Simplicidad y Nueva Complejidad (Lester, Enfoques analíticos de la música del siglo XX).",
-      "Composición: Pequeño ejercicio explorando una de estas estéticas."
-    ],
-    repertoire: [
-      "Henryk Górecki: Sinfonía No. 3, 'Sinfonía de las Canciones Lamentativas' (Nueva Simplicidad)",
-      "Arvo Pärt: Spiegel im Spiegel (Nueva Simplicidad)",
-      "Brian Ferneyhough: Bone Alphabet (Nueva Complejidad)",
-      "Helmut Lachenmann: Guero (Nueva Complejidad)"
-    ]
-  },
-  {
-    week: 15,
-    title: "Otros Estilos y Composición en Set Theory",
-    objectives: [
-      "Explorar otros estilos relevantes del siglo XX.",
-      "Realizar composición en set theory utilizando software de notación musical."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los compositores y sus técnicas innovadoras.",
-      "Taller práctico: Creación de pequeñas piezas en FINALE aplicando set theory.",
-      "Audición dirigida: Ejemplos de obras."
-    ],
-    independentWork: [
-      "Lectura: Sobre los compositores vistos (Graetzer, La Musica Contemporánea).",
-      "Finalización de la composición en FINALE."
-    ],
-    repertoire: [
-      "Luciano Berio: Sequenza III (para voz)",
-      "Henry Cowell: The Banshee (para técnicas extendidas en piano)",
-      "Conlon Nancarrow: Estudios para piano mecánico (selecciones)"
-    ]
-  },
-  {
-    week: 16,
-    title: "EXAMEN FINAL y Presentación de Proyectos",
-    objectives: [
-      "Evaluar la comprensión global de los conceptos del curso.",
-      "Presentar y sustentar el proceso creativo de la composición final."
-    ],
-    activities: [
-      "Examen Parcial III (25%): Evaluación final de los contenidos del curso.",
-      "Presentación de composiciones: Cada estudiante sustentará su proceso creativo."
-    ],
-    independentWork: [
-      "Finalización de la composición y preparación de la sustentación."
-    ],
-    repertoire: [
-      "N/A"
-    ]
-  }
-];
-
-// Información de ambos cursos
-const courses = {
-  'MUS4000': {
-    id: 'MUS4000',
-    name: 'Conceptos de Música del Siglo XX y XXI I',
-    code: 'MUS 4000',
-    description: 'Esta asignatura es una inmersión profunda en la evolución de la música desde las postrimerías del siglo XIX hasta las vanguardias del siglo XXI. Exploraremos la fascinante **transición de la tonalidad**, desentrañando movimientos clave como el **Nacionalismo**, el **Impresionismo** y el **Neoclasicismo**. Analizaremos los innovadores **sistemas de organización musical** (como el Sistema de Ejes) y la influencia de escuelas fundamentales como la francesa ("Los Seis") y la inglesa. Además, dedicaremos un espacio vital a comprender los **orígenes y la evolución temprana del Jazz**.',
-    generalObjectives: [
-      "Conocer los sistemas de organización en la música del siglo XIX.",
-      "Establecer una línea transversal con los estilos: similitud y diferencia entre los países de Centro Europa.",
-      "Realizar composición corta en estilo modal del siglo XIX y en estilo de ejes Bartok, realizando detalle del proceso creativo.",
-      "Audición sobre compositores de finales del siglo XIX para entender y asimilar el resultado de dicho repertorio."
-    ],
-    learningOutcomes: [
-      { id: 'RA1', text: 'Analizar obras maestras del Impresionismo (Debussy, Ravel).' },
-      { id: 'RA2', text: 'Interpretar el movimiento nacionalista a través de la música de Bartok.' },
-      { id: 'RA3', text: 'Identificar y analizar obras del Neoclasicismo (Stravinsky, Hindemith, Prokofiev, Los Seis).' },
-      { id: 'RA4', text: 'Dominar los conceptos fundamentales del Jazz temprano (1890-1930).' },
-      { id: 'RA5', text: 'Reconocer el estilo interpretativo de pianistas icónicos de la primera mitad del siglo XX.' },
-      { id: 'RA6', text: 'Escribir e identificar escalas modales con precisión.' }
-    ],
-    bibliography: [
-      'Aguilar, M. d. (1989). *Estructuras de la sintaxis musical*.',
-      'Antokoletz, E. (2006). *La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX*.',
-      'Catalán, T. (2012). *Sistema Compositivo Temperado En El Siglo XX*.',
-      'Cormier, S. M. (2010). *Modal Music Composition*.',
-      'Desportes, Y., & Bernaud, A. (1995). *Manual Practico Para El Reconocimiento De Los Estilos Desde Bach A Ravel*.',
-      'Gabis, C. (2006). *Armonía funcional*.',
-      'Graetzer, G. (1980). *La Musica Contemporánea*.',
-      'Lendvai, E. (2003). *Béla Bartok: un análisis de su música*.',
-      'Miller, R. (1996). *Modal Jazz Composition & Harmony Volumen 1*.',
-      'Padilla Rincón, J. C. (2014). *Armonia 1*.',
-      'Persichetti, V. (1985). *Armonía del siglo XX*.',
-      'Ulehla, L. (1994). *Comtemporary Harmony*.',
-      'Vergés, L. (2007). *El lenguaje de la armonía: de los inicios a la actualidad*.'
-    ],
-    scheduleData: scheduleDataI
-  },
-  'MUS4005': {
-    id: 'MUS4005',
-    name: 'Conceptos de Música del Siglo XX y XXI II',
-    code: 'MUS 4005',
-    description: 'Estudia la transición de la tonalidad a la música del siglo XX apoyado en los elementos comunes en toda la música. Comparación entre J.S. Bach y A. Schönberg. Ritmo, metro, textura y timbre. El movimiento nacionalista y sistemas de organización musical (Sistema de ejes), Impresionismo (Debussy). Estructuración de alturas: altura, intervalo, melodía. Herramienta de análisis de música del siglo XX. Introducción al análisis de la música post tonal y elementos de construcción y análisis de líneas estéticas de la música del siglo XX y XXI.',
-    generalObjectives: [
-      "Conocer y dominar las técnicas de elaboración de finales del siglo XIX y primera etapa del siglo XX, en la obra de compositores de las escuelas europeas.",
-      "Realizar análisis de teoría de conjunto (set theory) en la música post tonal para potencializar la escucha y la interpretación en obras de compositores del siglo XX y XXI (Europa, América)."
-    ],
-    learningOutcomes: [
-      { id: 'RA1', text: 'Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así como sus técnicas de elaboración comprendidas en los siglos XX y XXI.' },
-      { id: 'RA2', text: 'Analizar las principales obras del repertorio de los siglos XX al XXI.' },
-      { id: 'RA3', text: 'Elaborar análisis por medio de la teoría de conjunto (set theory).' },
-      { id: 'RA4', text: 'Analizar música de Bela Bartok (microcosmos Vol 5 y 6) como introducción al análisis de teoría de conjunto (set theory).' },
-      { id: 'RA5', text: 'Reconocer segmentación musical, construcción musical (composición) a partir del set theory dentro de alguna forma tradicional.' },
-      { id: 'RA6', text: 'Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así asus técnicas de elaboración comprendidas a finales de siglo XIX y primera etapa del siglo XX.' },
-      { id: 'RA7', text: 'Elaborar análisis interpretativo teniendo en cuenta los conceptos y materiales desarrollados.' },
-      { id: 'RA8', text: 'Reconocer características interpretativas de pianistas de la segunda mitad del siglo XX hasta 1980: Thelonius Monk, Bud Powell, Oscar Peterson, Erroll Garner, Lennie Tristano, Bill Evans, Clare Fischer, Jimmy Rowles, Cecil Taylor, Chick Corea, Keith Jarrett, Richie Beirach.' }
-    ],
-    bibliography: [
-      'Aguilar, M. d. (1989). *Estructuras de la sintaxis musical*.',
-      'Antokoletz, E. (2006). *La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX*.',
-      'Brouwer, L. (1972). *Síntesis De La Armonía Contemporánea*.',
-      'Catalán, T., & Fernández Vidal, C. (2012). *Musica No Tonal. Las Propuestas de Julien Falk y Ernst Krenek*.',
-      'Catalán, T. (2012). *Sistema Compositivo Temperado En El Siglo XX*.',
-      'Forte, A. (1973). *The structure of atonal music*.',
-      'Gerou, T., & Lusk, L. (1996). *Essential Dictionary Of Music Notation*.',
-      'Gould, E. (2011). *Behind Bars*.',
-      'Grabner, H. (2001). *Teoría General De La Musica*.',
-      'Heussenstamm, G. (1987). *The Norton Manual Of Music Notation*.',
-      'Karkoschka, E. (1972). *Notation in the New Music*.',
-      'Lester, J. (2005). *Enfoques analíticos de la música del siglo XX*.',
-      'Read, G. (1979). *Music Notation. A Manual Of Modern Practice*.',
-      'Risatti, H. (1976). *New Music Vocabulary*.',
-      'Roig-Francolí, M. A. (2008). *Understanding Post-Tonal Music*.',
-      'Stone, K. (1980). *Music Notation In The Twentieth Century*.',
-      'Straus, J. N. (2004). *Introduction to Post-Tonal Theory (3rd Edition)*.',
-      'Ulehla, L. (1994). *Comtemporary Harmony*.',
-      'Villa Rojo, J. (2003). *Notacion Y Grafia Musical En El Siglo XX*.'
-    ],
-    scheduleData: scheduleDataII
-  }
-};
-
-// --- Datos de Fechas Importantes ---
-const importantDates = [
-  { event: "Inicio de clase", date: "28 de julio 2025" },
-  { event: "Fecha límite realización I parcial", date: "22 de agosto 2025" },
-  { event: "Fecha límite para el registro de notas del primer parcial", date: "29 de agosto 2025" },
-  { event: "Fecha límite realización del II parcial", date: "19 de septiembre 2025" },
-  { event: "Fecha límite registro de notas del II parcial", date: "19 de septiembre 2025" },
-  { event: "Semana de Receso", date: "Del 06 al 10 de octubre" },
-  { event: "Fecha límite registro del 40% de las notas del semestre PR. Semestre I", date: "22 de octubre 2025" },
-  { event: "Fecha límite realización del III parcial", date: "24 de octubre 2025" },
-  { event: "Fecha límite registro de nota del III parcial", date: "31 de octubre 2025" },
-  { event: "Fecha límite para retiro", date: "05 de noviembre 2025" },
-  { event: "Finalización de clases", date: "23 de noviembre 2025" },
-  { event: "Inicio Exámenes finales", date: "24 de noviembre 2025" },
-  { event: "Finalizan Exámenes Finales", date: "03 de diciembre 2025" },
-  { event: "Fecha límite registro de notas finales", date: "06 de diciembre 2025" },
-];
-
-
-// --- Componente para mostrar los detalles de una semana del cronograma ---
-const WeekDetail = ({ weekData }) => (
-  <div className="p-6 bg-white rounded-xl shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.005] border border-gray-100">
-    <h3 className="text-3xl font-extrabold text-blue-800 mb-4 flex items-center">
-      <Calendar className="mr-3 text-blue-600" size={32} /> Semana {weekData.week}: {weekData.title}
-    </h3>
-
-    <div className="space-y-6">
-      <div>
-        <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
-          <Target className="mr-2 text-green-500" size={20} /> Objetivos Clave
-        </h4>
-        <ul className="list-disc list-inside text-gray-600 space-y-1">
-          {weekData.objectives.map((obj, i) => (
-            <li key={i} className="flex items-start">
-              <CheckCircle className="text-green-400 mr-2 mt-1 flex-shrink-0" size={16} />
-              <span>{obj}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div>
-        <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
-          <Activity className="mr-2 text-purple-500" size={20} /> Actividades en Clase
-        </h4>
-        <ul className="list-disc list-inside text-gray-600 space-y-1">
-          {weekData.activities.map((act, i) => (
-            <li key={i} className="flex items-start">
-              <Lightbulb className="text-purple-400 mr-2 mt-1 flex-shrink-0" size={16} />
-              <span>{act}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div>
-        <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
-          <ClipboardList className="mr-2 text-orange-500" size={20} /> Desafío Independiente
-        </h4>
-        <ul className="list-disc list-inside text-gray-600 space-y-1">
-          {weekData.independentWork.map((work, i) => (
-            <li key={i} className="flex items-start">
-              <BookOpen className="text-orange-400 mr-2 mt-1 flex-shrink-0" size={16} />
-              <span>{work}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {weekData.repertoire && weekData.repertoire.length > 0 && weekData.repertoire[0] !== "N/A" && (
-        <div>
-          <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
-            <Music className="mr-2 text-red-500" size={20} /> Repertorio Sugerido
-          </h4>
-          <ul className="list-disc list-inside text-gray-600 space-y-1">
-            {weekData.repertoire.map((rep, i) => (
-              <li key={i} className="flex items-start">
-                <Music className="text-red-400 mr-2 mt-1 flex-shrink-0" size={16} />
-                <span>{rep}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+    <div id="app-root" class="container mx-auto py-8">
+        <!-- Contenido de la aplicación se renderizará aquí -->
     </div>
-  </div>
-);
 
-// --- Componente principal de la aplicación (App) ---
-// Este componente gestiona la selección del curso y la navegación semanal.
-const App = () => {
-  const [selectedCourseId, setSelectedCourseId] = useState('MUS4000'); // Inicia con Conceptos I
-  const [selectedWeek, setSelectedWeek] = useState(1); // Inicia en la semana 1
+    <script>
+        // --- Datos del Cronograma ---
+        // Estos datos definen el contenido de cada semana para ambos cursos.
 
-  // Obtiene los datos del curso y del cronograma actual según la selección.
-  const currentCourse = courses[selectedCourseId];
-  const currentScheduleData = currentCourse.scheduleData;
-  const currentWeekData = currentScheduleData.find(week => week.week === selectedWeek);
+        // Datos del cronograma para Conceptos de Música del Siglo XX y XXI I (MUS 4000)
+        const scheduleDataI = [
+          {
+            week: 1,
+            title: "El Crepúsculo Tonal y el Amanecer Modal",
+            objectives: [
+              "Introducir el contexto musical de finales del siglo XIX.",
+              "Comprender el concepto de transición de la tonalidad.",
+              "Familiarizarse con los rudimentos teóricos de acordes y escalas modales."
+            ],
+            activities: [
+              "Clase magistral: Presentación de lineamientos técnico-teóricos.",
+              "Taller: Ejercicios de identificación de escalas y acordes modales básicos.",
+              "Audición dirigida: Ejemplos de obras con elementos de transición tonal."
+            ],
+            independentWork: [
+              "Lectura: Capítulo introductorio sobre la armonía de finales del siglo XIX y principios del XX (Persichetti, Ulehla).",
+              "Ejercicios de escritura: Identificación de modos y construcción de acordes modales."
+            ],
+            repertoire: [
+              "Richard Wagner: Preludio de Tristán e Isolda",
+              "Franz Liszt: Nuages gris",
+              "Modest Mussorgsky: Cuadros de una exposición (original para piano)"
+            ]
+          },
+          {
+            week: 2,
+            title: "Debussy: La Paleta Sonora del Impresionismo",
+            objectives: [
+              "Analizar las características armónicas y melódicas de la música de Debussy.",
+              "Comprender el cuartalismo y el modalismo en su obra."
+            ],
+            activities: [
+              "Clase magistral: Análisis de obras clave de Debussy (ej. Preludios, La Mer).",
+              "Taller: Ejercicios de composición corta aplicando cuartalismo y modalismo debussyniano.",
+              "Discusión crítica: Sobre la ruptura con la tonalidad tradicional en Debussy."
+            ],
+            independentWork: [
+              "Audición dirigida (con score): Análisis de 2-3 piezas de Debussy, identificando elementos modales y cuartales.",
+              "Composición: Pequeña pieza de 8-16 compases en estilo impresionista."
+            ],
+            repertoire: [
+              "Claude Debussy: Préludes (Libro I y II, selecciones como 'Voiles', 'La Cathédrale engloutie')",
+              "Claude Debussy: Estampes ('Pagodes', 'La soirée dans Grenade', 'Jardins sous la pluie')",
+              "Claude Debussy: Children's Corner ('Golliwogg's Cakewalk')"
+            ]
+          },
+          {
+            week: 3,
+            title: "Ravel: Claridad y Brillo Impresionista",
+            objectives: [
+              "Distinguir las características de Ravel en comparación con Debussy."
+            ],
+            activities: [
+              "Clase magistral: Análisis comparativo de obras de Ravel (ej. Daphnis et Chloé, Bolero).",
+              "Simulacro de examen: Avance de composición realizada con contenidos de las semanas anteriores."
+            ],
+            independentWork: [
+              "Lectura: Sección sobre Ravel en textos de armonía del siglo XX (Persichetti).",
+              "Audición: Escuchar obras de Ravel, prestando atención a la instrumentación."
+            ],
+            repertoire: [
+              "Maurice Ravel: Miroirs ('Noctuelles', 'Oiseaux tristes', 'Une barque sur l'océan')",
+              "Maurice Ravel: Gaspard de la Nuit ('Ondine', 'Le Gibet', 'Scarbo')",
+              "Maurice Ravel: Valses nobles et sentimentales"
+            ]
+          },
+          {
+            week: 4,
+            title: "Bartók: Folclore y el Sistema de Ejes",
+            objectives: [
+              "Comprender el concepto de nacionalismo musical en Europa del Este.",
+              "Analizar el Sistema de Ejes de Béla Bartók."
+            ],
+            activities: [
+              "Clase magistral: Explicación del sistema de ejes y análisis de obras de Bartók (ej. Mikrokosmos, Cuartetos de cuerda).",
+              "Taller: Ejercicios de escritura aplicando el sistema de ejes.",
+              "Audición dirigida: Obras de Bartók."
+            ],
+            independentWork: [
+              "Lectura: La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX (Antokoletz, Lendvai).",
+              "Composición: Pequeña pieza en estilo de ejes Bartok."
+            ],
+            repertoire: [
+              "Béla Bartók: Mikrokosmos (selecciones, especialmente piezas con elementos modales o de ejes)",
+              "Béla Bartók: Allegro Barbaro",
+              "Béla Bartók: Seis Danzas Rumanas (versión para piano)"
+            ]
+          },
+          {
+            week: 5,
+            title: "Stravinsky y Hindemith: El Retorno a la Forma",
+            objectives: [
+              "Identificar las características del Neoclasicismo musical.",
+              "Analizar las obras de Stravinsky y Hindemith dentro de este estilo."
+            ],
+            activities: [
+              "Clase magistral: Análisis de obras clave de Stravinsky (ej. Pulcinella, Sinfonía de los Salmos) y Hindemith (ej. Ludus Tonalis).",
+              "Taller: Ejercicios de escritura con elementos neoclásicos.",
+              "Discusión crítica: Sobre la estética neoclásica."
+            ],
+            independentWork: [
+              "Audición dirigida (con score): Obras neoclásicas.",
+              "Preparación para Parcial I."
+            ],
+            repertoire: [
+              "Igor Stravinsky: Pulcinella Suite (versión de concierto)",
+              "Igor Stravinsky: Octeto para instrumentos de viento",
+              "Paul Hindemith: Sonata para piano No. 2",
+              "Paul Hindemith: Ludus Tonalis (selecciones de fugas e interludios)"
+            ]
+          },
+          {
+            week: 6,
+            title: "Prokofiev y Contrastes Estilísticos / EXAMEN PARCIAL I",
+            objectives: [
+              "Continuar el análisis del Neoclasicismo con Prokofiev.",
+              "Establecer comparaciones estilísticas entre los compositores vistos hasta ahora."
+            ],
+            activities: [
+              "Clase magistral: Análisis de obras de Prokofiev (ej. Sinfonía Clásica).",
+              "Taller: Ejercicios de análisis comparativo de fragmentos musicales.",
+              "Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."
+            ],
+            independentWork: [
+              "Revisión de los temas para el parcial."
+            ],
+            repertoire: [
+              "Sergei Prokofiev: Sinfonía Clásica (Movimientos selectos)",
+              "Sergei Prokofiev: Visions Fugitives (selecciones)",
+              "Comparación: Johann Sebastian Bach (ej. una invención a dos voces) y Arnold Schönberg (ej. una de las Seis pequeñas piezas para piano, Op. 19)"
+            ]
+          },
+          {
+            week: 7,
+            title: "Los Seis: La Vanguardia Francesa",
+            objectives: [
+              "Conocer a los miembros y la filosofía del Grupo de Los Seis.",
+              "Analizar la politonalidad de Darius Milhaud y su influencia."
+            ],
+            activities: [
+              "Clase magistral: Presentación de los compositores y sus ideas estéticas.",
+              "Taller: Ejercicios de escritura con elementos politonales simples.",
+              "Audición dirigida: Obras representativas de Los Seis."
+            ],
+            independentWork: [
+              "Lectura: Sobre el Grupo de Los Seis.",
+              "Composición: Pequeño ejercicio explorando la bitonalidad."
+            ],
+            repertoire: [
+              "Darius Milhaud: Scaramouche (para dos pianos o saxofón y piano)",
+              "Francis Poulenc: Les Biches (Suite de ballet)",
+              "Arthur Honegger: Pacific 231",
+              "Erik Satie: Gymnopédies y Gnossiennes"
+            ]
+          },
+          {
+            week: 8,
+            title: "Ragtime y New Orleans: Cuna del Jazz",
+            objectives: [
+              "Comprender los orígenes del Jazz.",
+              "Analizar las características del Ragtime y el Estilo New Orleans."
+            ],
+            activities: [
+              "Clase magistral: Historia y evolución del Jazz temprano.",
+              "Audición dirigida: Obras de Scott Joplin y grabaciones de New Orleans Jazz.",
+              "Discusión crítica: Sobre la importancia de la improvisación en el Jazz."
+            ],
+            independentWork: [
+              "Audición: Escuchar más ejemplos de Ragtime y New Orleans Jazz.",
+              "Investigación: Breve biografía de Scott Joplin."
+            ],
+            repertoire: [
+              "Scott Joplin: 'Maple Leaf Rag', 'The Entertainer'",
+              "Original Dixieland Jazz Band: 'Livery Stable Blues'",
+              "Jelly Roll Morton: 'King Porter Stomp'"
+            ]
+          },
+          {
+            week: 9,
+            title: "Chicago Jazz y el Legado de Louis Armstrong",
+            objectives: [
+              "Analizar la evolución del Jazz hacia el Estilo Chicago.",
+              "Reconocer la figura de Louis Armstrong y su impacto."
+            ],
+            activities: [
+              "Clase magistral: Análisis de grabaciones de Louis Armstrong.",
+              "Taller: Transcripción de solos sencillos de Jazz temprano.",
+              "Simulacro de examen: Avance de composición o análisis de obras."
+            ],
+            independentWork: [
+              "Audición: Comparar grabaciones de New Orleans y Chicago Jazz.",
+              "Preparación para Parcial II."
+            ],
+            repertoire: [
+              "Louis Armstrong & His Hot Five/Seven: 'West End Blues', 'Potato Head Blues', 'Cornet Chop Suey'",
+              "Bix Beiderbecke: 'Singin' the Blues'"
+            ]
+          },
+          {
+            week: 10,
+            title: "Modalismo en el Jazz y Armonías Cuartales",
+            objectives: [
+              "Comprender la aplicación del modalismo en el Jazz.",
+              "Analizar las arquitecturas acordales cuartales en el Jazz."
+            ],
+            activities: [
+              "Clase magistral: Ejemplos de Jazz modal y uso de acordes cuartales.",
+              "Taller: Ejercicios de escritura de progresiones modales y acordes cuartales en un contexto de Jazz.",
+              "Audición dirigida: Ejemplos de Jazz con estas características."
+            ],
+            independentWork: [
+              "Lectura: Modal Jazz Composition & Harmony Volumen 1 (Miller).",
+              "Ejercicios de improvisación sobre vamps modales."
+            ],
+            repertoire: [
+              "Miles Davis: 'So What' (del álbum Kind of Blue) - para modalismo",
+              "Herbie Hancock: 'Maiden Voyage' - para acordes cuartales",
+              "McCoy Tyner: 'Passion Dance' - para acordes cuartales"
+            ]
+          },
+          {
+            week: 11,
+            title: "Pianistas del Jazz Temprano I",
+            objectives: [
+              "Reconocer las características interpretativas de los primeros pianistas de Jazz.",
+              "Analizar su estilo de improvisación."
+            ],
+            activities: [
+              "Clase magistral: Presentación de los pianistas y sus estilos.",
+              "Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."
+            ],
+            independentWork: [
+              "Audición: Escuchar grabaciones de los pianistas estudiados.",
+              "Preparar análisis de improvisaciones."
+            ],
+            repertoire: [
+              "Scott Joplin: Grabaciones de sus rags.",
+              "Jelly Roll Morton: Grabaciones de sus solos.",
+              "James P. Johnson: 'Carolina Shout'",
+              "Willie 'The Lion' Smith: Grabaciones de su estilo Stride.",
+              "Earl Hines: 'Fifty-Seven Varieties'"
+            ]
+          },
+          {
+            week: 12,
+            title: "Pianistas del Jazz Temprano II / EXAMEN PARCIAL II",
+            objectives: [
+              "Continuar el reconocimiento de pianistas clave.",
+              "Consolidar la comprensión de los conceptos de Jazz y la escuela francesa."
+            ],
+            activities: [
+              "Clase magistral: Continuación de la presentación de pianistas.",
+              "Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."
+            ],
+            independentWork: [
+              "Revisión de los temas para el parcial."
+            ],
+            repertoire: [
+              "Fats Waller: 'Honeysuckle Rose'",
+              "Teddy Wilson: Grabaciones con Billie Holiday o Benny Goodman.",
+              "Duke Ellington (solos de piano): 'Solitude', 'Mood Indigo'",
+              "Art Tatum: 'Tiger Rag', 'Tea for Two'",
+              "Meade Lux Lewis: 'Honky Tonk Train Blues'",
+              "Pete Johnson: 'Roll 'Em Pete'",
+              "Jimmy Yancey: Grabaciones de boogie-woogie."
+            ]
+          },
+          {
+            week: 13,
+            title: "Armonía Funcional, Motivo y Conjunto en el Siglo XX",
+            objectives: [
+              "Revisar y aplicar conceptos de armonía funcional en un contexto ampliado.",
+              "Comprender el uso del motivo y el conjunto en la música del siglo XX."
+            ],
+            activities: [
+              "Clase magistral: Ejemplos de análisis de obras que demuestran el uso de motivo y conjunto.",
+              "Taller: Ejercicios de desarrollo motívico.",
+              "Discusión crítica: Sobre la persistencia de elementos tradicionales en la música moderna."
+            ],
+            independentWork: [
+              "Lectura: Armonía funcional (Gabis).",
+              "Análisis de partituras: Identificación de motivos y su desarrollo."
+            ],
+            repertoire: [
+              "Arnold Schoenberg: Pierrot Lunaire (selecciones, para motivo y conjunto atonal)",
+              "Alban Berg: Wozzeck (fragmentos, para leitmotivs y conjuntos)",
+              "Anton Webern: Sinfonía, Op. 21 (para serialismo y organización motívica)"
+            ]
+          },
+          {
+            week: 14,
+            title: "Aplicación de Materiales en Composición: Forma Binaria y Ternaria",
+            objectives: [
+              "Aplicar los materiales armónicos y melódicos aprendidos en composiciones formales.",
+              "Realizar composiciones cortas en forma binaria y/o ternaria."
+            ],
+            activities: [
+              "Clase magistral: Revisión de las formas binaria y ternaria.",
+              "Taller: Sesión de composición guiada, trabajando en la estructura de las piezas.",
+              "Simulacro de examen: Presentación de avances de composición."
+            ],
+            independentWork: [
+              "Composición: Desarrollo de una pieza corta en forma binaria o ternaria, aplicando los conceptos vistos."
+            ],
+            repertoire: [
+              "Ejemplos de piezas cortas del siglo XX que utilizan estas formas con lenguajes modernos (ej. Béla Bartók Mikrokosmos, Paul Hindemith Ludus Tonalis)."
+            ]
+          },
+          {
+            week: 15,
+            title: "Análisis de Repertorio Modal y Preparación Final",
+            objectives: [
+              "Realizar un análisis profundo de repertorio modal.",
+              "Consolidar todos los conocimientos adquiridos a lo largo del semestre."
+            ],
+            activities: [
+              "Clase magistral: Análisis de obras complejas que integren varios conceptos.",
+              "Taller: Sesión de preguntas y respuestas, resolución de dudas.",
+              "Audición dirigida (con score): Análisis en clase."
+            ],
+            independentWork: [
+              "Repaso general para el examen final.",
+              "Pulir la composición final."
+            ],
+            repertoire: [
+              "Olivier Messiaen: Quatuor pour la fin du temps (selecciones, para modos de transposición limitada)",
+              "Béla Bartók: Concierto para Orquesta (movimientos selectos, para integración de elementos folclóricos y modales)",
+              "Jazz modal avanzado: John Coltrane 'Giant Steps' (aunque complejo, para entender la progresión modal rápida), Bill Evans 'Waltz for Debby'."
+            ]
+          },
+          {
+            week: 16,
+            title: "EXAMEN FINAL y Presentación de Proyectos",
+            objectives: [
+              "Evaluar la comprensión global de los conceptos del curso.",
+              "Presentar y sustentar el proceso creativo de la composición final."
+            ],
+            activities: [
+              "Examen Parcial III (25%): Evaluación final de los contenidos del curso.",
+              "Presentación de composiciones: Cada estudiante sustentará su proceso creativo."
+            ],
+            independentWork: [
+              "Finalización de la composición y preparación de la sustentación."
+            ],
+            repertoire: [
+              "N/A"
+            ]
+          }
+        ];
 
-  // Reinicia la semana seleccionada a 1 cada vez que cambia el curso.
-  useEffect(() => {
-    setSelectedWeek(1);
-  }, [selectedCourseId]);
+        // Datos del cronograma para Conceptos de Música del Siglo XX y XXI II (MUS 4005)
+        const scheduleDataII = [
+          {
+            week: 1,
+            title: "Introducción a la Música del Siglo XX y XXI: Conceptos Estéticos",
+            objectives: [
+              "Introducir el contexto de la música del siglo XX y XXI.",
+              "Comprender los conceptos estéticos de indeterminación, electroacústica, mixta y estocástica.",
+              "Aproximación filosófica a conceptos estéticos de vanguardia."
+            ],
+            activities: [
+              "Clase magistral: Presentación de las corrientes estéticas y sus fundamentos filosóficos.",
+              "Audiciones dirigidas: Ejemplos de obras representativas.",
+              "Discusión crítica: Análisis de las implicaciones de estas estéticas en la creación musical."
+            ],
+            independentWork: [
+              "Lectura: Introducción a las estéticas musicales del siglo XX (Lester, Enfoques analíticos de la música del siglo XX).",
+              "Investigación: Breve reseña sobre un compositor representativo de alguna de estas estéticas."
+            ],
+            repertoire: [
+              "John Cage: 4'33\" (indeterminación)",
+              "Karlheinz Stockhausen: Gesang der Jünglinge (música electrónica)",
+              "Iannis Xenakis: Metastaseis (música estocástica)"
+            ]
+          },
+          {
+            week: 2,
+            title: "Ritmo, Metro y Formas de Organización en el Siglo XX",
+            objectives: [
+              "Analizar las innovaciones en ritmo y metro en la música de finales del siglo XIX y principios del XX.",
+              "Comprender la armonía modal en este periodo."
+            ],
+            activities: [
+              "Clase magistral: Ejemplos de polirritmia, cambios de compás y ritmos aditivos.",
+              "Taller: Ejercicios de escritura rítmica compleja.",
+              "Audición dirigida: Identificación de elementos rítmicos y métricos."
+            ],
+            independentWork: [
+              "Lectura: Sobre ritmo y metro en el siglo XX (Grabner, Teoría General De La Musica).",
+              "Análisis de partituras: Fragmentos con ritmos complejos."
+            ],
+            repertoire: [
+              "Igor Stravinsky: La consagración de la primavera (selecciones)",
+              "Béla Bartók: Concierto para Orquesta (movimientos rítmicos)",
+              "Olivier Messiaen: Quatuor pour la fin du temps (selecciones rítmicas)"
+            ]
+          },
+          {
+            week: 3,
+            title: "Introducción a la Teoría Post Tonal: Dodecafonismo",
+            objectives: [
+              "Comprender los fundamentos del Dodecafonismo.",
+              "Analizar la organización de alturas en la música dodecafónica."
+            ],
+            activities: [
+              "Clase magistral: Explicación de la serie de doce tonos y sus transformaciones.",
+              "Taller: Construcción de series dodecafónicas y sus formas básicas.",
+              "Audición dirigida: Ejemplos de música dodecafónica."
+            ],
+            independentWork: [
+              "Lectura: Introducción al Dodecafonismo (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).",
+              "Análisis: Identificación de series en fragmentos musicales."
+            ],
+            repertoire: [
+              "Arnold Schönberg: Suite para piano, Op. 25 (selecciones)",
+              "Anton Webern: Variaciones para piano, Ор. 27",
+              "Alban Berg: Concierto para violín (fragmentos)"
+            ]
+          },
+          {
+            week: 4,
+            title: "Teoría de Conjunto (Set Theory) I: Intervalos y Vectores",
+            objectives: [
+              "Introducir los conceptos de equivalencias interválicas y clase de intervalo.",
+              "Comprender el vector interválico."
+            ],
+            activities: [
+              "Clase magistral: Explicación de las clases de intervalos y cálculo de vectores interválicos.",
+              "Taller: Ejercicios de análisis de conjuntos de notas utilizando vectores interválicos.",
+              "Audición dirigida: Obras de Bartók."
+            ],
+            independentWork: [
+              "Lectura: Teoría de conjuntos básica (Forte, The structure of atonal music).",
+              "Análisis: Fragmentos de Mikrokosmos Vol. 5 y 6 de Bartók."
+            ],
+            repertoire: [
+              "Béla Bartók: Mikrokosmos (Vol. 5 y 6, selecciones)",
+              "Béla Bartók: Cuarteto de Cuerdas No. 4 (fragmentos)"
+            ]
+          },
+          {
+            week: 5,
+            title: "Teoría de Conjunto (Set Theory) II: Forma Normal y Forma Prima",
+            objectives: [
+              "Dominar la determinación de la forma normal y la forma prima de un conjunto.",
+              "Comprender las operaciones de transposición e inversión."
+            ],
+            activities: [
+              "Clase magistral: Demostración de cómo derivar la forma normal y prima.",
+              "Taller: Ejercicios prácticos de transposición e inversión de conjuntos.",
+              "Simulacro de examen: Presentación de compositores latinoamericanos y establecimiento del tipo de estética."
+            ],
+            independentWork: [
+              "Lectura: Forma normal y prima (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).",
+              "Análisis: Ejercicios de segmentación musical."
+            ],
+            repertoire: [
+              "Anton Webern: Cinco piezas para orquesta, Op. 10 (para análisis de conjuntos pequeños)",
+              "Alban Berg: Sonata para piano, Op. 1 (para análisis de estructuras post-tonales tempranas)"
+            ]
+          },
+          {
+            week: 6,
+            title: "Teoría de Conjunto (Set Theory) III: Relaciones entre Conjuntos / EXAMEN PARCIAL I",
+            objectives: [
+              "Comprender las relaciones Z, complemento, superconjunto y subconjunto.",
+              "Aplicar la teoría de conjunto en el análisis de obras."
+            ],
+            activities: [
+              "Clase magistral: Explicación de las relaciones entre conjuntos y su significado musical.",
+              "Taller: Ejercicios de identificación de relaciones entre conjuntos en fragmentos musicales.",
+              "Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."
+            ],
+            independentWork: [
+              "Revisión de los temas para el parcial."
+            ],
+            repertoire: [
+              "Elliott Carter: Cuarteto de Cuerdas No. 1 (fragmentos, para análisis de relaciones complejas)",
+              "Milton Babbitt: Composition for Four Instruments (para análisis serial y de conjuntos)"
+            ]
+          },
+          {
+            week: 7,
+            title: "Conceptos del Jazz de 1930 a 1980: Swing y Bebop",
+            objectives: [
+              "Comprender la evolución del Jazz desde el Swing hasta el Bebop.",
+              "Identificar las características distintivas de cada estilo."
+            ],
+            activities: [
+              "Clase magistral: Historia y desarrollo de los estilos Swing y Bebop.",
+              "Audición dirigida: Ejemplos de obras representativas.",
+              "Discusión crítica: Sobre la influencia del Bebop en la música posterior."
+            ],
+            independentWork: [
+              "Audición: Escuchar grabaciones de las eras Swing y Bebop.",
+              "Investigación: Breve biografía de un músico clave de cada estilo."
+            ],
+            repertoire: [
+              "Duke Ellington: 'Take the 'A' Train', 'Cotton Tail' (Swing)",
+              "Count Basie: 'One O'Clock Jump' (Swing)",
+              "Charlie Parker: 'Ko-Ko', 'Donna Lee' (Bebop)",
+              "Dizzy Gillespie: 'Salt Peanuts', 'A Night in Tunisia' (Bebop)"
+            ]
+          },
+          {
+            week: 8,
+            title: "Conceptos del Jazz de 1930 a 1980: Cool Jazz y Hard Bop",
+            objectives: [
+              "Analizar las características del Cool Jazz y el Hard Bop.",
+              "Distinguir las diferencias estilísticas entre ellos."
+            ],
+            activities: [
+              "Clase magistral: Presentación de los estilos y sus exponentes.",
+              "Audición dirigida: Comparación de obras de Cool Jazz y Hard Bop.",
+              "Taller: Análisis de progresiones armónicas en estos estilos."
+            ],
+            independentWork: [
+              "Audición: Escuchar más ejemplos de Cool Jazz y Hard Bop.",
+              "Preparación para Parcial II."
+            ],
+            repertoire: [
+              "Miles Davis: Birth of the Cool (Cool Jazz)",
+              "Dave Brubeck Quartet: 'Take Five' (Cool Jazz)",
+              "Art Blakey & The Jazz Messengers: 'Moanin'' (Hard Bop)",
+              "Horace Silver: 'Song for My Father' (Hard Bop)"
+            ]
+          },
+          {
+            week: 9,
+            title: "Conceptos del Jazz de 1930 a 1980: Jazz Modal y Free Jazz",
+            objectives: [
+              "Comprender el desarrollo del Jazz Modal y el Free Jazz.",
+              "Analizar las implicaciones de la improvisación modal y la libertad atonal."
+            ],
+            activities: [
+              "Clase magistral: Explicación de los conceptos y sus figuras clave.",
+              "Audición dirigida: Ejemplos de Jazz Modal y Free Jazz.",
+              "Simulacro de examen: Avance de composición o análisis de obras."
+            ],
+            independentWork: [
+              "Audición: Escuchar grabaciones de Jazz Modal y Free Jazz.",
+              "Investigación: Breve reseña sobre John Coltrane o Ornette Coleman."
+            ],
+            repertoire: [
+              "Miles Davis: 'So What' (del álbum Kind of Blue) (Jazz Modal)",
+              "John Coltrane: 'My Favorite Things' (Jazz Modal)",
+              "Ornette Coleman: Free Jazz: A Collective Improvisation (Free Jazz)",
+              "Cecil Taylor: Unit Structures (Free Jazz)"
+            ]
+          },
+          {
+            week: 10,
+            title: "Pianistas del Jazz (1930-1980) I",
+            objectives: [
+              "Reconocer las características interpretativas de los pianistas de Jazz de la segunda mitad del siglo XX.",
+              "Analizar su estilo de improvisación."
+            ],
+            activities: [
+              "Clase magistral: Presentación de los pianistas y sus estilos distintivos.",
+              "Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."
+            ],
+            independentWork: [
+              "Audición: Escuchar grabaciones de los pianistas estudiados.",
+              "Preparar análisis de improvisaciones."
+            ],
+            repertoire: [
+              "Thelonius Monk: 'Round Midnight', 'Straight, No Chaser'",
+              "Bud Powell: 'Un Poco Loco', 'Cleopatra's Dream'",
+              "Oscar Peterson: 'Hymn to Freedom', 'Canadiana Suite'",
+              "Erroll Garner: 'Misty', 'Concert by the Sea'"
+            ]
+          },
+          {
+            week: 11,
+            title: "Pianistas del Jazz (1930-1980) II",
+            objectives: [
+              "Continuar el reconocimiento de pianistas clave del Jazz.",
+              "Analizar sus aportes a la improvisación y el lenguaje armónico."
+            ],
+            activities: [
+              "Clase magistral: Continuación de la presentación de pianistas.",
+              "Audición individual dirigida: Identificación de características de improvisación."
+            ],
+            independentWork: [
+              "Audición: Escuchar grabaciones de los pianistas estudiados.",
+              "Preparar análisis de improvisaciones."
+            ],
+            repertoire: [
+              "Lennie Tristano: 'Line Up', 'Wow'",
+              "Bill Evans: 'Waltz for Debby', 'Autumn Leaves'",
+              "Clare Fischer: 'Pensativa', 'Morning'",
+              "Jimmy Rowles: Grabaciones con Billie Holiday o Stan Getz."
+            ]
+          },
+          {
+            week: 12,
+            title: "Pianistas del Jazz (1930-1980) III y EXAMEN PARCIAL II",
+            objectives: [
+              "Completar el estudio de los pianistas de Jazz de este periodo.",
+              "Consolidar la comprensión de los conceptos de Jazz y la teoría post tonal."
+            ],
+            activities: [
+              "Clase magistral: Presentación de los últimos pianistas y sus innovaciones.",
+              "Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."
+            ],
+            independentWork: [
+              "Revisión de los temas para el parcial."
+            ],
+            repertoire: [
+              "Cecil Taylor: Grabaciones de sus improvisaciones libres.",
+              "Chick Corea: 'Spain', 'La Fiesta' (fusión, latin jazz)",
+              "Keith Jarrett: The Köln Concert (improvisación solo de piano)",
+              "Richie Beirach: Grabaciones de sus trabajos en solo o con grupos."
+            ]
+          },
+          {
+            week: 13,
+            title: "Corrientes Estéticas: Minimalismo y Espectralismo",
+            objectives: [
+              "Comprender los conceptos de Minimalismo y Espectralismo.",
+              "Analizar las técnicas compositivas asociadas a estas corrientes."
+            ],
+            activities: [
+              "Clase magistral: Explicación de las filosofías y técnicas de cada corriente.",
+              "Audición dirigida: Ejemplos de obras minimalistas y espectrales.",
+              "Taller: Ejercicios de composición con repetición y procesos lentos (minimalismo)."
+            ],
+            independentWork: [
+              "Lectura: Sobre Minimalismo y Espectralismo (Lester, Enfoques analíticos de la música del siglo XX).",
+              "Análisis: Fragmentos de obras representativas."
+            ],
+            repertoire: [
+              "Steve Reich: Music for 18 Musicians",
+              "Philip Glass: Einstein on the Beach (fragmentos)",
+              "Terry Riley: In C",
+              "Gérard Grisey: Partiels (Espectralismo)",
+              "Tristan Murail: Désintégrations (Espectralismo)"
+            ]
+          },
+          {
+            week: 14,
+            title: "Corrientes Estéticas: Nueva Simplicidad y Nueva Complejidad",
+            objectives: [
+              "Distinguir entre la Nueva Simplicidad y la Nueva Complejidad.",
+              "Analizar las técnicas compositivas de estas corrientes."
+            ],
+            activities: [
+              "Clase magistral: Presentación de las ideas detrás de cada corriente y sus compositores.",
+              "Audición dirigida: Ejemplos de obras.",
+              "Discusión crítica: Debates sobre la accesibilidad y la dificultad en la música contemporánea."
+            ],
+            independentWork: [
+              "Lectura: Sobre Nueva Simplicidad y Nueva Complejidad (Lester, Enfoques analíticos de la música del siglo XX).",
+              "Composición: Pequeño ejercicio explorando una de estas estéticas."
+            ],
+            repertoire: [
+              "Henryk Górecki: Sinfonía No. 3, 'Sinfonía de las Canciones Lamentativas' (Nueva Simplicidad)",
+              "Arvo Pärt: Spiegel im Spiegel (Nueva Simplicidad)",
+              "Brian Ferneyhough: Bone Alphabet (Nueva Complejidad)",
+              "Helmut Lachenmann: Guero (Nueva Complejidad)"
+            ]
+          },
+          {
+            week: 15,
+            title: "Otros Estilos y Composición en Set Theory",
+            objectives: [
+              "Explorar otros estilos relevantes del siglo XX.",
+              "Realizar composición en set theory utilizando software de notación musical."
+            ],
+            activities: [
+              "Clase magistral: Presentación de los compositores y sus técnicas innovadoras.",
+              "Taller práctico: Creación de pequeñas piezas en FINALE aplicando set theory.",
+              "Audición dirigida: Ejemplos de obras."
+            ],
+            independentWork: [
+              "Lectura: Sobre los compositores vistos (Graetzer, La Musica Contemporánea).",
+              "Finalización de la composición en FINALE."
+            ],
+            repertoire: [
+              "Luciano Berio: Sequenza III (para voz)",
+              "Henry Cowell: The Banshee (para técnicas extendidas en piano)",
+              "Conlon Nancarrow: Estudios para piano mecánico (selecciones)"
+            ]
+          },
+          {
+            week: 16,
+            title: "EXAMEN FINAL y Presentación de Proyectos",
+            objectives: [
+              "Evaluar la comprensión global de los conceptos del curso.",
+              "Presentar y sustentar el proceso creativo de la composición final."
+            ],
+            activities: [
+              "Examen Parcial III (25%): Evaluación final de los contenidos del curso.",
+              "Presentación de composiciones: Cada estudiante sustentará su proceso creativo."
+            ],
+            independentWork: [
+              "Finalización de la composición y preparación de la sustentación."
+            ],
+            repertoire: [
+              "N/A"
+            ]
+          }
+        ];
 
-  // Manejador para navegar a la semana anterior.
-  const handlePrevWeek = () => {
-    setSelectedWeek(prev => Math.max(1, prev - 1));
-  };
+        // Información de ambos cursos
+        const courses = {
+          'MUS4000': {
+            id: 'MUS4000',
+            name: 'Conceptos de Música del Siglo XX y XXI I',
+            code: 'MUS 4000',
+            description: 'Esta asignatura es una inmersión profunda en la evolución de la música desde las postrimerías del siglo XIX hasta las vanguardias del siglo XXI. Exploraremos la fascinante **transición de la tonalidad**, desentrañando movimientos clave como el **Nacionalismo**, el **Impresionismo** y el **Neoclasicismo**. Analizaremos los innovadores **sistemas de organización musical** (como el Sistema de Ejes) y la influencia de escuelas fundamentales como la francesa ("Los Seis") y la inglesa. Además, dedicaremos un espacio vital a comprender los **orígenes y la evolución temprana del Jazz**.',
+            generalObjectives: [
+              "Conocer los sistemas de organización en la música del siglo XIX.",
+              "Establecer una línea transversal con los estilos: similitud y diferencia entre los países de Centro Europa.",
+              "Realizar composición corta en estilo modal del siglo XIX y en estilo de ejes Bartok, realizando detalle del proceso creativo.",
+              "Audición sobre compositores de finales del siglo XIX para entender y asimilar el resultado de dicho repertorio."
+            ],
+            learningOutcomes: [
+              { id: 'RA1', text: 'Analizar obras maestras del Impresionismo (Debussy, Ravel).' },
+              { id: 'RA2', text: 'Interpretar el movimiento nacionalista a través de la música de Bartok.' },
+              { id: 'RA3', text: 'Identificar y analizar obras del Neoclasicismo (Stravinsky, Hindemith, Prokofiev, Los Seis).' },
+              { id: 'RA4', text: 'Dominar los conceptos fundamentales del Jazz temprano (1890-1930).' },
+              { id: 'RA5', text: 'Reconocer el estilo interpretativo de pianistas icónicos de la primera mitad del siglo XX.' },
+              { id: 'RA6', text: 'Escribir e identificar escalas modales con precisión.' }
+            ],
+            bibliography: [
+              'Aguilar, M. d. (1989). *Estructuras de la sintaxis musical*.',
+              'Antokoletz, E. (2006). *La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX*.',
+              'Catalán, T. (2012). *Sistema Compositivo Temperado En El Siglo XX*.',
+              'Cormier, S. M. (2010). *Modal Music Composition*.',
+              'Desportes, Y., & Bernaud, A. (1995). *Manual Practico Para El Reconocimiento De Los Estilos Desde Bach A Ravel*.',
+              'Gabis, C. (2006). *Armonía funcional*.',
+              'Graetzer, G. (1980). *La Musica Contemporánea*.',
+              'Lendvai, E. (2003). *Béla Bartok: un análisis de su música*.',
+              'Miller, R. (1996). *Modal Jazz Composition & Harmony Volumen 1*.',
+              'Padilla Rincón, J. C. (2014). *Armonia 1*.',
+              'Persichetti, V. (1985). *Armonía del siglo XX*.',
+              'Ulehla, L. (1994). *Comtemporary Harmony*.',
+              'Vergés, L. (2007). *El lenguaje de la armonía: de los inicios a la actualidad*.'
+            ],
+            scheduleData: scheduleDataI
+          },
+          'MUS4005': {
+            id: 'MUS4005',
+            name: 'Conceptos de Música del Siglo XX y XXI II',
+            code: 'MUS 4005',
+            description: 'Estudia la transición de la tonalidad a la música del siglo XX apoyado en los elementos comunes en toda la música. Comparación entre J.S. Bach y A. Schönberg. Ritmo, metro, textura y timbre. El movimiento nacionalista y sistemas de organización musical (Sistema de ejes), Impresionismo (Debussy). Estructuración de alturas: altura, intervalo, melodía. Herramienta de análisis de música del siglo XX. Introducción al análisis de la música post tonal y elementos de construcción y análisis de líneas estéticas de la música del siglo XX y XXI.',
+            generalObjectives: [
+              "Conocer y dominar las técnicas de elaboración de finales del siglo XIX y primera etapa del siglo XX, en la obra de compositores de las escuelas europeas.",
+              "Realizar análisis de teoría de conjunto (set theory) en la música post tonal para potencializar la escucha y la interpretación en obras de compositores del siglo XX y XXI (Europa, América)."
+            ],
+            learningOutcomes: [
+              { id: 'RA1', text: 'Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así como sus técnicas de elaboración comprendidas en los siglos XX y XXI.' },
+              { id: 'RA2', text: 'Analizar las principales obras del repertorio de los siglos XX al XXI.' },
+              { id: 'RA3', text: 'Elaborar análisis por medio de la teoría de conjunto (set theory).' },
+              { id: 'RA4', text: 'Analizar música de Bela Bartok (microcosmos Vol 5 y 6) como introducción al análisis de teoría de conjunto (set theory).' },
+              { id: 'RA5', text: 'Reconocer segmentación musical, construcción musical (composición) a partir del set theory dentro de alguna forma tradicional.' },
+              { id: 'RA6', text: 'Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así asus técnicas de elaboración comprendidas a finales de siglo XIX y primera etapa del siglo XX.' },
+              { id: 'RA7', text: 'Elaborar análisis interpretativo teniendo en cuenta los conceptos y materiales desarrollados.' },
+              { id: 'RA8', text: 'Reconocer características interpretativas de pianistas de la segunda mitad del siglo XX hasta 1980: Thelonius Monk, Bud Powell, Oscar Peterson, Erroll Garner, Lennie Tristano, Bill Evans, Clare Fischer, Jimmy Rowles, Cecil Taylor, Chick Corea, Keith Jarrett, Richie Beirach.' }
+            ],
+            bibliography: [
+              'Aguilar, M. d. (1989). *Estructuras de la sintaxis musical*.',
+              'Antokoletz, E. (2006). *La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX*.',
+              'Brouwer, L. (1972). *Síntesis De La Armonía Contemporánea*.',
+              'Catalán, T., & Fernández Vidal, C. (2012). *Musica No Tonal. Las Propuestas de Julien Falk y Ernst Krenek*.',
+              'Catalán, T. (2012). *Sistema Compositivo Temperado En El Siglo XX*.',
+              'Forte, A. (1973). *The structure of atonal music*.',
+              'Gerou, T., & Lusk, L. (1996). *Essential Dictionary Of Music Notation*.',
+              'Gould, E. (2011). *Behind Bars*.',
+              'Grabner, H. (2001). *Teoría General De La Musica*.',
+              'Heussenstamm, G. (1987). *The Norton Manual Of Music Notation*.',
+              'Karkoschka, E. (1972). *Notation in the New Music*.',
+              'Lester, J. (2005). *Enfoques analíticos de la música del siglo XX*.',
+              'Read, G. (1979). *Music Notation. A Manual Of Modern Practice*.',
+              'Risatti, H. (1976). *New Music Vocabulary*.',
+              'Roig-Francolí, M. A. (2008). *Understanding Post-Tonal Music*.',
+              'Stone, K. (1980). *Music Notation In The Twentieth Century*.',
+              'Straus, J. N. (2004). *Introduction to Post-Tonal Theory (3rd Edition)*.',
+              'Ulehla, L. (1994). *Comtemporary Harmony*.',
+              'Villa Rojo, J. (2003). *Notacion Y Grafia Musical En El Siglo XX*.'
+            ],
+            scheduleData: scheduleDataII
+          }
+        };
 
-  // Manejador para navegar a la semana siguiente.
-  const handleNextWeek = () => {
-    setSelectedWeek(prev => Math.min(currentScheduleData.length, prev + 1));
-  };
+        // --- Datos de Fechas Importantes ---
+        const importantDates = [
+          { event: "Inicio de clase", date: "28 de julio 2025" },
+          { event: "Fecha límite realización I parcial", date: "22 de agosto 2025" },
+          { event: "Fecha límite para el registro de notas del primer parcial", date: "29 de agosto 2025" },
+          { event: "Fecha límite realización del II parcial", date: "19 de septiembre 2025" },
+          { event: "Fecha límite registro de notas del II parcial", date: "19 de septiembre 2025" },
+          { event: "Semana de Receso", date: "Del 06 al 10 de octubre" },
+          { event: "Fecha límite registro del 40% de las notas del semestre PR. Semestre I", date: "22 de octubre 2025" },
+          { event: "Fecha límite realización del III parcial", date: "24 de octubre 2025" },
+          { event: "Fecha límite registro de nota del III parcial", date: "31 de octubre 2025" },
+          { event: "Fecha límite para retiro", date: "05 de noviembre 2025" },
+          { event: "Finalización de clases", date: "23 de noviembre 2025" },
+          { event: "Inicio Exámenes finales", date: "24 de noviembre 2025" },
+          { event: "Finalizan Exámenes Finales", date: "03 de diciembre 2025" },
+          { event: "Fecha límite registro de notas finales", date: "06 de diciembre 2025" },
+        ];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 font-sans text-gray-800">
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-      <style>
-        {`
-          body { font-family: 'Inter', sans-serif; }
-        `}
-      </style>
+        // --- Variables de estado global (simulando useState de React) ---
+        let selectedCourseId = 'MUS4000';
+        let selectedWeek = 1;
 
-      <div className="container mx-auto py-8">
-        {/* Encabezado del Curso */}
-        <header className="bg-white rounded-2xl shadow-xl p-6 mb-8 text-center border-b-4 border-blue-500">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-blue-900 mb-2 flex items-center justify-center">
-            <GraduationCap className="mr-4 text-blue-600" size={48} />
-            Cronograma: {currentCourse.name}
-          </h1>
-          <p className="text-lg text-gray-600">Profesor: Juan Miguel Ríos Redondo | Email: mrjuan@uninorte.edu.co</p>
-          <div className="mt-4 flex flex-wrap justify-center gap-4 text-gray-700 text-sm">
-            <span className="flex items-center"><Users className="mr-1 text-gray-500" size={16} /> Créditos: 2</span>
-            <span className="flex items-center"><Calendar className="mr-1 text-gray-500" size={16} /> Horas Semanales: 2h Teóricas / 2h Prácticas</span>
-            <span className="flex items-center"><Home className="mr-1 text-gray-500" size={16} /> Modalidad: Presencial</span>
-          </div>
+        // --- Funciones para manipular el DOM y renderizar la interfaz ---
 
-          {/* Selector de Cursos */}
-          <div className="mt-6 flex flex-wrap justify-center gap-4">
-            <button
-              onClick={() => setSelectedCourseId('MUS4000')}
-              className={`px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center
-                ${selectedCourseId === 'MUS4000'
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-700 hover:bg-blue-100'
-                }`}
-            >
-              <SwatchBook className="mr-2" size={20} /> Conceptos I
-            </button>
-            <button
-              onClick={() => setSelectedCourseId('MUS4005')}
-              className={`px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center
-                ${selectedCourseId === 'MUS4005'
-                  ? 'bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-700 hover:bg-purple-100'
-                }`}
-            >
-              <SwatchBook className="mr-2" size={20} /> Conceptos II
-            </button>
-          </div>
-        </header>
+        /**
+         * Crea un elemento HTML con clases y contenido opcional.
+         * @param {string} tagName - El nombre de la etiqueta HTML (ej. 'div', 'p').
+         * @param {string} classes - Clases de Tailwind CSS como una cadena.
+         * @param {string} innerHTML - Contenido HTML interno (opcional).
+         * @returns {HTMLElement} El elemento HTML creado.
+         */
+        function createElement(tagName, classes = '', innerHTML = '') {
+            const element = document.createElement(tagName);
+            if (classes) {
+                element.className = classes;
+            }
+            if (innerHTML) {
+                element.innerHTML = innerHTML;
+            }
+            return element;
+        }
 
-        {/* Sección de Descripción y Objetivos */}
-        <section className="bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-purple-500">
-          <h2 className="text-3xl font-bold text-purple-800 mb-4 flex items-center">
-            <BookOpen className="mr-3 text-purple-600" size={30} /> Descripción General del Curso
-          </h2>
-          <p className="text-gray-700 leading-relaxed mb-6" dangerouslySetInnerHTML={{ __html: currentCourse.description }} />
+        /**
+         * Crea un elemento con un icono de Lucide.
+         * @param {string} iconName - Nombre del icono de Lucide (ej. 'Calendar').
+         * @param {string} classes - Clases de Tailwind CSS para el icono.
+         * @param {number} size - Tamaño del icono.
+         * @returns {HTMLElement} El elemento span que contiene el icono.
+         */
+        function createIconElement(iconName, classes = '', size = 24) {
+            const iconSpan = createElement('span', classes);
+            iconSpan.setAttribute('data-lucide', iconName);
+            iconSpan.setAttribute('width', size);
+            iconSpan.setAttribute('height', size);
+            return iconSpan;
+        }
 
-          <h2 className="text-3xl font-bold text-green-800 mb-4 flex items-center">
-            <Target className="mr-3 text-green-600" size={30} /> Objetivos del Curso
-          </h2>
-          <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
-            {currentCourse.generalObjectives.map((obj, i) => <li key={i}>{obj}</li>)}
-          </ul>
-        </section>
+        /**
+         * Renderiza los detalles de una semana específica.
+         * @param {Object} weekData - Objeto con los datos de la semana.
+         * @returns {HTMLElement} El elemento div que contiene los detalles de la semana.
+         */
+        function renderWeekDetail(weekData) {
+            const weekDetailDiv = createElement('div', 'p-6 bg-white rounded-xl shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.005] border border-gray-100');
 
-        {/* Resultados de Aprendizaje y Evaluación */}
-        <section className="bg-white rounded-2xl shadow-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-r-4 border-red-500">
-          <div>
-            <h2 className="text-3xl font-bold text-red-800 mb-4 flex items-center">
-              <Award className="mr-3 text-red-600" size={30} /> Resultados de Aprendizaje Clave
-            </h2>
-            <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
-              {currentCourse.learningOutcomes.map((ra) => (
-                <li key={ra.id}><strong>{ra.id}:</strong> {ra.text}</li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold text-indigo-800 mb-4 flex items-center">
-              <ClipboardList className="mr-3 text-indigo-600" size={30} /> Sistema de Evaluación
-            </h2>
-            <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
-              <li>**Examen Parcial I:** 25% (Cubre Semanas 1-5)</li>
-              <li>**Examen Parcial II:** 25% (Cubre Semanas 7-11)</li>
-              <li>**Examen Parcial III (Final):** 25% (Evaluación global del curso)</li>
-              <li>**Materiales (Trabajos, Tareas, Ejercicios):** 15%</li>
-              <li>**Participación (Clase, Lecturas):** 10%</li>
-              <li className="font-bold mt-2">**TOTAL: 100%**</li>
-              <li className="text-red-600 font-semibold mt-4 flex items-start">
-                <CheckCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={16} />
-                **Importante:** La inasistencia a más del 25% de las clases (más de 8 horas o 4 faltas) resultará en la pérdida del derecho a presentar el examen parcial final.
-              </li>
-            </ul>
-          </div>
-        </section>
+            const titleH3 = createElement('h3', 'text-3xl font-extrabold text-blue-800 mb-4 flex items-center');
+            titleH3.appendChild(createIconElement('Calendar', 'mr-3 text-blue-600', 32));
+            titleH3.innerHTML += `Semana ${weekData.week}: ${weekData.title}`;
+            weekDetailDiv.appendChild(titleH3);
 
-        {/* Sección de Fechas Importantes */}
-        <section className="bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-orange-500">
-          <h2 className="text-3xl font-bold text-orange-800 mb-4 flex items-center">
-            <Clock className="mr-3 text-orange-600" size={30} /> Fechas Importantes
-          </h2>
-          <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200">
-            <table className="min-w-full bg-white rounded-lg">
-              <thead className="bg-gray-100 border-b border-gray-200">
-                <tr>
-                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tl-lg">Evento</th>
-                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tr-lg">Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {importantDates.map((item, index) => (
-                  <tr key={index} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
-                    <td className="py-3 px-4 text-sm text-gray-800">{item.event}</td>
-                    <td className="py-3 px-4 text-sm text-gray-800">{item.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+            const contentDiv = createElement('div', 'space-y-6');
 
-        {/* Navegación y Contenido de Semanas */}
-        <section className="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500">
-          <h2 className="text-3xl font-bold text-blue-800 mb-6 text-center flex items-center justify-center">
-            <Calendar className="mr-3 text-blue-600" size={30} /> Cronograma Semanal
-          </h2>
+            // Objetivos Clave
+            const objectivesDiv = createElement('div');
+            const objectivesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center');
+            objectivesH4.appendChild(createIconElement('Target', 'mr-2 text-green-500', 20));
+            objectivesH4.innerHTML += `Objetivos Clave`;
+            objectivesDiv.appendChild(objectivesH4);
+            const objectivesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1');
+            weekData.objectives.forEach(obj => {
+                const li = createElement('li', 'flex items-start');
+                li.appendChild(createIconElement('CheckCircle', 'text-green-400 mr-2 mt-1 flex-shrink-0', 16));
+                li.innerHTML += `<span>${obj}</span>`;
+                objectivesList.appendChild(li);
+            });
+            objectivesDiv.appendChild(objectivesList);
+            contentDiv.appendChild(objectivesDiv);
 
-          {/* Controles de Navegación */}
-          <div className="flex justify-center items-center mb-8 space-x-4">
-            <button
-              onClick={handlePrevWeek}
-              disabled={selectedWeek === 1}
-              className="p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
-              aria-label="Semana anterior"
-            >
-              <ChevronLeft size={24} />
-            </button>
-            <span className="text-2xl font-semibold text-blue-800">
-              Semana {selectedWeek} de {currentScheduleData.length}
-            </span>
-            <button
-              onClick={handleNextWeek}
-              disabled={selectedWeek === currentScheduleData.length}
-              className="p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
-              aria-label="Semana siguiente"
-            >
-              <ChevronRight size={24} />
-            </button>
-          </div>
+            // Actividades en Clase
+            const activitiesDiv = createElement('div');
+            const activitiesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center');
+            activitiesH4.appendChild(createIconElement('Activity', 'mr-2 text-purple-500', 20));
+            activitiesH4.innerHTML += `Actividades en Clase`;
+            activitiesDiv.appendChild(activitiesH4);
+            const activitiesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1');
+            weekData.activities.forEach(act => {
+                const li = createElement('li', 'flex items-start');
+                li.appendChild(createIconElement('Lightbulb', 'text-purple-400 mr-2 mt-1 flex-shrink-0', 16));
+                li.innerHTML += `<span>${act}</span>`;
+                activitiesList.appendChild(li);
+            });
+            activitiesDiv.appendChild(activitiesList);
+            contentDiv.appendChild(activitiesDiv);
 
-          {/* Selector de Semanas (para pantallas más grandes) */}
-          <div className="hidden md:flex flex-wrap justify-center gap-2 mb-8">
-            {currentScheduleData.map((week) => (
-              <button
-                key={week.week}
-                onClick={() => setSelectedWeek(week.week)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105
-                  ${selectedWeek === week.week
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
-                  }`}
-              >
-                Semana {week.week}
-              </button>
-            ))}
-          </div>
+            // Desafío Independiente
+            const independentWorkDiv = createElement('div');
+            const independentWorkH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center');
+            independentWorkH4.appendChild(createIconElement('ClipboardList', 'mr-2 text-orange-500', 20));
+            independentWorkH4.innerHTML += `Desafío Independiente`;
+            independentWorkDiv.appendChild(independentWorkH4);
+            const independentWorkList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1');
+            weekData.independentWork.forEach(work => {
+                const li = createElement('li', 'flex items-start');
+                li.appendChild(createIconElement('BookOpen', 'text-orange-400 mr-2 mt-1 flex-shrink-0', 16));
+                li.innerHTML += `<span>${work}</span>`;
+                independentWorkList.appendChild(li);
+            });
+            independentWorkDiv.appendChild(independentWorkList);
+            contentDiv.appendChild(independentWorkDiv);
 
-          {/* Detalles de la Semana Actual */}
-          {currentWeekData && <WeekDetail weekData={currentWeekData} />}
-        </section>
+            // Repertorio Sugerido
+            if (weekData.repertoire && weekData.repertoire.length > 0 && weekData.repertoire[0] !== "N/A") {
+                const repertoireDiv = createElement('div');
+                const repertoireH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center');
+                repertoireH4.appendChild(createIconElement('Music', 'mr-2 text-red-500', 20));
+                repertoireH4.innerHTML += `Repertorio Sugerido`;
+                repertoireDiv.appendChild(repertoireH4);
+                const repertoireList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1');
+                weekData.repertoire.forEach(rep => {
+                    const li = createElement('li', 'flex items-start');
+                    li.appendChild(createIconElement('Music', 'text-red-400 mr-2 mt-1 flex-shrink-0', 16));
+                    li.innerHTML += `<span>${rep}</span>`;
+                    repertoireList.appendChild(li);
+                });
+                repertoireDiv.appendChild(repertoireList);
+                contentDiv.appendChild(repertoireDiv);
+            }
 
-        {/* Sección de Bibliografía */}
-        <section className="bg-white rounded-2xl shadow-xl p-6 mt-8 border-b-4 border-green-500">
-          <h2 className="text-3xl font-bold text-green-800 mb-4 flex items-center">
-            <BookOpen className="mr-3 text-green-600" size={30} /> Bibliografía Recomendada
-          </h2>
-          <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
-            {currentCourse.bibliography.map((item, i) => <li key={i} dangerouslySetInnerHTML={{ __html: item }} />)}
-          </ul>
-        </section>
-      </div>
+            weekDetailDiv.appendChild(contentDiv);
+            return weekDetailDiv;
+        }
 
-      {/* Pie de página */}
-      <footer className="text-center text-gray-500 text-sm py-4">
-        <p>© 2025 Aplicación de Cronograma Musical. Todos los derechos reservados.</p>
-      </footer>
-    </div>
-  );
-};
+        /**
+         * Renderiza la sección de Fechas Importantes.
+         * @returns {HTMLElement} El elemento section con las fechas.
+         */
+        function renderImportantDatesSection() {
+            const section = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-orange-500');
+            const h2 = createElement('h2', 'text-3xl font-bold text-orange-800 mb-4 flex items-center');
+            h2.appendChild(createIconElement('Clock', 'mr-3 text-orange-600', 30));
+            h2.innerHTML += `Fechas Importantes`;
+            section.appendChild(h2);
 
-export default App;
+            const tableContainer = createElement('div', 'overflow-x-auto rounded-lg shadow-md border border-gray-200');
+            const table = createElement('table', 'min-w-full bg-white rounded-lg');
+            const thead = createElement('thead', 'bg-gray-100 border-b border-gray-200');
+            const trHead = createElement('tr');
+            trHead.appendChild(createElement('th', 'py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tl-lg', 'Evento'));
+            trHead.appendChild(createElement('th', 'py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tr-lg', 'Fecha'));
+            thead.appendChild(trHead);
+            table.appendChild(thead);
+
+            const tbody = createElement('tbody');
+            importantDates.forEach((item, index) => {
+                const tr = createElement('tr', 'border-b border-gray-100 last:border-b-0 hover:bg-gray-50');
+                tr.appendChild(createElement('td', 'py-3 px-4 text-sm text-gray-800', item.event));
+                tr.appendChild(createElement('td', 'py-3 px-4 text-sm text-gray-800', item.date));
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            tableContainer.appendChild(table);
+            section.appendChild(tableContainer);
+            return section;
+        }
+
+
+        /**
+         * La función principal para renderizar toda la aplicación.
+         */
+        function renderApp() {
+            const appRoot = document.getElementById('app-root');
+            appRoot.innerHTML = ''; // Limpiar el contenido existente
+
+            const currentCourse = courses[selectedCourseId];
+            const currentScheduleData = currentCourse.scheduleData;
+            const currentWeekData = currentScheduleData.find(week => week.week === selectedWeek);
+
+            // --- Header del Curso ---
+            const header = createElement('header', 'bg-white rounded-2xl shadow-xl p-6 mb-8 text-center border-b-4 border-blue-500');
+            const h1 = createElement('h1', 'text-4xl sm:text-5xl font-extrabold text-blue-900 mb-2 flex items-center justify-center');
+            h1.appendChild(createIconElement('GraduationCap', 'mr-4 text-blue-600', 48));
+            h1.innerHTML += `Cronograma: ${currentCourse.name}`;
+            header.appendChild(h1);
+            header.appendChild(createElement('p', 'text-lg text-gray-600', 'Profesor: Juan Miguel Ríos Redondo | Email: mrjuan@uninorte.edu.co'));
+            const headerInfoDiv = createElement('div', 'mt-4 flex flex-wrap justify-center gap-4 text-gray-700 text-sm');
+            headerInfoDiv.appendChild(createElement('span', 'flex items-center', `<span data-lucide="Users" width="16" height="16" class="mr-1 text-gray-500"></span> Créditos: 2`));
+            headerInfoDiv.appendChild(createElement('span', 'flex items-center', `<span data-lucide="Calendar" width="16" height="16" class="mr-1 text-gray-500"></span> Horas Semanales: 2h Teóricas / 2h Prácticas`));
+            headerInfoDiv.appendChild(createElement('span', 'flex items-center', `<span data-lucide="Home" width="16" height="16" class="mr-1 text-gray-500"></span> Modalidad: Presencial`));
+            header.appendChild(headerInfoDiv);
+
+            // Selector de Cursos
+            const courseSelectorDiv = createElement('div', 'mt-6 flex flex-wrap justify-center gap-4');
+            const btnMus4000 = createElement('button', `px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center ${selectedCourseId === 'MUS4000' ? 'bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-blue-100'}`);
+            btnMus4000.appendChild(createIconElement('SwatchBook', 'mr-2', 20));
+            btnMus4000.innerHTML += `Conceptos I`;
+            btnMus4000.onclick = () => {
+                selectedCourseId = 'MUS4000';
+                selectedWeek = 1; // Reset week when course changes
+                renderApp();
+            };
+            courseSelectorDiv.appendChild(btnMus4000);
+
+            const btnMus4005 = createElement('button', `px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center ${selectedCourseId === 'MUS4005' ? 'bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-purple-100'}`);
+            btnMus4005.appendChild(createIconElement('SwatchBook', 'mr-2', 20));
+            btnMus4005.innerHTML += `Conceptos II`;
+            btnMus4005.onclick = () => {
+                selectedCourseId = 'MUS4005';
+                selectedWeek = 1; // Reset week when course changes
+                renderApp();
+            };
+            courseSelectorDiv.appendChild(btnMus4005);
+            header.appendChild(courseSelectorDiv);
+            appRoot.appendChild(header);
+
+            // --- Sección de Descripción y Objetivos ---
+            const descriptionSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-purple-500');
+            const descH2 = createElement('h2', 'text-3xl font-bold text-purple-800 mb-4 flex items-center');
+            descH2.appendChild(createIconElement('BookOpen', 'mr-3 text-purple-600', 30));
+            descH2.innerHTML += `Descripción General del Curso`;
+            descriptionSection.appendChild(descH2);
+            descriptionSection.appendChild(createElement('p', 'text-gray-700 leading-relaxed mb-6', currentCourse.description));
+
+            const objectivesH2 = createElement('h2', 'text-3xl font-bold text-green-800 mb-4 flex items-center');
+            objectivesH2.appendChild(createIconElement('Target', 'mr-3 text-green-600', 30));
+            objectivesH2.innerHTML += `Objetivos del Curso`;
+            descriptionSection.appendChild(objectivesH2);
+            const objList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2');
+            currentCourse.generalObjectives.forEach(obj => objList.appendChild(createElement('li', '', obj)));
+            descriptionSection.appendChild(objList);
+            appRoot.appendChild(descriptionSection);
+
+            // --- Resultados de Aprendizaje y Evaluación ---
+            const raEvalSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-r-4 border-red-500');
+            const raDiv = createElement('div');
+            const raH2 = createElement('h2', 'text-3xl font-bold text-red-800 mb-4 flex items-center');
+            raH2.appendChild(createIconElement('Award', 'mr-3 text-red-600', 30));
+            raH2.innerHTML += `Resultados de Aprendizaje Clave`;
+            raDiv.appendChild(raH2);
+            const raList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2');
+            currentCourse.learningOutcomes.forEach(ra => {
+                const li = createElement('li');
+                li.innerHTML = `<strong>${ra.id}:</strong> ${ra.text}`;
+                raList.appendChild(li);
+            });
+            raDiv.appendChild(raList);
+            raEvalSection.appendChild(raDiv);
+
+            const evalDiv = createElement('div');
+            const evalH2 = createElement('h2', 'text-3xl font-bold text-indigo-800 mb-4 flex items-center');
+            evalH2.appendChild(createIconElement('ClipboardList', 'mr-3 text-indigo-600', 30));
+            evalH2.innerHTML += `Sistema de Evaluación`;
+            evalDiv.appendChild(evalH2);
+            const evalList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2');
+            evalList.innerHTML = `
+                <li>**Examen Parcial I:** 25% (Cubre Semanas 1-5)</li>
+                <li>**Examen Parcial II:** 25% (Cubre Semanas 7-11)</li>
+                <li>**Examen Parcial III (Final):** 25% (Evaluación global del curso)</li>
+                <li>**Materiales (Trabajos, Tareas, Ejercicios):** 15%</li>
+                <li>**Participación (Clase, Lecturas):** 10%</li>
+                <li class="font-bold mt-2">**TOTAL: 100%**</li>
+                <li class="text-red-600 font-semibold mt-4 flex items-start">
+                    <span data-lucide="CheckCircle" width="16" height="16" class="text-red-500 mr-2 mt-1 flex-shrink-0"></span>
+                    **Importante:** La inasistencia a más del 25% de las clases (más de 8 horas o 4 faltas) resultará en la pérdida del derecho a presentar el examen parcial final.
+                </li>
+            `;
+            evalDiv.appendChild(evalList);
+            raEvalSection.appendChild(evalDiv);
+            appRoot.appendChild(raEvalSection);
+
+            // --- Sección de Fechas Importantes ---
+            appRoot.appendChild(renderImportantDatesSection());
+
+            // --- Navegación y Contenido de Semanas ---
+            const scheduleSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500');
+            const scheduleH2 = createElement('h2', 'text-3xl font-bold text-blue-800 mb-6 text-center flex items-center justify-center');
+            scheduleH2.appendChild(createIconElement('Calendar', 'mr-3 text-blue-600', 30));
+            scheduleH2.innerHTML += `Cronograma Semanal`;
+            scheduleSection.appendChild(scheduleH2);
+
+            // Controles de Navegación
+            const navControlsDiv = createElement('div', 'flex justify-center items-center mb-8 space-x-4');
+            const prevButton = createElement('button', 'p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105', `<span data-lucide="ChevronLeft" width="24" height="24"></span>`);
+            prevButton.disabled = selectedWeek === 1;
+            prevButton.onclick = () => {
+                selectedWeek = Math.max(1, selectedWeek - 1);
+                renderApp();
+            };
+            navControlsDiv.appendChild(prevButton);
+            navControlsDiv.appendChild(createElement('span', 'text-2xl font-semibold text-blue-800', `Semana ${selectedWeek} de ${currentScheduleData.length}`));
+            const nextButton = createElement('button', 'p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105', `<span data-lucide="ChevronRight" width="24" height="24"></span>`);
+            nextButton.disabled = selectedWeek === currentScheduleData.length;
+            nextButton.onclick = () => {
+                selectedWeek = Math.min(currentScheduleData.length, selectedWeek + 1);
+                renderApp();
+            };
+            navControlsDiv.appendChild(nextButton);
+            scheduleSection.appendChild(navControlsDiv);
+
+            // Selector de Semanas (para pantallas más grandes)
+            const weekSelectorDiv = createElement('div', 'hidden md:flex flex-wrap justify-center gap-2 mb-8');
+            currentScheduleData.forEach(week => {
+                const weekButton = createElement('button', `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 ${selectedWeek === week.week ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-blue-100'}`, `Semana ${week.week}`);
+                weekButton.onclick = () => {
+                    selectedWeek = week.week;
+                    renderApp();
+                };
+                weekSelectorDiv.appendChild(weekButton);
+            });
+            scheduleSection.appendChild(weekSelectorDiv);
+
+            // Detalles de la Semana Actual
+            if (currentWeekData) {
+                scheduleSection.appendChild(renderWeekDetail(currentWeekData));
+            }
+            appRoot.appendChild(scheduleSection);
+
+            // --- Sección de Bibliografía ---
+            const bibliographySection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mt-8 border-b-4 border-green-500');
+            const biblioH2 = createElement('h2', 'text-3xl font-bold text-green-800 mb-4 flex items-center');
+            biblioH2.appendChild(createIconElement('BookOpen', 'mr-3 text-green-600', 30));
+            biblioH2.innerHTML += `Bibliografía Recomendada`;
+            bibliographySection.appendChild(biblioH2);
+            const biblioList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2');
+            currentCourse.bibliography.forEach(item => {
+                const li = createElement('li', '', item);
+                biblioList.appendChild(li);
+            });
+            bibliographySection.appendChild(biblioList);
+            appRoot.appendChild(bibliographySection);
+
+            // --- Footer ---
+            const footer = createElement('footer', 'text-center text-gray-500 text-sm py-4');
+            footer.appendChild(createElement('p', '', '© 2025 Aplicación de Cronograma Musical. Todos los derechos reservados.'));
+            appRoot.appendChild(footer);
+
+            // Renderizar los iconos de Lucide después de que el DOM esté actualizado
+            lucide.createIcons();
+        }
+
+        // Ejecutar la aplicación cuando el DOM esté completamente cargado
+        document.addEventListener('DOMContentLoaded', renderApp);
+    </script>
+</body>
+</html>
 
 
