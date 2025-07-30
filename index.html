@@ -1,1050 +1,1244 @@
-import React, { useState, useEffect } from 'react';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador de Teoría Neo-Riemanniana</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            color: #334155; /* Darker text */
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .btn {
+            @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200 cursor-pointer;
+        }
+        .btn-primary {
+            @apply bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 shadow-lg transform hover:scale-105;
+        }
+        .btn-secondary {
+            @apply bg-gray-200 text-gray-800 hover:bg-gray-300 active:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 shadow-md transform hover:scale-105;
+        }
+        /* Style for active operation button */
+        .btn-secondary.active-op-btn {
+            @apply bg-yellow-400 text-gray-900 border-2 border-yellow-600 shadow-xl transform scale-105;
+        }
 
-// Importar iconos de lucide-react
-import { BookOpen, Calendar, Target, Activity, Music, Users, Award, ChevronRight, ChevronLeft, Home, Lightbulb, ClipboardList, CheckCircle, GraduationCap, SwatchBook } from 'lucide-react';
+        /* Style for the operations box */
+        #operationsBox {
+            transition: box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out;
+        }
+        /* New style for the active operations box */
+        #operationsBox.operations-box-active {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5), 0 10px 20px -5px rgba(59, 130, 246, 0.3); /* Blue glow/shadow */
+            border-color: #3b82f6; /* Brighter border */
+        }
 
-// --- Componente de Cronograma (ScheduleView) ---
+        .chord-display {
+            @apply bg-blue-100 p-4 rounded-lg text-center my-4 border border-blue-200;
+        }
+        .history-item {
+            @apply bg-gray-50 p-2 rounded-md mb-2 text-sm border border-gray-100;
+        }
+        .explanation-box {
+            @apply bg-green-50 p-4 rounded-lg text-sm my-4 border border-green-100;
+        }
+        /* Custom styles for the circular visualization */
+        .circle-container {
+            position: relative;
+            margin: 0 auto;
+            border: 2px solid #cbd5e1;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f8fafc; /* Lighter background for the circle */
+            width: 100%; /* Fill parent width */
+            height: 100%; /* Fill parent height */
+        }
+        .chord-node {
+            position: absolute;
+            width: 60px;
+            height: 30px;
+            background-color: #e2e8f0;
+            border: 1px solid #94a3b8;
+            border-radius: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out, box-shadow 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chord-node.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #1d4ed8;
+            box-shadow: 0 6px 12px -2px rgba(59, 130, 246, 0.4), 0 3px 7px -3px rgba(59, 130, 246, 0.3);
+            animation: pulse 1.5s infinite alternate; /* Subtle pulse effect */
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.03); }
+        }
 
-// Datos del cronograma para Conceptos de Música del Siglo XX y XXI I (MUS 4000)
-const scheduleDataI = [
-  {
-    week: 1,
-    title: "El Crepúsculo Tonal y el Amanecer Modal",
-    objectives: [
-      "Introducir el contexto musical de finales del siglo XIX.",
-      "Comprender el concepto de transición de la tonalidad.",
-      "Familiarizarse con los rudimentos teóricos de acordes y escalas modales."
-    ],
-    activities: [
-      "Clase magistral: Presentación de lineamientos técnico-teóricos.",
-      "Taller: Ejercicios de identificación de escalas y acordes modales básicos.",
-      "Audición dirigida: Ejemplos de obras con elementos de transición tonal."
-    ],
-    independentWork: [
-      "Lectura: Capítulo introductorio sobre la armonía de finales del siglo XIX y principios del XX (Persichetti, Ulehla).",
-      "Ejercicios de escritura: Identificación de modos y construcción de acordes modales."
-    ],
-    repertoire: [
-      "Richard Wagner: Preludio de Tristán e Isolda",
-      "Franz Liszt: Nuages gris",
-      "Modest Mussorgsky: Cuadros de una exposición (original para piano)"
-    ]
-  },
-  {
-    week: 2,
-    title: "Debussy: La Paleta Sonora del Impresionismo",
-    objectives: [
-      "Analizar las características armónicas y melódicas de la música de Debussy.",
-      "Comprender el cuartalismo y el modalismo en su obra."
-    ],
-    activities: [
-      "Clase magistral: Análisis de obras clave de Debussy (ej. Preludios, La Mer).",
-      "Taller: Ejercicios de composición corta aplicando cuartalismo y modalismo debussyniano.",
-      "Discusión crítica: Sobre la ruptura con la tonalidad tradicional en Debussy."
-    ],
-    independentWork: [
-      "Audición dirigida (con score): Análisis de 2-3 piezas de Debussy, identificando elementos modales y cuartales.",
-      "Composición: Pequeña pieza de 8-16 compases en estilo impresionista."
-    ],
-    repertoire: [
-      "Claude Debussy: Préludes (Libro I y II, selecciones como 'Voiles', 'La Cathédrale engloutie')",
-      "Claude Debussy: Estampes ('Pagodes', 'La soirée dans Grenade', 'Jardins sous la pluie')",
-      "Claude Debussy: Children's Corner ('Golliwogg's Cakewalk')"
-    ]
-  },
-  {
-    week: 3,
-    title: "Ravel: Claridad y Brillo Impresionista",
-    objectives: [
-      "Distinguir las características de Ravel en comparación con Debussy."
-    ],
-    activities: [
-      "Clase magistral: Análisis comparativo de obras de Ravel (ej. Daphnis et Chloé, Bolero).",
-      "Simulacro de examen: Avance de composición realizada con contenidos de las semanas anteriores."
-    ],
-    independentWork: [
-      "Lectura: Sección sobre Ravel en textos de armonía del siglo XX (Persichetti).",
-      "Audición: Escuchar obras de Ravel, prestando atención a la instrumentación."
-    ],
-    repertoire: [
-      "Maurice Ravel: Miroirs ('Noctuelles', 'Oiseaux tristes', 'Une barque sur l'océan')",
-      "Maurice Ravel: Gaspard de la Nuit ('Ondine', 'Le Gibet', 'Scarbo')",
-      "Maurice Ravel: Valses nobles et sentimentales"
-    ]
-  },
-  {
-    week: 4,
-    title: "Bartók: Folclore y el Sistema de Ejes",
-    objectives: [
-      "Comprender el concepto de nacionalismo musical en Europa del Este.",
-      "Analizar el Sistema de Ejes de Béla Bartók."
-    ],
-    activities: [
-      "Clase magistral: Explicación del sistema de ejes y análisis de obras de Bartók (ej. Mikrokosmos, Cuartetos de cuerda).",
-      "Taller: Ejercicios de escritura aplicando el sistema de ejes.",
-      "Audición dirigida: Obras de Bartók."
-    ],
-    independentWork: [
-      "Lectura: La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX (Antokoletz, Lendvai).",
-      "Composición: Pequeña pieza en estilo de ejes Bartok."
-    ],
-    repertoire: [
-      "Béla Bartók: Mikrokosmos (selecciones, especialmente piezas con elementos modales o de ejes)",
-      "Béla Bartók: Allegro Barbaro",
-      "Béla Bartók: Seis Danzas Rumanas (versión para piano)"
-    ]
-  },
-  {
-    week: 5,
-    title: "Stravinsky y Hindemith: El Retorno a la Forma",
-    objectives: [
-      "Identificar las características del Neoclasicismo musical.",
-      "Analizar las obras de Stravinsky y Hindemith dentro de este estilo."
-    ],
-    activities: [
-      "Clase magistral: Análisis de obras clave de Stravinsky (ej. Pulcinella, Sinfonía de los Salmos) y Hindemith (ej. Ludus Tonalis).",
-      "Taller: Ejercicios de escritura con elementos neoclásicos.",
-      "Discusión crítica: Sobre la estética neoclásica."
-    ],
-    independentWork: [
-      "Audición dirigida (con score): Obras neoclásicas.",
-      "Preparación para Parcial I."
-    ],
-    repertoire: [
-      "Igor Stravinsky: Pulcinella Suite (versión de concierto)",
-      "Igor Stravinsky: Octeto para instrumentos de viento",
-      "Paul Hindemith: Sonata para piano No. 2",
-      "Paul Hindemith: Ludus Tonalis (selecciones de fugas e interludios)"
-    ]
-  },
-  {
-    week: 6,
-    title: "Prokofiev y Contrastes Estilísticos / EXAMEN PARCIAL I",
-    objectives: [
-      "Continuar el análisis del Neoclasicismo con Prokofiev.",
-      "Establecer comparaciones estilísticas entre los compositores vistos hasta ahora."
-    ],
-    activities: [
-      "Clase magistral: Análisis de obras de Prokofiev (ej. Sinfonía Clásica).",
-      "Taller: Ejercicios de análisis comparativo de fragmentos musicales.",
-      "Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."
-    ],
-    independentWork: [
-      "Revisión de los temas para el parcial."
-    ],
-    repertoire: [
-      "Sergei Prokofiev: Sinfonía Clásica (Movimientos selectos)",
-      "Sergei Prokofiev: Visions Fugitives (selecciones)",
-      "Comparación: Johann Sebastian Bach (ej. una invención a dos voces) y Arnold Schönberg (ej. una de las Seis pequeñas piezas para piano, Op. 19)"
-    ]
-  },
-  {
-    week: 7,
-    title: "Los Seis: La Vanguardia Francesa",
-    objectives: [
-      "Conocer a los miembros y la filosofía del Grupo de Los Seis.",
-      "Analizar la politonalidad de Darius Milhaud y su influencia."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los compositores y sus ideas estéticas.",
-      "Taller: Ejercicios de escritura con elementos politonales simples.",
-      "Audición dirigida: Obras representativas de Los Seis."
-    ],
-    independentWork: [
-      "Lectura: Sobre el Grupo de Los Seis.",
-      "Composición: Pequeño ejercicio explorando la bitonalidad."
-    ],
-    repertoire: [
-      "Darius Milhaud: Scaramouche (para dos pianos o saxofón y piano)",
-      "Francis Poulenc: Les Biches (Suite de ballet)",
-      "Arthur Honeagner: Pacific 231",
-      "Erik Satie: Gymnopédies y Gnossiennes"
-    ]
-  },
-  {
-    week: 8,
-    title: "Ragtime y New Orleans: Cuna del Jazz",
-    objectives: [
-      "Comprender los orígenes del Jazz.",
-      "Analizar las características del Ragtime y el Estilo New Orleans."
-    ],
-    activities: [
-      "Clase magistral: Historia y evolución del Jazz temprano.",
-      "Audición dirigida: Obras de Scott Joplin y grabaciones de New Orleans Jazz.",
-      "Discusión crítica: Sobre la importancia de la improvisación en el Jazz."
-    ],
-    independentWork: [
-      "Audición: Escuchar más ejemplos de Ragtime y New Orleans Jazz.",
-      "Investigación: Breve biografía de Scott Joplin."
-    ],
-    repertoire: [
-      "Scott Joplin: 'Maple Leaf Rag', 'The Entertainer'",
-      "Original Dixieland Jazz Band: 'Livery Stable Blues'",
-      "Jelly Roll Morton: 'King Porter Stomp'"
-    ]
-  },
-  {
-    week: 9,
-    title: "Chicago Jazz y el Legado de Louis Armstrong",
-    objectives: [
-      "Analizar la evolución del Jazz hacia el Estilo Chicago.",
-      "Reconocer la figura de Louis Armstrong y su impacto."
-    ],
-    activities: [
-      "Clase magistral: Análisis de grabaciones de Louis Armstrong.",
-      "Taller: Transcripción de solos sencillos de Jazz temprano.",
-      "Simulacro de examen: Avance de composición o análisis de obras."
-    ],
-    independentWork: [
-      "Audición: Comparar grabaciones de New Orleans y Chicago Jazz.",
-      "Preparación para Parcial II."
-    ],
-    repertoire: [
-      "Louis Armstrong & His Hot Five/Seven: 'West End Blues', 'Potato Head Blues', 'Cornet Chop Suey'",
-      "Bix Beiderbecke: 'Singin' the Blues'"
-    ]
-  },
-  {
-    week: 10,
-    title: "Modalismo en el Jazz y Armonías Cuartales",
-    objectives: [
-      "Comprender la aplicación del modalismo en el Jazz.",
-      "Analizar las arquitecturas acordales cuartales en el Jazz."
-    ],
-    activities: [
-      "Clase magistral: Ejemplos de Jazz modal y uso de acordes cuartales.",
-      "Taller: Ejercicios de escritura de progresiones modales y acordes cuartales en un contexto de Jazz.",
-      "Audición dirigida: Ejemplos de Jazz con estas características."
-    ],
-    independentWork: [
-      "Lectura: Modal Jazz Composition & Harmony Volumen 1 (Miller).",
-      "Ejercicios de improvisación sobre vamps modales."
-    ],
-    repertoire: [
-      "Miles Davis: 'So What' (del álbum Kind of Blue) - para modalismo",
-      "Herbie Hancock: 'Maiden Voyage' - para acordes cuartales",
-      "McCoy Tyner: 'Passion Dance' - para acordes cuartales"
-    ]
-  },
-  {
-    week: 11,
-    title: "Pianistas del Jazz Temprano I",
-    objectives: [
-      "Reconocer las características interpretativas de los primeros pianistas de Jazz.",
-      "Analizar su estilo de improvisación."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los pianistas y sus estilos.",
-      "Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."
-    ],
-    independentWork: [
-      "Audición: Escuchar grabaciones de los pianistas estudiados.",
-      "Preparar análisis de improvisaciones."
-    ],
-    repertoire: [
-      "Scott Joplin: Grabaciones de sus rags.",
-      "Jelly Roll Morton: Grabaciones de sus solos.",
-      "James P. Johnson: 'Carolina Shout'",
-      "Willie 'The Lion' Smith: Grabaciones de su estilo Stride.",
-      "Earl Hines: 'Fifty-Seven Varieties'"
-    ]
-  },
-  {
-    week: 12,
-    title: "Pianistas del Jazz Temprano II / EXAMEN PARCIAL II",
-    objectives: [
-      "Continuar el reconocimiento de pianistas clave.",
-      "Consolidar la comprensión de los conceptos de Jazz y la escuela francesa."
-    ],
-    activities: [
-      "Clase magistral: Continuación de la presentación de pianistas.",
-      "Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."
-    ],
-    independentWork: [
-      "Revisión de los temas para el parcial."
-    ],
-    repertoire: [
-      "Fats Waller: 'Honeysuckle Rose'",
-      "Teddy Wilson: Grabaciones con Billie Holiday o Benny Goodman.",
-      "Duke Ellington (solos de piano): 'Solitude', 'Mood Indigo'",
-      "Art Tatum: 'Tiger Rag', 'Tea for Two'",
-      "Meade Lux Lewis: 'Honky Tonk Train Blues'",
-      "Pete Johnson: 'Roll 'Em Pete'",
-      "Jimmy Yancey: Grabaciones de boogie-woogie."
-    ]
-  },
-  {
-    week: 13,
-    title: "Armonía Funcional, Motivo y Conjunto en el Siglo XX",
-    objectives: [
-      "Revisar y aplicar conceptos de armonía funcional en un contexto ampliado.",
-      "Comprender el uso del motivo y el conjunto en la música del siglo XX."
-    ],
-    activities: [
-      "Clase magistral: Ejemplos de análisis de obras que demuestran el uso de motivo y conjunto.",
-      "Taller: Ejercicios de desarrollo motívico.",
-      "Discusión crítica: Sobre la persistencia de elementos tradicionales en la música moderna."
-    ],
-    independentWork: [
-      "Lectura: Armonía funcional (Gabis).",
-      "Análisis de partituras: Identificación de motivos y su desarrollo."
-    ],
-    repertoire: [
-      "Arnold Schoenberg: Pierrot Lunaire (selecciones, para motivo y conjunto atonal)",
-      "Alban Berg: Wozzeck (fragmentos, para leitmotivs y conjuntos)",
-      "Anton Webern: Sinfonía, Op. 21 (para serialismo y organización motívica)"
-    ]
-  },
-  {
-    week: 14,
-    title: "Aplicación de Materiales en Composición: Forma Binaria y Ternaria",
-    objectives: [
-      "Aplicar los materiales armónicos y melódicos aprendidos en composiciones formales.",
-      "Realizar composiciones cortas en forma binaria y/o ternaria."
-    ],
-    activities: [
-      "Clase magistral: Revisión de las formas binaria y ternaria.",
-      "Taller: Sesión de composición guiada, trabajando en la estructura de las piezas.",
-      "Simulacro de examen: Presentación de avances de composición."
-    ],
-    independentWork: [
-      "Composición: Desarrollo de una pieza corta en forma binaria o ternaria, aplicando los conceptos vistos."
-    ],
-    repertoire: [
-      "Ejemplos de piezas cortas del siglo XX que utilizan estas formas con lenguajes modernos (ej. Béla Bartók Mikrokosmos, Paul Hindemith Ludus Tonalis)."
-    ]
-  },
-  {
-    week: 15,
-    title: "Análisis de Repertorio Modal y Preparación Final",
-    objectives: [
-      "Realizar un análisis profundo de repertorio modal.",
-      "Consolidar todos los conocimientos adquiridos a lo largo del semestre."
-    ],
-    activities: [
-      "Clase magistral: Análisis de obras complejas que integren varios conceptos.",
-      "Taller: Sesión de preguntas y respuestas, resolución de dudas.",
-      "Audición dirigida (con score): Análisis en clase."
-    ],
-    independentWork: [
-      "Repaso general para el examen final.",
-      "Pulir la composición final."
-    ],
-    repertoire: [
-      "Olivier Messiaen: Quatuor pour la fin du temps (selecciones, para modos de transposición limitada)",
-      "Béla Bartók: Concierto para Orquesta (movimientos selectos, para integración de elementos folclóricos y modales)",
-      "Jazz modal avanzado: John Coltrane 'Giant Steps' (aunque complejo, para entender la progresión modal rápida), Bill Evans 'Waltz for Debby'."
-    ]
-  },
-  {
-    week: 16,
-    title: "EXAMEN FINAL y Presentación de Proyectos",
-    objectives: [
-      "Evaluar la comprensión global de los conceptos del curso.",
-      "Presentar y sustentar el proceso creativo de la composición final."
-    ],
-    activities: [
-      "Examen Parcial III (25%): Evaluación final de los contenidos del curso.",
-      "Presentación de composiciones: Cada estudiante sustentará su proceso creativo."
-    ],
-    independentWork: [
-      "Finalización de la composición y preparación de la sustentación."
-    ],
-    repertoire: [
-      "N/A"
-    ]
-  }
-];
+        .arrow {
+            position: absolute;
+            stroke: #94a3b8; /* Lighter grey for default arrows */
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
+        }
+        .arrow-active {
+            stroke: #3b82f6;
+            stroke-width: 3;
+        }
+        #arrowhead {
+            fill: #94a3b8;
+        }
+        .arrow-active #arrowhead {
+            fill: #3b82f6;
+        }
 
-// Datos del cronograma para Conceptos de Música del Siglo XX y XXI II (MUS 4005)
-const scheduleDataII = [
-  {
-    week: 1,
-    title: "Introducción a la Música del Siglo XX y XXI: Conceptos Estéticos",
-    objectives: [
-      "Introducir el contexto de la música del siglo XX y XXI.",
-      "Comprender los conceptos estéticos de indeterminación, electroacústica, mixta y estocástica.",
-      "Aproximación filosófica a conceptos estéticos de vanguardia."
-    ],
-    activities: [
-      "Clase magistral: Presentación de las corrientes estéticas y sus fundamentos filosóficos.",
-      "Audiciones dirigidas: Ejemplos de obras representativas.",
-      "Discusión crítica: Análisis de las implicaciones de estas estéticas en la creación musical."
-    ],
-    independentWork: [
-      "Lectura: Introducción a las estéticas musicales del siglo XX (Lester, Enfoques analíticos de la música del siglo XX).",
-      "Investigación: Breve reseña sobre un compositor representativo de alguna de estas estéticas."
-    ],
-    repertoire: [
-      "John Cage: 4'33\" (indeterminación)",
-      "Karlheinz Stockhausen: Gesang der Jünglinge (música electrónica)",
-      "Iannis Xenakis: Metastaseis (música estocástica)"
-    ]
-  },
-  {
-    week: 2,
-    title: "Ritmo, Metro y Formas de Organización en el Siglo XX",
-    objectives: [
-      "Analizar las innovaciones en ritmo y metro en la música de finales del siglo XIX y principios del XX.",
-      "Comprender la armonía modal en este periodo."
-    ],
-    activities: [
-      "Clase magistral: Ejemplos de polirritmia, cambios de compás y ritmos aditivos.",
-      "Taller: Ejercicios de escritura rítmica compleja.",
-      "Audición dirigida: Identificación de elementos rítmicos y métricos."
-    ],
-    independentWork: [
-      "Lectura: Sobre ritmo y metro en el siglo XX (Grabner, Teoría General De La Musica).",
-      "Análisis de partituras: Fragmentos con ritmos complejos."
-    ],
-    repertoire: [
-      "Igor Stravinsky: La consagración de la primavera (selecciones)",
-      "Béla Bartók: Concierto para Orquesta (movimientos rítmicos)",
-      "Olivier Messiaen: Quatuor pour la fin du temps (selecciones rítmicas)"
-    ]
-  },
-  {
-    week: 3,
-    title: "Introducción a la Teoría Post Tonal: Dodecafonismo",
-    objectives: [
-      "Comprender los fundamentos del Dodecafonismo.",
-      "Analizar la organización de alturas en la música dodecafónica."
-    ],
-    activities: [
-      "Clase magistral: Explicación de la serie de doce tonos y sus transformaciones.",
-      "Taller: Construcción de series dodecafónicas y sus formas básicas.",
-      "Audición dirigida: Ejemplos de música dodecafónica."
-    ],
-    independentWork: [
-      "Lectura: Introducción al Dodecafonismo (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).",
-      "Análisis: Identificación de series en fragmentos musicales."
-    ],
-    repertoire: [
-      "Arnold Schönberg: Suite para piano, Op. 25 (selecciones)",
-      "Anton Webern: Variaciones para piano, Ор. 27",
-      "Alban Berg: Concierto para violín (fragmentos)"
-    ]
-  },
-  {
-    week: 4,
-    title: "Teoría de Conjunto (Set Theory) I: Intervalos y Vectores",
-    objectives: [
-      "Introducir los conceptos de equivalencias interválicas y clase de intervalo.",
-      "Comprender el vector interválico."
-    ],
-    activities: [
-      "Clase magistral: Explicación de las clases de intervalos y cálculo de vectores interválicos.",
-      "Taller: Ejercicios de análisis de conjuntos de notas utilizando vectores interválicos.",
-      "Audición dirigida: Obras de Bartók."
-    ],
-    independentWork: [
-      "Lectura: Teoría de conjuntos básica (Forte, The structure of atonal music).",
-      "Análisis: Fragmentos de Mikrokosmos Vol. 5 y 6 de Bartók."
-    ],
-    repertoire: [
-      "Béla Bartók: Mikrokosmos (Vol. 5 y 6, selecciones)",
-      "Béla Bartók: Cuarteto de Cuerdas No. 4 (fragmentos)"
-    ]
-  },
-  {
-    week: 5,
-    title: "Teoría de Conjunto (Set Theory) II: Forma Normal y Forma Prima",
-    objectives: [
-      "Dominar la determinación de la forma normal y la forma prima de un conjunto.",
-      "Comprender las operaciones de transposición e inversión."
-    ],
-    activities: [
-      "Clase magistral: Demostración de cómo derivar la forma normal y prima.",
-      "Taller: Ejercicios prácticos de transposición e inversión de conjuntos.",
-      "Simulacro de examen: Presentación de compositores latinoamericanos y establecimiento del tipo de estética."
-    ],
-    independentWork: [
-      "Lectura: Forma normal y prima (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).",
-      "Análisis: Ejercicios de segmentación musical."
-    ],
-    repertoire: [
-      "Anton Webern: Cinco piezas para orquesta, Op. 10 (para análisis de conjuntos pequeños)",
-      "Alban Berg: Sonata para piano, Op. 1 (para análisis de estructuras post-tonales tempranas)"
-    ]
-  },
-  {
-    week: 6,
-    title: "Teoría de Conjunto (Set Theory) III: Relaciones entre Conjuntos / EXAMEN PARCIAL I",
-    objectives: [
-      "Comprender las relaciones Z, complemento, superconjunto y subconjunto.",
-      "Aplicar la teoría de conjunto en el análisis de obras."
-    ],
-    activities: [
-      "Clase magistral: Explicación de las relaciones entre conjuntos y su significado musical.",
-      "Taller: Ejercicios de identificación de relaciones entre conjuntos en fragmentos musicales.",
-      "Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."
-    ],
-    independentWork: [
-      "Revisión de los temas para el parcial."
-    ],
-    repertoire: [
-      "Elliott Carter: Cuarteto de Cuerdas No. 1 (fragmentos, para análisis de relaciones complejas)",
-      "Milton Babbitt: Composition for Four Instruments (para análisis serial y de conjuntos)"
-    ]
-  },
-  {
-    week: 7,
-    title: "Conceptos del Jazz de 1930 a 1980: Swing y Bebop",
-    objectives: [
-      "Comprender la evolución del Jazz desde el Swing hasta el Bebop.",
-      "Identificar las características distintivas de cada estilo."
-    ],
-    activities: [
-      "Clase magistral: Historia y desarrollo de los estilos Swing y Bebop.",
-      "Audición dirigida: Ejemplos de obras representativas.",
-      "Discusión crítica: Sobre la influencia del Bebop en la música posterior."
-    ],
-    independentWork: [
-      "Audición: Escuchar grabaciones de las eras Swing y Bebop.",
-      "Investigación: Breve biografía de un músico clave de cada estilo."
-    ],
-    repertoire: [
-      "Duke Ellington: 'Take the 'A' Train', 'Cotton Tail' (Swing)",
-      "Count Basie: 'One O'Clock Jump' (Swing)",
-      "Charlie Parker: 'Ko-Ko', 'Donna Lee' (Bebop)",
-      "Dizzy Gillespie: 'Salt Peanuts', 'A Night in Tunisia' (Bebop)"
-    ]
-  },
-  {
-    week: 8,
-    title: "Conceptos del Jazz de 1930 a 1980: Cool Jazz y Hard Bop",
-    objectives: [
-      "Analizar las características del Cool Jazz y el Hard Bop.",
-      "Distinguir las diferencias estilísticas entre ellos."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los estilos y sus exponentes.",
-      "Audición dirigida: Comparación de obras de Cool Jazz y Hard Bop.",
-      "Taller: Análisis de progresiones armónicas en estos estilos."
-    ],
-    independentWork: [
-      "Audición: Escuchar más ejemplos de Cool Jazz y Hard Bop.",
-      "Preparación para Parcial II."
-    ],
-    repertoire: [
-      "Miles Davis: Birth of the Cool (Cool Jazz)",
-      "Dave Brubeck Quartet: 'Take Five' (Cool Jazz)",
-      "Art Blakey & The Jazz Messengers: 'Moanin'' (Hard Bop)",
-      "Horace Silver: 'Song for My Father' (Hard Bop)"
-    ]
-  },
-  {
-    week: 9,
-    title: "Conceptos del Jazz de 1930 a 1980: Jazz Modal y Free Jazz",
-    objectives: [
-      "Comprender el desarrollo del Jazz Modal y el Free Jazz.",
-      "Analizar las implicaciones de la improvisación modal y la libertad atonal."
-    ],
-    activities: [
-      "Clase magistral: Explicación de los conceptos y sus figuras clave.",
-      "Audición dirigida: Ejemplos de Jazz Modal y Free Jazz.",
-      "Simulacro de examen: Avance de composición o análisis de obras."
-    ],
-    independentWork: [
-      "Audición: Escuchar grabaciones de Jazz Modal y Free Jazz.",
-      "Investigación: Breve reseña sobre John Coltrane o Ornette Coleman."
-    ],
-    repertoire: [
-      "Miles Davis: 'So What' (del álbum Kind of Blue) (Jazz Modal)",
-      "John Coltrane: 'My Favorite Things' (Jazz Modal)",
-      "Ornette Coleman: Free Jazz: A Collective Improvisation (Free Jazz)",
-      "Cecil Taylor: Unit Structures (Free Jazz)"
-    ]
-  },
-  {
-    week: 10,
-    title: "Pianistas del Jazz (1930-1980) I",
-    objectives: [
-      "Reconocer las características interpretativas de los pianistas de Jazz de la segunda mitad del siglo XX.",
-      "Analizar su estilo de improvisación."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los pianistas y sus estilos distintivos.",
-      "Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."
-    ],
-    independentWork: [
-      "Audición: Escuchar grabaciones de los pianistas estudiados.",
-      "Preparar análisis de improvisaciones."
-    ],
-    repertoire: [
-      "Thelonius Monk: 'Round Midnight', 'Straight, No Chaser'",
-      "Bud Powell: 'Un Poco Loco', 'Cleopatra's Dream'",
-      "Oscar Peterson: 'Hymn to Freedom', 'Canadiana Suite'",
-      "Erroll Garner: 'Misty', 'Concert by the Sea'"
-    ]
-  },
-  {
-    week: 11,
-    title: "Pianistas del Jazz (1930-1980) II",
-    objectives: [
-      "Continuar el reconocimiento de pianistas clave del Jazz.",
-      "Analizar sus aportes a la improvisación y el lenguaje armónico."
-    ],
-    activities: [
-      "Clase magistral: Continuación de la presentación de pianistas.",
-      "Audición individual dirigida: Identificación de características de improvisación."
-    ],
-    independentWork: [
-      "Audición: Escuchar grabaciones de los pianistas estudiados.",
-      "Preparar análisis de improvisaciones."
-    ],
-    repertoire: [
-      "Lennie Tristano: 'Line Up', 'Wow'",
-      "Bill Evans: 'Waltz for Debby', 'Autumn Leaves'",
-      "Clare Fischer: 'Pensativa', 'Morning'",
-      "Jimmy Rowles: Grabaciones con Billie Holiday o Stan Getz."
-    ]
-  },
-  {
-    week: 12,
-    title: "Pianistas del Jazz (1930-1980) III y EXAMEN PARCIAL II",
-    objectives: [
-      "Completar el estudio de los pianistas de Jazz de este periodo.",
-      "Consolidar la comprensión de los conceptos de Jazz y la teoría post tonal."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los últimos pianistas y sus innovaciones.",
-      "Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."
-    ],
-    independentWork: [
-      "Revisión de los temas para el parcial."
-    ],
-    repertoire: [
-      "Cecil Taylor: Grabaciones de sus improvisaciones libres.",
-      "Chick Corea: 'Spain', 'La Fiesta' (fusión, latin jazz)",
-      "Keith Jarrett: The Köln Concert (improvisación solo de piano)",
-      "Richie Beirach: Grabaciones de sus trabajos en solo o con grupos."
-    ]
-  },
-  {
-    week: 13,
-    title: "Corrientes Estéticas: Minimalismo y Espectralismo",
-    objectives: [
-      "Comprender los conceptos de Minimalismo y Espectralismo.",
-      "Analizar las técnicas compositivas asociadas a estas corrientes."
-    ],
-    activities: [
-      "Clase magistral: Explicación de las filosofías y técnicas de cada corriente.",
-      "Audición dirigida: Ejemplos de obras minimalistas y espectrales.",
-      "Taller: Ejercicios de composición con repetición y procesos lentos (minimalismo)."
-    ],
-    independentWork: [
-      "Lectura: Sobre Minimalismo y Espectralismo (Lester, Enfoques analíticos de la música del siglo XX).",
-      "Análisis: Fragmentos de obras representativas."
-    ],
-    repertoire: [
-      "Steve Reich: Music for 18 Musicians",
-      "Philip Glass: Einstein on the Beach (fragmentos)",
-      "Terry Riley: In C",
-      "Gérard Grisey: Partiels (Espectralismo)",
-      "Tristan Murail: Désintégrations (Espectralismo)"
-    ]
-  },
-  {
-    week: 14,
-    title: "Corrientes Estéticas: Nueva Simplicidad y Nueva Complejidad",
-    objectives: [
-      "Distinguir entre la Nueva Simplicidad y la Nueva Complejidad.",
-      "Analizar las técnicas compositivas de estas corrientes."
-    ],
-    activities: [
-      "Clase magistral: Presentación de las ideas detrás de cada corriente y sus compositores.",
-      "Audición dirigida: Ejemplos de obras.",
-      "Discusión crítica: Debates sobre la accesibilidad y la dificultad en la música contemporánea."
-    ],
-    independentWork: [
-      "Lectura: Sobre Nueva Simplicidad y Nueva Complejidad (Lester, Enfoques analíticos de la música del siglo XX).",
-      "Composición: Pequeño ejercicio explorando una de estas estéticas."
-    ],
-    repertoire: [
-      "Henryk Górecki: Sinfonía No. 3, 'Sinfonía de las Canciones Lamentativas' (Nueva Simplicidad)",
-      "Arvo Pärt: Spiegel im Spiegel (Nueva Simplicidad)",
-      "Brian Ferneyhough: Bone Alphabet (Nueva Complejidad)",
-      "Helmut Lachenmann: Guero (Nueva Complejidad)"
-    ]
-  },
-  {
-    week: 15,
-    title: "Otros Estilos y Composición en Set Theory",
-    objectives: [
-      "Explorar otros estilos relevantes del siglo XX.",
-      "Realizar composición en set theory utilizando software de notación musical."
-    ],
-    activities: [
-      "Clase magistral: Presentación de los compositores y sus técnicas innovadoras.",
-      "Taller práctico: Creación de pequeñas piezas en FINALE aplicando set theory.",
-      "Audición dirigida: Ejemplos de obras."
-    ],
-    independentWork: [
-      "Lectura: Sobre los compositores vistos (Graetzer, La Musica Contemporánea).",
-      "Finalización de la composición en FINALE."
-    ],
-    repertoire: [
-      "Luciano Berio: Sequenza III (para voz)",
-      "Henry Cowell: The Banshee (para técnicas extendidas en piano)",
-      "Conlon Nancarrow: Estudios para piano mecánico (selecciones)"
-    ]
-  },
-  {
-    week: 16,
-    title: "EXAMEN FINAL y Presentación de Proyectos",
-    objectives: [
-      "Evaluar la comprensión global de los conceptos del curso.",
-      "Presentar y sustentar el proceso creativo de la composición final."
-    ],
-    activities: [
-      "Examen Parcial III (25%): Evaluación final de los contenidos del curso.",
-      "Presentación de composiciones: Cada estudiante sustentará su proceso creativo."
-    ],
-    independentWork: [
-      "Finalización de la composición y preparación de la sustentación."
-    ],
-    repertoire: [
-      "N/A"
-    ]
-  }
-];
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            .chord-node {
+                width: 50px;
+                height: 25px;
+                font-size: 0.65rem;
+            }
+            .circle-container {
+                /* width: 250px; */ /* Removed fixed width */
+                /* height: 250px; */ /* Removed fixed height */
+            }
+            .btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.875rem;
+            }
+        }
 
-// Información de ambos cursos
-const courses = {
-  'MUS4000': {
-    id: 'MUS4000',
-    name: 'Conceptos de Música del Siglo XX y XXI I',
-    code: 'MUS 4000',
-    description: 'Esta asignatura es una inmersión profunda en la evolución de la música desde las postrimerías del siglo XIX hasta las vanguardias del siglo XXI. Exploraremos la fascinante **transición de la tonalidad**, desentrañando movimientos clave como el **Nacionalismo**, el **Impresionismo** y el **Neoclasicismo**. Analizaremos los innovadores **sistemas de organización musical** (como el Sistema de Ejes) y la influencia de escuelas fundamentales como la francesa ("Los Seis") y la inglesa. Además, dedicaremos un espacio vital a comprender los **orígenes y la evolución temprana del Jazz**.',
-    generalObjectives: [
-      "Conocer los sistemas de organización en la música del siglo XIX.",
-      "Establecer una línea transversal con los estilos: similitud y diferencia entre los países de Centro Europa.",
-      "Realizar composición corta en estilo modal del siglo XIX y en estilo de ejes Bartok, realizando detalle del proceso creativo.",
-      "Audición sobre compositores de finales del siglo XIX para entender y asimilar el resultado de dicho repertorio."
-    ],
-    learningOutcomes: [
-      { id: 'RA1', text: 'Analizar obras maestras del Impresionismo (Debussy, Ravel).' },
-      { id: 'RA2', text: 'Interpretar el movimiento nacionalista a través de la música de Bartok.' },
-      { id: 'RA3', text: 'Identificar y analizar obras del Neoclasicismo (Stravinsky, Hindemith, Prokofiev, Los Seis).' },
-      { id: 'RA4', text: 'Dominar los conceptos fundamentales del Jazz temprano (1890-1930).' },
-      { id: 'RA5', text: 'Reconocer el estilo interpretativo de pianistas icónicos de la primera mitad del siglo XX.' },
-      { id: 'RA6', text: 'Escribir e identificar escalas modales con precisión.' }
-    ],
-    bibliography: [
-      'Aguilar, M. d. (1989). *Estructuras de la sintaxis musical*.',
-      'Antokoletz, E. (2006). *La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX*.',
-      'Catalán, T. (2012). *Sistema Compositivo Temperado En El Siglo XX*.',
-      'Cormier, S. M. (2010). *Modal Music Composition*.',
-      'Desportes, Y., & Bernaud, A. (1995). *Manual Practico Para El Reconocimiento De Los Estilos Desde Bach A Ravel*.',
-      'Gabis, C. (2006). *Armonía funcional*.',
-      'Graetzer, G. (1980). *La Musica Contemporánea*.',
-      'Lendvai, E. (2003). *Béla Bartok: un análisis de su música*.',
-      'Miller, R. (1996). *Modal Jazz Composition & Harmony Volumen 1*.',
-      'Padilla Rincón, J. C. (2014). *Armonia 1*.',
-      'Persichetti, V. (1985). *Armonía del siglo XX*.',
-      'Ulehla, L. (1994). *Comtemporary Harmony*.',
-      'Vergés, L. (2007). *El lenguaje de la armonía: de los inicios a la actualidad*.'
-    ],
-    scheduleData: scheduleDataI
-  },
-  'MUS4005': {
-    id: 'MUS4005',
-    name: 'Conceptos de Música del Siglo XX y XXI II',
-    code: 'MUS 4005',
-    description: 'Estudia la transición de la tonalidad a la música del siglo XX apoyado en los elementos comunes en toda la música. Comparación entre J.S. Bach y A. Schönberg. Ritmo, metro, textura y timbre. El movimiento nacionalista y sistemas de organización musical (Sistema de ejes), Impresionismo (Debussy). Estructuración de alturas: altura, intervalo, melodía. Herramienta de análisis de música del siglo XX. Introducción al análisis de la música post tonal y elementos de construcción y análisis de líneas estéticas de la música del siglo XX y XXI.',
-    generalObjectives: [
-      "Conocer y dominar las técnicas de elaboración de finales del siglo XIX y primera etapa del siglo XX, en la obra de compositores de las escuelas europeas.",
-      "Realizar análisis de teoría de conjunto (set theory) en la música post tonal para potencializar la escucha y la interpretación en obras de compositores del siglo XX y XXI (Europa, América)."
-    ],
-    learningOutcomes: [
-      { id: 'RA1', text: 'Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así como sus técnicas de elaboración comprendidas en los siglos XX y XXI.' },
-      { id: 'RA2', text: 'Analizar las principales obras del repertorio de los siglos XX al XXI.' },
-      { id: 'RA3', text: 'Elaborar análisis por medio de la teoría de conjunto (set theory).' },
-      { id: 'RA4', text: 'Analizar música de Bela Bartok (microcosmos Vol 5 y 6) como introducción al análisis de teoría de conjunto (set theory).' },
-      { id: 'RA5', text: 'Reconocer segmentación musical, construcción musical (composición) a partir del set theory dentro de alguna forma tradicional.' },
-      { id: 'RA6', text: 'Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así asus técnicas de elaboración comprendidas a finales de siglo XIX y primera etapa del siglo XX.' },
-      { id: 'RA7', text: 'Elaborar análisis interpretativo teniendo en cuenta los conceptos y materiales desarrollados.' },
-      { id: 'RA8', text: 'Reconocer características interpretativas de pianistas de la segunda mitad del siglo XX hasta 1980: Thelonius Monk, Bud Powell, Oscar Peterson, Erroll Garner, Lennie Tristano, Bill Evans, Clare Fischer, Jimmy Rowles, Cecil Taylor, Chick Corea, Keith Jarrett, Richie Beirach.' }
-    ],
-    bibliography: [
-      'Aguilar, M. d. (1989). *Estructuras de la sintaxis musical*.',
-      'Antokoletz, E. (2006). *La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX*.',
-      'Brouwer, L. (1972). *Síntesis De La Armonía Contemporánea*.',
-      'Catalán, T., & Fernández Vidal, C. (2012). *Musica No Tonal. Las Propuestas de Julien Falk y Ernst Krenek*.',
-      'Catalán, T. (2012). *Sistema Compositivo Temperado En El Siglo XX*.',
-      'Forte, A. (1973). *The structure of atonal music*.',
-      'Gerou, T., & Lusk, L. (1996). *Essential Dictionary Of Music Notation*.',
-      'Gould, E. (2011). *Behind Bars*.',
-      'Grabner, H. (2001). *Teoría General De La Musica*.',
-      'Heussenstamm, G. (1987). *The Norton Manual Of Music Notation*.',
-      'Karkoschka, E. (1972). *Notation in the New Music*.',
-      'Lester, J. (2005). *Enfoques analíticos de la música del siglo XX*.',
-      'Read, G. (1979). *Music Notation. A Manual Of Modern Practice*.',
-      'Risatti, H. (1976). *New Music Vocabulary*.',
-      'Roig-Francolí, M. A. (2008). *Understanding Post-Tonal Music*.',
-      'Stone, K. (1980). *Music Notation In The Twentieth Century*.',
-      'Straus, J. N. (2004). *Introduction to Post-Tonal Theory (3rd Edition)*.',
-      'Ulehla, L. (1994). *Comtemporary Harmony*.',
-      'Villa Rojo, J. (2003). *Notacion Y Grafia Musical En El Siglo XX*.'
-    ],
-    scheduleData: scheduleDataII
-  }
-};
+        /* Modal specific styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.2), 0 8px 15px -5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
 
+        /* Collapsible section styles */
+        .collapsible-header {
+            @apply bg-blue-500 text-white p-3 rounded-lg cursor-pointer flex justify-between items-center mt-6 shadow-md;
+        }
+        .collapsible-header span {
+            transition: transform 0.3s ease-in-out;
+        }
+        .collapsible-header.expanded span {
+            transform: rotate(180deg);
+        }
+        .collapsible-content {
+            @apply p-4 bg-white rounded-lg border border-gray-200 mt-2;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+        .collapsible-content.show {
+            max-height: 2000px; /* Increased for more content */
+            transition: max-height 0.5s ease-in;
+        }
 
-// Componente para mostrar los detalles de una semana del cronograma
-const WeekDetail = ({ weekData }) => (
-  <div className="p-6 bg-white rounded-xl shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.005] border border-gray-100">
-    <h3 className="text-3xl font-extrabold text-blue-800 mb-4 flex items-center">
-      <Calendar className="mr-3 text-blue-600" size={32} /> Semana {weekData.week}: {weekData.title}
-    </h3>
+        /* Tonnetz visualization specific styles */
+        .tonnetz-node-circle { /* Renamed from .tonnetz-node to avoid conflict */
+            transition: fill 0.2s ease-in-out, stroke 0.2s ease-in-out;
+        }
+        .tonnetz-node-circle.active {
+            fill: #3b82f6;
+            stroke: #1d4ed8;
+        }
+        .tonnetz-node-text {
+            transition: fill 0.2s ease-in-out;
+        }
+        .tonnetz-node-text.active {
+            fill: white;
+            font-weight: bold;
+        }
+        .tonnetz-triad-outline {
+            transition: stroke 0.2s ease-in-out;
+        }
+        .tonnetz-triad-outline.active {
+            stroke: #3b82f6;
+            stroke-width: 3;
+        }
+        .tonnetz-triad-fill {
+            transition: fill 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center mb-6 text-blue-700">Explorador de Teoría Neo-Riemanniana</h1>
+        <p class="text-gray-700 mb-6 text-center">
+            Bienvenido a este entorno interactivo para explorar las operaciones de la Teoría Neo-Riemanniana.
+            Selecciona un acorde inicial y aplica las operaciones para ver cómo transforman las tríadas y cómo se relacionan en el espacio tonal cromático.
+        </p>
 
-    <div className="space-y-6">
-      <div>
-        <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
-          <Target className="mr-2 text-green-500" size={20} /> Objetivos Clave
-        </h4>
-        <ul className="list-disc list-inside text-gray-600 space-y-1">
-          {weekData.objectives.map((obj, i) => (
-            <li key={i} className="flex items-start">
-              <CheckCircle className="text-green-400 mr-2 mt-1 flex-shrink-0" size={16} />
-              <span>{obj}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+        <div class="flex flex-col md:flex-row gap-6">
+            <div class="md:w-1/2">
+                <div class="mb-4 p-4 bg-gray-50 rounded-lg shadow-inner">
+                    <label for="startChord" class="block text-gray-700 text-sm font-bold mb-2">Selecciona un acorde inicial:</label>
+                    <select id="startChord" class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent">
+                        <!-- Options will be populated by JS -->
+                    </select>
+                    <button id="resetButton" class="btn btn-primary w-full mt-3">Reiniciar</button>
+                </div>
 
-      <div>
-        <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
-          <Activity className="mr-2 text-purple-500" size={20} /> Actividades en Clase
-        </h4>
-        <ul className="list-disc list-inside text-gray-600 space-y-1">
-          {weekData.activities.map((act, i) => (
-            <li key={i} className="flex items-start">
-              <Lightbulb className="text-purple-400 mr-2 mt-1 flex-shrink-0" size={16} />
-              <span>{act}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+                <div class="chord-display">
+                    <h2 class="text-xl font-bold mb-2 text-blue-800">Acorde Actual: <span id="currentChordName">C Mayor</span></h2>
+                    <p class="text-lg text-gray-700">Notas: <span id="currentChordNotes">C, E, G</span></p>
+                </div>
 
-      <div>
-        <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
-          <ClipboardList className="mr-2 text-orange-500" size={20} /> Desafío Independiente
-        </h4>
-        <ul className="list-disc list-inside text-gray-600 space-y-1">
-          {weekData.independentWork.map((work, i) => (
-            <li key={i} className="flex items-start">
-              <BookOpen className="text-orange-400 mr-2 mt-1 flex-shrink-0" size={16} />
-              <span>{work}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+                <div id="operationsBox" class="mb-4 p-4 bg-blue-50 rounded-lg shadow-inner border border-blue-100"> <!-- Colored box for operations -->
+                    <h3 class="text-lg font-semibold mb-3 text-gray-800">Operaciones:</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <button id="opL" class="btn btn-secondary" data-op="L">L (Leittonechel)</button>
+                        <button id="opP" class="btn btn-secondary" data-op="P">P (Parallel)</button>
+                        <button id="opR" class="btn btn-secondary" data-op="R">R (Relative)</button>
+                        <button id="opN" class="btn btn-secondary" data-op="N">N (Next Related)</button>
+                        <button id="opH" class="btn btn-secondary" data-op="H">H (Hexatonic Pole)</button>
+                        <button id="opS" class="btn btn-secondary" data-op="S">S (Slide)</button>
+                    </div>
+                </div>
 
-      {weekData.repertoire && weekData.repertoire.length > 0 && weekData.repertoire[0] !== "N/A" && (
-        <div>
-          <h4 className="text-xl font-semibold text-gray-700 mb-2 flex items-center">
-            <Music className="mr-2 text-red-500" size={20} /> Repertorio Sugerido
-          </h4>
-          <ul className="list-disc list-inside text-gray-600 space-y-1">
-            {weekData.repertoire.map((rep, i) => (
-              <li key={i} className="flex items-start">
-                <Music className="text-red-400 mr-2 mt-1 flex-shrink-0" size={16} />
-                <span>{rep}</span>
-              </li>
-            ))}
-          </ul>
+                <div class="explanation-box">
+                    <h3 class="text-lg font-semibold mb-2 text-green-800">Explicación de la Operación:</h3>
+                    <p id="operationExplanation" class="text-gray-800">Selecciona una operación para ver su descripción.</p>
+                </div>
+
+                <div class="p-4 bg-gray-50 rounded-lg shadow-inner">
+                    <h3 class="text-lg font-semibold mb-3 text-gray-800">Historial de Transformaciones:</h3>
+                    <div id="historyLog" class="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-2 bg-white">
+                        <!-- History items will be added here -->
+                    </div>
+                </div>
+
+                <!-- New UI Section for Set Relationships -->
+                <div class="p-4 bg-gray-50 rounded-lg shadow-inner mt-6">
+                    <h3 class="text-lg font-semibold mb-3 text-gray-800">Relación entre Conjuntos:</h3>
+                    <div id="setRelationships" class="bg-white p-3 rounded-lg border border-gray-200">
+                        <p class="mb-2"><strong class="text-blue-700">Ciclo Hexatónico Actual:</strong> <span id="currentHexatonicCycle"></span></p>
+                        <div id="hexatonicCycleMembers" class="flex flex-wrap gap-2 text-sm"></div>
+                        <p class="mt-4 mb-2"><strong class="text-green-700">Región de Weitzmann Actual:</strong> <span id="currentWeitzmannRegion"></span></p>
+                        <div id="weitzmannRegionMembers" class="flex flex-wrap gap-2 text-sm"></div>
+                        <p class="mt-4 mb-2"><strong class="text-purple-700">Acordes Compartidos:</strong></p>
+                        <div id="sharedChords" class="flex flex-wrap gap-2 text-sm"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Container for both visualizations -->
+            <div class="md:w-1/2 flex flex-col md:flex-row gap-6"> 
+                <!-- Hexatonic Cycle Visualization -->
+                <div class="flex-1 p-4 flex flex-col items-center justify-center bg-white rounded-lg shadow-inner border border-blue-100 h-[400px]">
+                    <h3 class="text-lg font-semibold mb-3 text-gray-800">Visualización (Ciclo Hexatónico):</h3>
+                    <div id="hexatonicCircle" class="circle-container w-full h-full">
+                        <svg width="100%" height="100%" viewBox="0 0 300 300">
+                            <defs>
+                                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" />
+                                </marker>
+                            </defs>
+                            <!-- Nodes will be added dynamically -->
+                        </svg>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2 text-center">
+                        Esta visualización muestra un ciclo hexatónico. El acorde activo se resaltará.
+                        Las operaciones R, N y S pueden llevarte a un ciclo diferente.
+                    </p>
+                </div>
+
+                <!-- Dynamic Tonnetz Visualization Section -->
+                <div class="flex-1 p-4 bg-white rounded-lg shadow-inner border border-blue-100 flex flex-col items-center justify-center h-[400px]">
+                    <h3 class="text-lg font-semibold mb-3 text-gray-800 text-center">Visualización Dinámica del Tonnetz</h3>
+                    <div id="tonnetzVisualization" class="w-full h-full border border-gray-200 rounded-lg bg-white flex justify-center items-center">
+                        <!-- SVG Tonnetz will be drawn here dynamically -->
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2 text-center">
+                        Esta es una representación dinámica de un segmento del Tonnetz.
+                        Las notas del acorde actual se resaltarán en azul (mayor) o rojo (menor).
+                    </p>
+                </div>
+            </div>
         </div>
-      )}
+
+
+        <!-- Tonnetz Explanation Section -->
+        <!-- Removed collapsible-header and collapsible-content for Tonnetz Explanation -->
+
+        <p class="text-center text-gray-700 text-sm font-semibold mt-8">
+            Herramienta realizada por Juan Miguel Ríos Redondo
+        </p>
     </div>
-  </div>
-);
 
-// --- Componente Principal Unificado (MainApp) ---
-const App = () => {
-  const [selectedCourseId, setSelectedCourseId] = useState('MUS4000'); // Inicia con Conceptos I
-  const [selectedWeek, setSelectedWeek] = useState(1); // Inicia en la semana 1
-
-  const currentCourse = courses[selectedCourseId];
-  const currentScheduleData = currentCourse.scheduleData;
-  const currentWeekData = currentScheduleData.find(week => week.week === selectedWeek);
-
-  // Reset selectedWeek when course changes
-  useEffect(() => {
-    setSelectedWeek(1);
-  }, [selectedCourseId]);
-
-  const handlePrevWeek = () => {
-    setSelectedWeek(prev => Math.max(1, prev - 1));
-  };
-
-  const handleNextWeek = () => {
-    setSelectedWeek(prev => Math.min(currentScheduleData.length, prev + 1));
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 font-sans text-gray-800">
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-      <style>
-        {`
-          body { font-family: 'Inter', sans-serif; }
-        `}
-      </style>
-
-      <div className="container mx-auto py-8">
-        {/* Header del Curso */}
-        <header className="bg-white rounded-2xl shadow-xl p-6 mb-8 text-center border-b-4 border-blue-500">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-blue-900 mb-2 flex items-center justify-center">
-            <GraduationCap className="mr-4 text-blue-600" size={48} />
-            Cronograma: {currentCourse.name}
-          </h1>
-          <p className="text-lg text-gray-600">Profesor: Juan Miguel Ríos Redondo | Email: mrjuan@uninorte.edu.co</p>
-          <div className="mt-4 flex flex-wrap justify-center gap-4 text-gray-700 text-sm">
-            <span className="flex items-center"><Users className="mr-1 text-gray-500" size={16} /> Créditos: 2</span>
-            <span className="flex items-center"><Calendar className="mr-1 text-gray-500" size={16} /> Horas Semanales: 2h Teóricas / 2h Prácticas</span>
-            <span className="flex items-center"><Home className="mr-1 text-gray-500" size={16} /> Modalidad: Presencial</span>
-          </div>
-
-          {/* Selector de Cursos */}
-          <div className="mt-6 flex flex-wrap justify-center gap-4">
-            <button
-              onClick={() => setSelectedCourseId('MUS4000')}
-              className={`px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center
-                ${selectedCourseId === 'MUS4000'
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-700 hover:bg-blue-100'
-                }`}
-            >
-              <SwatchBook className="mr-2" size={20} /> Conceptos I
-            </button>
-            <button
-              onClick={() => setSelectedCourseId('MUS4005')}
-              className={`px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center
-                ${selectedCourseId === 'MUS4005'
-                  ? 'bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-700 hover:bg-purple-100'
-                }`}
-            >
-              <SwatchBook className="mr-2" size={20} /> Conceptos II
-            </button>
-          </div>
-        </header>
-
-        {/* Sección de Descripción y Objetivos */}
-        <section className="bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-purple-500">
-          <h2 className="text-3xl font-bold text-purple-800 mb-4 flex items-center">
-            <BookOpen className="mr-3 text-purple-600" size={30} /> Descripción General del Curso
-          </h2>
-          <p className="text-gray-700 leading-relaxed mb-6" dangerouslySetInnerHTML={{ __html: currentCourse.description }} />
-
-          <h2 className="text-3xl font-bold text-green-800 mb-4 flex items-center">
-            <Target className="mr-3 text-green-600" size={30} /> Objetivos del Curso
-          </h2>
-          <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
-            {currentCourse.generalObjectives.map((obj, i) => <li key={i}>{obj}</li>)}
-          </ul>
-        </section>
-
-        {/* Resultados de Aprendizaje y Evaluación */}
-        <section className="bg-white rounded-2xl shadow-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-r-4 border-red-500">
-          <div>
-            <h2 className="text-3xl font-bold text-red-800 mb-4 flex items-center">
-              <Award className="mr-3 text-red-600" size={30} /> Resultados de Aprendizaje Clave
-            </h2>
-            <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
-              {currentCourse.learningOutcomes.map((ra) => (
-                <li key={ra.id}><strong>{ra.id}:</strong> {ra.text}</li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold text-indigo-800 mb-4 flex items-center">
-              <ClipboardList className="mr-3 text-indigo-600" size={30} /> Sistema de Evaluación
-            </h2>
-            <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
-              <li>**Examen Parcial I:** 25% (Cubre Semanas 1-5)</li>
-              <li>**Examen Parcial II:** 25% (Cubre Semanas 7-11)</li>
-              <li>**Examen Parcial III (Final):** 25% (Evaluación global del curso)</li>
-              <li>**Materiales (Trabajos, Tareas, Ejercicios):** 15%</li>
-              <li>**Participación (Clase, Lecturas):** 10%</li>
-              <li className="font-bold mt-2">**TOTAL: 100%**</li>
-              <li className="text-red-600 font-semibold mt-4 flex items-start">
-                <CheckCircle className="text-red-500 mr-2 mt-1 flex-shrink-0" size={16} />
-                **Importante:** La inasistencia a más del 25% de las clases (más de 8 horas o 4 faltas) resultará en la pérdida del derecho a presentar el examen parcial final.
-              </li>
-            </ul>
-          </div>
-        </section>
-
-        {/* Navegación y Contenido de Semanas */}
-        <section className="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500">
-          <h2 className="text-3xl font-bold text-blue-800 mb-6 text-center flex items-center justify-center">
-            <Calendar className="mr-3 text-blue-600" size={30} /> Cronograma Semanal
-          </h2>
-
-          {/* Controles de Navegación */}
-          <div className="flex justify-center items-center mb-8 space-x-4">
-            <button
-              onClick={handlePrevWeek}
-              disabled={selectedWeek === 1}
-              className="p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
-              aria-label="Semana anterior"
-            >
-              <ChevronLeft size={24} />
-            </button>
-            <span className="text-2xl font-semibold text-blue-800">
-              Semana {selectedWeek} de {currentScheduleData.length}
-            </span>
-            <button
-              onClick={handleNextWeek}
-              disabled={selectedWeek === currentScheduleData.length}
-              className="p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
-              aria-label="Semana siguiente"
-            >
-              <ChevronRight size={24} />
-            </button>
-          </div>
-
-          {/* Selector de Semanas (para pantallas más grandes) */}
-          <div className="hidden md:flex flex-wrap justify-center gap-2 mb-8">
-            {currentScheduleData.map((week) => (
-              <button
-                key={week.week}
-                onClick={() => setSelectedWeek(week.week)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105
-                  ${selectedWeek === week.week
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
-                  }`}
-              >
-                Semana {week.week}
-              </button>
-            ))}
-          </div>
-
-          {/* Detalles de la Semana Actual */}
-          {currentWeekData && <WeekDetail weekData={currentWeekData} />}
-        </section>
-
-        {/* Sección de Bibliografía */}
-        <section className="bg-white rounded-2xl shadow-xl p-6 mt-8 border-b-4 border-green-500">
-          <h2 className="text-3xl font-bold text-green-800 mb-4 flex items-center">
-            <BookOpen className="mr-3 text-green-600" size={30} /> Bibliografía Recomendada
-          </h2>
-          <ul className="list-disc list-inside text-gray-700 leading-relaxed space-y-2">
-            {currentCourse.bibliography.map((item, i) => <li key={i} dangerouslySetInnerHTML={{ __html: item }} />)}
-          </ul>
-        </section>
-      </div>
-
-      {/* Footer */}
-      <footer className="text-center text-gray-500 text-sm py-4">
-        <p>&copy; 2025 Aplicación de Gestión Musical. Todos los derechos reservados.</p>
-      </footer>
+    <!-- Modal for author information -->
+    <div id="authorModal" class="modal-overlay">
+        <div class="modal-content">
+            <p class="text-gray-800 text-lg">Esta herramienta fue realizada por:</p>
+            <p class="text-blue-600 text-2xl font-bold mt-2">Juan Miguel Ríos Redondo</p>
+        </div>
     </div>
-  );
-};
 
-export default App;
+    <script>
+        // Flag to ensure the modal only shows once per page load
+        let hasModalBeenShown = false;
+
+        // Mapping from pitch class number to note name (using sharps as primary)
+        const pitchClasses = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"]; // Using Unicode sharps
+        
+        // Mapping from note name to pitch class number (handles both sharps and flats)
+        const noteToPitchClass = {
+            "C": 0, "C♯": 1, "D♭": 1, "D": 2, "D♯": 3, "E♭": 3, "E": 4, "F": 5, "F♯": 6, "G♭": 6, "G": 7, "G♯": 8, "A♭": 8, "A": 9, "A♯": 10, "B♭": 10, "B": 11
+        };
+
+        // Define a canonical spelling for each pitch class (prefer sharps by default)
+        const canonicalSpelling = {
+            0: "C", 1: "C♯", 2: "D", 3: "D♯", 4: "E", 5: "F",
+            6: "F♯", 7: "G", 8: "G♯", 9: "A", 10: "A♯", 11: "B"
+        };
+
+        // Specific pitch class mapping for Tonnetz display notes (including enharmonic spellings as they appear in the image)
+        const tonnetzNoteToPc = {
+            "C": 0, "C♯": 1, "D♭": 1, "D": 2, "D♯": 3, "E♭": 3, "E": 4, "E♯": 5, "F": 5, "F♯": 6, "G♭": 6, "G": 7, "G♯": 8, "A♭": 8, "A": 9, "A♯": 10, "B♭": 10, "B": 11, "B♯": 0, "C♭": 11, "F♭": 4, "Gx": 9, "Ax": 11
+        };
+
+        // Function to normalize a pitch class (keep it within 0-11)
+        function normalizePitch(pc) {
+            return (pc % 12 + 12) % 12;
+        }
+
+        // Triad class
+        class Triad {
+            constructor(root, type) {
+                this.root = root; // Note name (e.g., "C", "C#", "Db")
+                this.type = type; // "major" or "minor"
+                this.pitchClasses = this.calculatePitchClasses();
+                this.name = `${root} ${type === 'major' ? 'Mayor' : 'menor'}`;
+            }
+
+            calculatePitchClasses() {
+                const rootPc = noteToPitchClass[this.root];
+                let thirdPc, fifthPc;
+
+                if (this.type === "major") {
+                    thirdPc = normalizePitch(rootPc + 4); // Major third
+                    fifthPc = normalizePitch(rootPc + 7); // Perfect fifth
+                } else { // minor
+                    thirdPc = normalizePitch(rootPc + 3); // Minor third
+                    fifthPc = normalizePitch(rootPc + 7); // Perfect fifth
+                }
+                return [rootPc, thirdPc, fifthPc];
+            }
+
+            getNotes() {
+                const notes = [];
+                
+                // Root note (always use the triad's root name as is)
+                notes.push(this.root);
+
+                const thirdPc = this.pitchClasses[1];
+                const fifthPc = this.pitchClasses[2];
+
+                // Helper to get the correct enharmonic spelling based on the root of the triad
+                const getNoteSpelling = (pc) => {
+                    // Special cases for C# Major (E#) and F# Major (B#)
+                    if (this.root === "C♯" && this.type === "major" && pc === 5) return "E♯"; // F -> E#
+                    if (this.root === "F♯" && this.type === "major" && pc === 0) return "B♯"; // C -> B#
+
+                    // Determine if we should generally prefer flat spellings for the internal notes
+                    // This is a heuristic based on the root of the chord and common musical practice
+                    const preferFlats = ["D♭", "E♭", "G♭", "A♭", "B♭"].includes(this.root) || // If root is explicitly flat
+                                        (this.root === "F") || // F major/minor often use Bb
+                                        (this.root === "C" && this.type === "minor") || // Cm uses Eb
+                                        (this.root === "G" && this.type === "minor"); // Gm uses Bb
+
+                    // Specific checks for common flat notes based on pitch class and context
+                    if (pc === 11 && preferFlats) return "C♭"; // B -> Cb (e.g., in Ab minor)
+                    if (pc === 4 && preferFlats) return "F♭";  // E -> Fb (e.g., in Db major)
+                    if (pc === 1 && preferFlats) return "D♭";
+                    if (pc === 3 && preferFlats) return "E♭";
+                    if (pc === 6 && preferFlats) return "G♭";
+                    if (pc === 8 && preferFlats) return "A♭";
+                    if (pc === 10 && preferFlats) return "B♭";
+
+                    // Otherwise, use canonical (sharp/natural) spelling
+                    return canonicalSpelling[pc];
+                };
+
+                notes.push(getNoteSpelling(thirdPc)); // Third
+                notes.push(getNoteSpelling(fifthPc)); // Fifth
+
+                return notes;
+            }
+
+            // Checks if two triads are the same (same root and type)
+            isEqual(otherTriad) {
+                return this.root === otherTriad.root && this.type === otherTriad.type;
+            }
+
+            // Checks if two triads have the same pitch classes (enharmonic equivalence)
+            hasSamePitchClasses(otherTriad) {
+                const sortedThis = [...this.pitchClasses].sort();
+                const sortedOther = [...otherTriad.pitchClasses].sort();
+                return sortedThis.every((pc, i) => pc === sortedOther[i]);
+            }
+        }
+
+        // Define all 12 unique root names to create all 24 triads
+        const allPossibleRootNames = ["C", "C♯", "D♭", "D", "D♯", "E♭", "E", "F", "F♯", "G♭", "G", "G♯", "A♭", "A", "A♯", "B♭", "B"];
+
+        // All possible major and minor triads (24 total) generated from allPossibleRootNames
+        const allTriads = [];
+        allPossibleRootNames.forEach(root => {
+            if (noteToPitchClass[root] !== undefined) {
+                allTriads.push(new Triad(root, "major"));
+                allTriads.push(new Triad(root, "minor")); 
+            }
+        });
+
+        // Helper to get a Triad object by name
+        function getTriadByName(name) {
+            return allTriads.find(t => t.name === name);
+        }
+
+        // --- Neo-Riemannian Operations ---
+        function opL(triad) {
+            const [r, t, f] = triad.pitchClasses;
+            let newPcs, newType;
+            if (triad.type === "major") {
+                newPcs = [t, f, normalizePitch(r + 11)];
+                newType = "minor";
+            } else {
+                newPcs = [normalizePitch(f + 1), r, t];
+                newType = "major";
+            }
+            return findTriadByPitchClasses(newPcs, newType);
+        }
+
+        function opP(triad) {
+            const [r, t, f] = triad.pitchClasses;
+            let newPcs, newType;
+            if (triad.type === "major") {
+                newPcs = [r, normalizePitch(t - 1), f];
+                newType = "minor";
+            } else {
+                newPcs = [r, normalizePitch(t + 1), f];
+                newType = "major";
+            }
+            return findTriadByPitchClasses(newPcs, newType);
+        }
+
+        function opR(triad) {
+            const [r, t, f] = triad.pitchClasses;
+            let newPcs, newType;
+            if (triad.type === "major") {
+                newPcs = [normalizePitch(r + 9), r, t];
+                newType = "minor";
+            } else {
+                newPcs = [normalizePitch(r + 3), f, normalizePitch(t + 7)];
+                newType = "major";
+            }
+            return findTriadByPitchClasses(newPcs, newType);
+        }
+
+        function opN(triad) {
+            const [r, t, f] = triad.pitchClasses;
+            let newPcs, newType;
+            if (triad.type === "major") {
+                newPcs = [normalizePitch(r + 5), normalizePitch(t + 4), r];
+                newType = "minor";
+            } else {
+                newPcs = [f, normalizePitch(r + 2), normalizePitch(t + 8)];
+                newType = "major";
+            }
+            return findTriadByPitchClasses(newPcs, newType);
+        }
+
+        function opH(triad) {
+            let result = opP(triad);
+            result = opL(result);
+            result = opP(result);
+            return result;
+        }
+
+        function opS(triad) {
+            const [r, t, f] = triad.pitchClasses;
+            let newPcs, newType;
+            if (triad.type === "major") {
+                newPcs = [normalizePitch(r + 1), t, normalizePitch(f + 1)];
+                newType = "minor";
+            } else {
+                newPcs = [normalizePitch(r - 1), t, normalizePitch(f - 1)];
+                newType = "major";
+            }
+            return findTriadByPitchClasses(newPcs, newType);
+        }
+
+
+        // Corrected Pre-defined Hexatonic Cycles (dynamically generated for accuracy)
+        const hexatonicCycles = [
+            { name: "Ciclo I (C/E/G♯)", members: [] },
+            { name: "Ciclo II (C♯/F/A)", members: [] },
+            { name: "Ciclo III (D/F♯/B♭)", members: [] },
+            { name: "Ciclo IV (D♯/G/B)", members: [] }
+        ];
+
+        function generateAndPopulateHexatonicCycle(startMajorTriad, cycleIndex) {
+            const cycle = [];
+            let current = startMajorTriad;
+            for (let i = 0; i < 6; i++) {
+                cycle.push(current);
+                if (i % 2 === 0) { // Apply L
+                    current = opL(current);
+                } else { // Apply P
+                    current = opP(current);
+                }
+            }
+            hexatonicCycles[cycleIndex].members = cycle.filter(Boolean);
+        }
+
+        // Populate hexatonic cycles after allTriads and operations are defined
+        // Ensure these starting triads exist in allTriads.
+        generateAndPopulateHexatonicCycle(getTriadByName("C Mayor"), 0);
+        generateAndPopulateHexatonicCycle(getTriadByName("C♯ Mayor"), 1);
+        generateAndPopulateHexatonicCycle(getTriadByName("D Mayor"), 2);
+        generateAndPopulateHexatonicCycle(getTriadByName("D♯ Mayor"), 3);
+
+
+        // Pre-defined Weitzmann Regions
+        const weitzmannRegions = [
+            { name: "Región de C-E-G♯", members: [
+                getTriadByName("C Mayor"), getTriadByName("C menor"),
+                getTriadByName("E Mayor"), getTriadByName("E menor"),
+                getTriadByName("G♯ Mayor"), getTriadByName("G♯ menor")
+            ].filter(Boolean)},
+            { name: "Región de C♯-F-A", members: [
+                getTriadByName("C♯ Mayor"), getTriadByName("C♯ menor"),
+                getTriadByName("F Mayor"), getTriadByName("F menor"),
+                getTriadByName("A Mayor"), getTriadByName("A menor")
+            ].filter(Boolean)},
+            { name: "Región de D-F♯-B♭", members: [
+                getTriadByName("D Mayor"), getTriadByName("D menor"),
+                getTriadByName("F♯ Mayor"), getTriadByName("F♯ menor"),
+                getTriadByName("B♭ Mayor"), getTriadByName("B♭ menor") 
+            ].filter(Boolean)},
+            { name: "Región de D♯-G-B", members: [
+                getTriadByName("D♯ Mayor"), getTriadByName("D♯ menor"),
+                getTriadByName("G Mayor"), getTriadByName("G menor"),
+                getTriadByName("B Mayor"), getTriadByName("B menor")
+            ].filter(Boolean)}
+        ];
+
+
+        // Global state
+        let currentTriad;
+        let history = [];
+        let hexatonicCycleChords = []; // Chords for the current hexatonic cycle visualization
+
+        // DOM Elements
+        const startChordSelect = document.getElementById("startChord");
+        const resetButton = document.getElementById("resetButton");
+        const currentChordName = document.getElementById("currentChordName");
+        const currentChordNotes = document.getElementById("currentChordNotes");
+        const operationExplanation = document.getElementById("operationExplanation");
+        const historyLog = document.getElementById("historyLog");
+        const hexatonicCircleSvg = document.querySelector("#hexatonicCircle svg");
+        const operationButtons = document.querySelectorAll('.grid button'); // All operation buttons
+        const operationsBox = document.getElementById('operationsBox'); // The container for operation buttons
+
+        // DOM elements for new Set Relationships section
+        const currentHexatonicCycleSpan = document.getElementById("currentHexatonicCycle");
+        const hexatonicCycleMembersDiv = document.getElementById("hexatonicCycleMembers");
+        const currentWeitzmannRegionSpan = document.getElementById("currentWeitzmannRegion");
+        const weitzmannRegionMembersDiv = document.getElementById("weitzmannRegionMembers");
+        const sharedChordsDiv = document.getElementById("sharedChords");
+        const authorModal = document.getElementById('authorModal'); // Modal element
+
+        // Tonnetz explanation elements
+        const tonnetzHeader = document.getElementById('tonnetzHeader');
+        const tonnetzContent = document.getElementById('tonnetzContent');
+
+        // New Tonnetz visualization elements
+        const tonnetzVisualizerDiv = document.getElementById('tonnetzVisualization'); 
+        const tonnetzSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        tonnetzSvg.setAttribute("width", "100%");
+        tonnetzSvg.setAttribute("height", "100%"); // Make it fill parent
+        tonnetzVisualizerDiv.appendChild(tonnetzSvg);
+
+        // Global coordToNodeMap for quick lookup
+        let coordToNodeMap = new Map();
+
+        // Define spacing constants for the Tonnetz grid based on the image
+        const P5_HORIZONTAL_SPACING = 80; // Horizontal distance for a perfect fifth
+        const THIRD_VERTICAL_SPACING = 45; // Vertical distance for a major/minor third
+        const THIRD_HORIZONTAL_OFFSET = P5_HORIZONTAL_SPACING / 2; // Horizontal offset for thirds
+
+        // Define the Tonnetz nodes with their precise coordinates and note names as in the image
+        // Using Unicode flat and sharp symbols for exact match with the image
+        const tonnetzNodesData = [
+            // Row 1: D# A# E# B# Gx
+            { note: "D♯", pc: tonnetzNoteToPc["D♯"], x: 0, y: 0 },
+            { note: "A♯", pc: tonnetzNoteToPc["A♯"], x: 80, y: 0 },
+            { note: "E♯", pc: tonnetzNoteToPc["E♯"], x: 160, y: 0 },
+            { note: "B♯", pc: tonnetzNoteToPc["B♯"], x: 240, y: 0 },
+            { note: "Gx", pc: tonnetzNoteToPc["Gx"], x: 320, y: 0 },
+
+            // Row 2: B F# C# G# D# A#
+            { note: "B", pc: tonnetzNoteToPc["B"], x: -40, y: 45 },
+            { note: "F♯", pc: tonnetzNoteToPc["F♯"], x: 40, y: 45 },
+            { note: "C♯", pc: tonnetzNoteToPc["C♯"], x: 120, y: 45 },
+            { note: "G♯", pc: tonnetzNoteToPc["G♯"], x: 200, y: 45 },
+            { note: "D♯", pc: tonnetzNoteToPc["D♯"], x: 280, y: 45 },
+            { note: "A♯", pc: tonnetzNoteToPc["A♯"], x: 360, y: 45 },
+
+            // Row 3: D A E B F# C#
+            { note: "D", pc: tonnetzNoteToPc["D"], x: 0, y: 90 },
+            { note: "A", pc: tonnetzNoteToPc["A"], x: 80, y: 90 },
+            { note: "E", pc: tonnetzNoteToPc["E"], x: 160, y: 90 },
+            { note: "B", pc: tonnetzNoteToPc["B"], x: 240, y: 90 },
+            { note: "F♯", pc: tonnetzNoteToPc["F♯"], x: 320, y: 90 },
+            { note: "C♯", pc: tonnetzNoteToPc["C♯"], x: 400, y: 90 },
+
+            // Row 4: Bb F C G D A
+            { note: "B♭", pc: tonnetzNoteToPc["B♭"], x: -40, y: 135 },
+            { note: "F", pc: tonnetzNoteToPc["F"], x: 40, y: 135 },
+            { note: "C", pc: tonnetzNoteToPc["C"], x: 120, y: 135 },
+            { note: "G", pc: tonnetzNoteToPc["G"], x: 200, y: 135 },
+            { note: "D", pc: tonnetzNoteToPc["D"], x: 280, y: 135 },
+            { note: "A", pc: tonnetzNoteToPc["A"], x: 360, y: 135 },
+
+            // Row 5: Db Ab Eb Bb F C
+            { note: "D♭", pc: tonnetzNoteToPc["D♭"], x: 0, y: 180 },
+            { note: "A♭", pc: tonnetzNoteToPc["A♭"], x: 80, y: 180 },
+            { note: "E♭", pc: tonnetzNoteToPc["E♭"], x: 160, y: 180 },
+            { note: "B♭", pc: tonnetzNoteToPc["B♭"], x: 240, y: 180 },
+            { note: "F", pc: tonnetzNoteToPc["F"], x: 320, y: 180 },
+            { note: "C", pc: tonnetzNoteToPc["C"], x: 400, y: 180 },
+
+            // Row 6: Ax Fb Cb Gb Db Ab
+            { note: "Ax", pc: tonnetzNoteToPc["Ax"], x: -40, y: 225 },
+            { note: "F♭", pc: tonnetzNoteToPc["F♭"], x: 40, y: 225 },
+            { note: "C♭", pc: tonnetzNoteToPc["C♭"], x: 120, y: 225 },
+            { note: "G♭", pc: tonnetzNoteToPc["G♭"], x: 200, y: 225 },
+            { note: "D♭", pc: tonnetzNoteToPc["D♭"], x: 280, y: 225 },
+            { note: "A♭", pc: tonnetzNoteToPc["A♭"], x: 360, y: 225 },
+        ];
+
+
+        // Explanations for operations
+        const explanations = {
+            "L": "La operación **L (Leittonechel / Intercambio de Tono Principal)** transforma una tríada mayor en una menor (y viceversa) moviendo una voz por semitono. Por ejemplo, C Mayor (C-E-G) → L E menor (E-G-B).",
+            "P": "La operación **P (Parallel / Paralelo)** transforma una tríada mayor en su paralela menor (y viceversa) manteniendo la tónica y la quinta, y moviendo la tercera un semitono. Por ejemplo, C Mayor (C-E-G) → P C menor (C-E♭-G).",
+            "R": "La operación **R (Relative / Relativo)** transforma una tríada mayor en su relativa menor (o viceversa) moviendo la tónica o la quinta un tono. Por ejemplo, C Mayor (C-E-G) → R A menor (A-C-E).",
+            "N": "La operación **N (Next Related / Próximo Relacionado)** transforma una tríada mayor en una menor (y viceversa) moviendo dos voces por semitono. Por ejemplo, C Mayor (C-E-G) → N F menor (F-A♭-C).",
+            "H": "La operación **H (Hexatonic Pole / Polo Hexatónico)** es una operación compuesta (PLP o LPL) que conecta dos tríadas dentro del mismo ciclo hexatónico que no comparten ninguna nota. Por ejemplo, C Mayor → H A♭ menor (A♭-C♭-E♭).",
+            "S": "La operación **S (Slide / Deslizamiento)** transforma una tríada mayor en una menor (y viceversa) moviendo la tónica y la quinta un semitono en la misma dirección. Por ejemplo, C Mayor (C-E-G) → S C♯ menor (C♯-E-G♯)."
+        };
+
+        // Function to display operation explanation
+        function displayOperationExplanation(opCode) {
+            operationExplanation.innerHTML = explanations[opCode] || "Selecciona una operación para ver su descripción.";
+        }
+
+        // Function to show the author modal
+        function showAuthorModal() {
+            if (!hasModalBeenShown) {
+                authorModal.classList.add('show');
+                setTimeout(() => {
+                    authorModal.classList.remove('show');
+                }, 4000); // Hide after 4 seconds
+                hasModalBeenShown = true; // Set flag to true after showing
+            }
+        }
+
+        // Helper to draw a line in SVG
+        function drawLine(svg, p1, p2, color, strokeWidth = "1") {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", p1.x);
+            line.setAttribute("y1", p1.y);
+            line.setAttribute("x2", p2.x);
+            line.setAttribute("y2", p2.y);
+            line.setAttribute("stroke", color);
+            line.setAttribute("stroke-width", strokeWidth);
+            svg.appendChild(line);
+        }
+
+        function drawFullTonnetz() {
+            tonnetzSvg.innerHTML = ''; // Clear existing content
+
+            // Create a map for quick lookup by coordinates
+            coordToNodeMap = new Map(); // Re-initialize global map
+            tonnetzNodesData.forEach(node => {
+                coordToNodeMap.set(`${node.x},${node.y}`, node);
+            });
+
+            // Draw connections first (lines)
+            tonnetzNodesData.forEach(node => {
+                // Check for P5 right neighbor (horizontal)
+                const p5RightCoord = `${node.x + P5_HORIZONTAL_SPACING},${node.y}`;
+                const p5RightNode = coordToNodeMap.get(p5RightCoord);
+                if (p5RightNode) {
+                    drawLine(tonnetzSvg, node, p5RightNode, "#cbd5e1");
+                }
+
+                // Check for M3 up-right neighbor (diagonal)
+                const m3UpRightCoord = `${node.x + THIRD_HORIZONTAL_OFFSET},${node.y - THIRD_VERTICAL_SPACING}`;
+                const m3UpRightNode = coordToNodeMap.get(m3UpRightCoord);
+                if (m3UpRightNode) {
+                    drawLine(tonnetzSvg, node, m3UpRightNode, "#cbd5e1");
+                }
+
+                // Check for m3 up-left neighbor (diagonal)
+                const m3UpLeftCoord = `${node.x - THIRD_HORIZONTAL_OFFSET},${node.y - THIRD_VERTICAL_SPACING}`;
+                const m3UpLeftNode = coordToNodeMap.get(m3UpLeftCoord);
+                if (m3UpLeftNode) {
+                    drawLine(tonnetzSvg, node, m3UpLeftNode, "#cbd5e1");
+                }
+            });
+
+            // Draw nodes (circles and text) on top of lines
+            tonnetzNodesData.forEach(pos => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", pos.x);
+                circle.setAttribute("cy", pos.y);
+                circle.setAttribute("r", 15);
+                circle.setAttribute("fill", "#e2e8f0");
+                circle.setAttribute("stroke", "#94a3b8");
+                circle.setAttribute("stroke-width", "1");
+                circle.classList.add("tonnetz-node-circle"); // Renamed class
+                circle.dataset.note = pos.note; // Store the exact note name for highlighting
+
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", pos.x);
+                text.setAttribute("y", pos.y + 5);
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("font-size", "10");
+                text.setAttribute("fill", "#475569");
+                text.textContent = pos.note; // Use the exact note name from tonnetzNodesData
+                text.classList.add("tonnetz-node-text");
+                text.dataset.note = pos.note;
+
+                tonnetzSvg.appendChild(circle);
+                tonnetzSvg.appendChild(text);
+            });
+
+            // Update viewBox to fit the generated content
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            tonnetzNodesData.forEach(node => {
+                minX = Math.min(minX, node.x - 15); // Node radius
+                minY = Math.min(minY, node.y - 15);
+                maxX = Math.max(maxX, node.x + 15);
+                maxY = Math.max(maxY, node.y + 15);
+            });
+            const padding = 20; // Extra padding for the viewBox
+            const finalWidth = maxX - minX + 2 * padding;
+            const finalHeight = maxY - minY + 2 * padding;
+            tonnetzSvg.setAttribute("viewBox", `${minX - padding} ${minY - padding} ${finalWidth} ${finalHeight}`);
+        }
+
+
+        // Update highlightTonnetzTriad to use the new tonnetzGrid
+        function highlightTonnetzTriad(triad) {
+            // Remove existing highlights
+            tonnetzSvg.querySelectorAll('.tonnetz-node-circle.active').forEach(node => node.classList.remove('active'));
+            tonnetzSvg.querySelectorAll('.tonnetz-node-text.active').forEach(node => node.classList.remove('active'));
+            tonnetzSvg.querySelectorAll('.tonnetz-triad-fill').forEach(fill => fill.remove()); // Remove dynamic fill
+
+            const triadPcs = triad.pitchClasses; // These are 0-11 pitch classes
+
+            // Highlight nodes that match the triad's pitch classes (reverted to previous behavior)
+            triadPcs.forEach(pc => {
+                // Find all notes in tonnetzNodesData that have this pitch class
+                const matchingTonnetzNodes = tonnetzNodesData.filter(node => node.pc === pc);
+
+                matchingTonnetzNodes.forEach(tonnetzNode => {
+                    tonnetzSvg.querySelectorAll(`.tonnetz-node-circle[data-note="${tonnetzNode.note}"]`).forEach(node => node.classList.add('active'));
+                    tonnetzSvg.querySelectorAll(`.tonnetz-node-text[data-note="${tonnetzNode.note}"]`).forEach(node => node.classList.add('active'));
+                });
+            });
+
+            // Draw and highlight the triad triangle
+            const rootPc = triad.pitchClasses[0];
+            const thirdPc = triad.pitchClasses[1];
+            const fifthPc = triad.pitchClasses[2];
+
+            let foundTriadNodes = [];
+
+            // Iterate through all nodes that match the root's pitch class to find the correct triangle
+            const possibleRootNodes = tonnetzNodesData.filter(node => node.pc === rootPc);
+
+            for (const pRootNode of possibleRootNodes) {
+                let pThirdNode = null;
+                let pFifthNode = null;
+
+                if (triad.type === "major") {
+                    // Expected Major Third position (up-right)
+                    const m3UpRightCoord = `${pRootNode.x + THIRD_HORIZONTAL_OFFSET},${pRootNode.y - THIRD_VERTICAL_SPACING}`;
+                    pThirdNode = coordToNodeMap.get(m3UpRightCoord);
+                    // Expected Perfect Fifth position (right)
+                    const p5RightCoord = `${pRootNode.x + P5_HORIZONTAL_SPACING},${pRootNode.y}`;
+                    pFifthNode = coordToNodeMap.get(p5RightCoord);
+                } else { // minor
+                    // Expected Minor Third position (up-left)
+                    const m3UpLeftCoord = `${pRootNode.x - THIRD_HORIZONTAL_OFFSET},${pRootNode.y - THIRD_VERTICAL_SPACING}`;
+                    pThirdNode = coordToNodeMap.get(m3UpLeftCoord);
+                    // Expected Perfect Fifth position (right)
+                    const p5RightCoord = `${pRootNode.x + P5_HORIZONTAL_SPACING},${pRootNode.y}`;
+                    pFifthNode = coordToNodeMap.get(p5RightCoord);
+                }
+
+                // Check if the found nodes exist and have the correct pitch classes
+                if (pThirdNode && pFifthNode &&
+                    pThirdNode.pc === thirdPc && pFifthNode.pc === fifthPc) {
+                    foundTriadNodes = [pRootNode, pThirdNode, pFifthNode];
+                    break; // Found the correct set of nodes for the triangle
+                }
+            }
+
+            if (foundTriadNodes.length === 3) {
+                const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                // Sort coords by x then y to ensure consistent drawing order for polygon
+                foundTriadNodes.sort((a, b) => {
+                    if (a.x !== b.x) return a.x - b.x;
+                    return a.y - b.y;
+                });
+                polygon.setAttribute("points", `${foundTriadNodes[0].x},${foundTriadNodes[0].y} ${foundTriadNodes[1].x},${foundTriadNodes[1].y} ${foundTriadNodes[2].x},${foundTriadNodes[2].y}`);
+                polygon.setAttribute("fill", triad.type === 'major' ? "rgba(255, 0, 0, 0.4)" : "rgba(0, 0, 255, 0.4)"); // Red for major, blue for minor, slightly more opaque
+                polygon.setAttribute("stroke", triad.type === 'major' ? "red" : "blue");
+                polygon.setAttribute("stroke-width", "3");
+                polygon.classList.add("tonnetz-triad-fill");
+                tonnetzSvg.prepend(polygon); // Add to the beginning so it's behind notes/lines
+            }
+        }
+
+
+        // Populate initial chord options
+        function populateStartChordSelect() {
+            // Define a canonical order for roots in the dropdown
+            const orderedRoots = [
+                "C", "D♭", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"
+            ];
+            
+            // Create a temporary list of triads to populate the dropdown, ensuring no duplicates
+            const dropdownTriads = [];
+            const addedNames = new Set(); // To track names already added
+
+            // Iterate through the ordered roots to ensure consistent dropdown order
+            orderedRoots.forEach(rootName => {
+                // Find major and minor triads for this root
+                const majorTriad = allTriads.find(t => t.root === rootName && t.type === "major");
+                const minorTriad = allTriads.find(t => t.root === rootName && t.type === "minor");
+
+                if (majorTriad && !addedNames.has(majorTriad.name)) {
+                    dropdownTriads.push(majorTriad);
+                    addedNames.add(majorTriad.name);
+                }
+                if (minorTriad && !addedNames.has(minorTriad.name)) {
+                    dropdownTriads.push(minorTriad);
+                    addedNames.add(minorTriad.name);
+                }
+            });
+
+            // Sort the final list for the dropdown
+            const sortedDropdownTriads = [...dropdownTriads].sort((a, b) => {
+                const indexA = orderedRoots.indexOf(a.root);
+                const indexB = orderedRoots.indexOf(b.root);
+
+                if (indexA !== indexB) {
+                    return indexA - indexB;
+                }
+                return a.type.localeCompare(b.type); // Major before minor
+            });
+
+            sortedDropdownTriads.forEach(triad => {
+                const option = document.createElement("option");
+                option.value = triad.name;
+                option.textContent = triad.name;
+                startChordSelect.appendChild(option);
+            });
+            startChordSelect.value = "C Mayor";
+        }
+
+        // Initialize or reset the application state
+        function initializeApp() {
+            try {
+                const selectedTriadName = startChordSelect.value;
+                currentTriad = allTriads.find(t => t.name === selectedTriadName);
+                if (!currentTriad) {
+                    console.error("Error: Initial triad not found for name:", selectedTriadName);
+                    // Fallback to a default if the selected one is not found
+                    currentTriad = getTriadByName("C Mayor");
+                    if (!currentTriad) {
+                        console.error("Critical Error: C Mayor not found. Cannot initialize.");
+                        document.body.innerHTML = "<p style='color: red; text-align: center; margin-top: 50px;'>Error crítico al cargar la aplicación. Por favor, recarga.</p>";
+                        return;
+                    }
+                }
+                history = [];
+                updateUI();
+                updateHexatonicCircleVisualization(currentTriad);
+                displayOperationExplanation(''); // Clear explanation on reset
+                removeActiveOperationHighlight(); // Clear any highlighted operation button
+                removeOperationsBoxHighlight(); // Clear operations box highlight
+                
+                // Only show modal if it hasn't been shown before (first page load)
+                showAuthorModal(); 
+
+            } catch (error) {
+                console.error("Error during application initialization:", error);
+                document.body.innerHTML = "<p style='color: red; text-align: center; margin-top: 50px;'>Ha ocurrido un error al cargar la aplicación. Por favor, inténtalo de nuevo.</p>";
+            }
+        }
+
+        // Update the UI with current triad information
+        function updateUI() {
+            currentChordName.textContent = currentTriad.name;
+            const notes = currentTriad.getNotes();
+            currentChordNotes.innerHTML = `Raíz: <span class="font-bold">${notes[0]}</span>, Tercera: <span class="font-bold">${notes[1]}</span>, Quinta: <span class="font-bold">${notes[2]}</span>`;
+            updateHistoryLog();
+            highlightHexatonicNode(currentTriad);
+            updateSetRelationshipsDisplay();
+            highlightTonnetzTriad(currentTriad); // Call to update the new Tonnetz visualization
+        }
+
+        // Add an entry to the history log
+        function addHistoryEntry(operationName, oldTriad, newTriad) {
+            const entry = {
+                operation: operationName,
+                from: oldTriad.name,
+                to: newTriad.name,
+                timestamp: new Date().toLocaleTimeString()
+            };
+            history.push(entry);
+            historyLog.scrollTop = historyLog.scrollHeight;
+        }
+
+        // Render the history log
+        function updateHistoryLog() {
+            historyLog.innerHTML = "";
+            if (history.length === 0) {
+                historyLog.innerHTML = "<p class='text-gray-500'>No hay transformaciones aún.</p>";
+                return;
+            }
+            history.forEach(entry => {
+                const div = document.createElement("div");
+                div.className = "history-item";
+                div.textContent = `${entry.timestamp}: ${entry.from} --(${entry.operation})--> ${entry.to}`;
+                historyLog.appendChild(div);
+            });
+        }
+
+        // Helper to find a triad by its pitch classes (for operations that might generate new note names)
+        function findTriadByPitchClasses(pcs, type) {
+            const sortedPcs = [...pcs].sort();
+            for (const triad of allTriads) {
+                const sortedTriadPcs = [...triad.pitchClasses].sort();
+                if (triad.type === type && sortedPcs.every((pc, i) => pc === sortedTriadPcs[i])) {
+                    return triad;
+                }
+            }
+            return null;
+        }
+
+        // --- Set Relationship Functions ---
+        function getHexatonicCycleForTriad(triad) {
+            for (const cycle of hexatonicCycles) {
+                if (cycle.members.some(member => member.hasSamePitchClasses(triad) && member.type === triad.type)) {
+                    return cycle;
+                }
+            }
+            return null;
+        }
+
+        function getWeitzmannRegionForTriad(triad) {
+            for (const region of weitzmannRegions) {
+                if (region.members.some(member => member.hasSamePitchClasses(triad) && member.type === triad.type)) {
+                    return region;
+                }
+            }
+            return null;
+        }
+
+        function updateSetRelationshipsDisplay() {
+            const hexCycle = getHexatonicCycleForTriad(currentTriad);
+            const weitzRegion = getWeitzmannRegionForTriad(currentTriad); // Corrected typo here
+
+            if (hexCycle) {
+                currentHexatonicCycleSpan.textContent = hexCycle.name;
+                hexatonicCycleMembersDiv.innerHTML = hexCycle.members.map(t => `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-md">${t.name}</span>`).join('');
+            } else {
+                currentHexatonicCycleSpan.textContent = "No encontrado";
+                hexatonicCycleMembersDiv.innerHTML = "";
+            }
+
+            if (weitzRegion) {
+                currentWeitzmannRegionSpan.textContent = weitzRegion.name;
+                weitzmannRegionMembersDiv.innerHTML = weitzRegion.members.map(t => `<span class="bg-green-100 text-green-800 px-2 py-1 rounded-md">${t.name}</span>`).join('');
+            } else {
+                currentWeitzmannRegionSpan.textContent = "No encontrado";
+                weitzmannRegionMembersDiv.innerHTML = "";
+            }
+
+            if (hexCycle && weitzRegion) {
+                const shared = hexCycle.members.filter(hexMember =>
+                    weitzRegion.members.some(weitzMember => weitzMember.hasSamePitchClasses(hexMember) && weitzMember.type === hexMember.type)
+                );
+                sharedChordsDiv.innerHTML = shared.map(t => `<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-md">${t.name}</span>`).join('');
+            } else {
+                sharedChordsDiv.innerHTML = "<p class='text-gray-500'>No hay conjuntos para comparar.</p>";
+            }
+        }
+
+
+        // --- Hexatonic Cycle Visualization ---
+        function updateHexatonicCircleVisualization(activeTriad) {
+            hexatonicCircleSvg.innerHTML = `<defs>
+                                                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                                    <polygon points="0 0, 10 3.5, 0 7" />
+                                                </marker>
+                                            </defs>`;
+
+            const foundCycle = getHexatonicCycleForTriad(activeTriad);
+
+            if (!foundCycle) {
+                hexatonicCircleSvg.innerHTML = `<text x="50%" y="50%" text-anchor="middle" fill="#64748b" class="text-xs">El acorde actual no está en el ciclo hexatónico visualizado.</text>`;
+                hexatonicCycleChords = [];
+                return;
+            }
+
+            hexatonicCycleChords = foundCycle.members;
+
+            const centerX = 150;
+            const centerY = 150;
+            const radius = 120;
+            const nodeWidth = 60;
+            const nodeHeight = 30;
+
+            hexatonicCycleChords.forEach((triad, index) => {
+                const angle = (index * (360 / hexatonicCycleChords.length) - 90) * Math.PI / 180;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+
+                const node = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+                node.setAttribute("x", x - nodeWidth / 2);
+                node.setAttribute("y", y - nodeHeight / 2);
+                node.setAttribute("width", nodeWidth);
+                node.setAttribute("height", nodeHeight);
+                node.classList.add("chord-node");
+                if (triad.hasSamePitchClasses(activeTriad) && triad.type === activeTriad.type) {
+                    node.classList.add("active");
+                }
+                node.innerHTML = `<div class="w-full h-full flex items-center justify-center">${triad.name}</div>`;
+                hexatonicCircleSvg.appendChild(node);
+
+                node.addEventListener('click', () => {
+                    currentTriad = getTriadByName(triad.name);
+                    history = [];
+                    updateUI();
+                    updateHexatonicCircleVisualization(currentTriad);
+                    displayOperationExplanation('');
+                    removeActiveOperationHighlight();
+                    removeOperationsBoxHighlight();
+                });
+
+                const nextIndex = (index + 1) % hexatonicCycleChords.length;
+                const nextTriad = hexatonicCycleChords[nextIndex];
+
+                const nextAngle = (nextIndex * (360 / hexatonicCycleChords.length) - 90) * Math.PI / 180;
+                const nextX = centerX + radius * Math.cos(nextAngle);
+                const nextY = centerY + radius * Math.sin(nextAngle);
+
+                let isArrowActive = false;
+                if (triad.hasSamePitchClasses(activeTriad) && triad.type === activeTriad.type) {
+                    const expectedNextByL = opL(triad);
+                    const expectedNextByP = opP(triad);
+
+                    if (expectedNextByL && expectedNextByL.hasSamePitchClasses(nextTriad) && expectedNextByL.type === nextTriad.type) {
+                        isArrowActive = true;
+                    } else if (expectedNextByP && expectedNextByP.hasSamePitchClasses(nextTriad) && expectedNextByP.type === nextTriad.type) {
+                        isArrowActive = true;
+                    }
+                }
+
+                drawArrow(hexatonicCircleSvg, x, y, nextX, nextY, nodeWidth / 2, isArrowActive);
+            });
+        }
+
+        function drawArrow(svg, x1, y1, x2, y2, offset, isActive = false) {
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+            const startX = x1 + offset * Math.cos(angle);
+            const startY = y1 + offset * Math.sin(angle);
+            const endX = x2 - offset * Math.cos(angle);
+            const endY = y2 - offset * Math.sin(angle);
+
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", `M ${startX} ${startY} L ${endX} ${endY}`);
+            path.setAttribute("class", `arrow ${isActive ? 'arrow-active' : ''}`);
+            svg.appendChild(path);
+        }
+
+        function highlightHexatonicNode(triadToHighlight) {
+            document.querySelectorAll('.chord-node').forEach(node => {
+                node.classList.remove('active');
+            });
+            const index = hexatonicCycleChords.findIndex(t => t.hasSamePitchClasses(triadToHighlight) && t.type === triadToHighlight.type);
+            if (index !== -1) {
+                const nodeElement = hexatonicCircleSvg.children[index + 1];
+                if (nodeElement) {
+                    nodeElement.classList.add('active');
+                }
+            }
+        }
+
+        // Function to highlight the active operation button
+        function highlightActiveOperation(opCode) {
+            removeActiveOperationHighlight();
+            const button = document.querySelector(`[data-op="${opCode}"]`);
+            if (button) {
+                button.classList.add('active-op-btn');
+            }
+            highlightOperationsBox();
+        }
+
+        // Function to remove all active operation button highlights
+        function removeActiveOperationHighlight() {
+            operationButtons.forEach(button => {
+                button.classList.remove('active-op-btn');
+            });
+        }
+
+        // Function to highlight the operations box
+        function highlightOperationsBox() {
+            operationsBox.classList.add('operations-box-active');
+        }
+
+        // Function to remove operations box highlight
+        function removeOperationsBoxHighlight() {
+            operationsBox.classList.remove('operations-box-active');
+        }
+
+
+        // Event Listeners
+        resetButton.addEventListener("click", initializeApp);
+
+        document.getElementById("opL").addEventListener("click", (event) => {
+            const oldTriad = currentTriad;
+            currentTriad = opL(currentTriad);
+            addHistoryEntry("L", oldTriad, currentTriad);
+            updateUI();
+            displayOperationExplanation("L");
+            updateHexatonicCircleVisualization(currentTriad);
+            highlightActiveOperation(event.target.dataset.op);
+        });
+
+        document.getElementById("opP").addEventListener("click", (event) => {
+            const oldTriad = currentTriad;
+            currentTriad = opP(currentTriad);
+            addHistoryEntry("P", oldTriad, currentTriad);
+            updateUI();
+            displayOperationExplanation("P");
+            updateHexatonicCircleVisualization(currentTriad);
+            highlightActiveOperation(event.target.dataset.op);
+        });
+
+        document.getElementById("opR").addEventListener("click", (event) => {
+            const oldTriad = currentTriad;
+            currentTriad = opR(currentTriad);
+            addHistoryEntry("R", oldTriad, currentTriad);
+            updateUI();
+            displayOperationExplanation("R");
+            updateHexatonicCircleVisualization(currentTriad);
+            highlightActiveOperation(event.target.dataset.op);
+        });
+
+        document.getElementById("opN").addEventListener("click", (event) => {
+            const oldTriad = currentTriad;
+            currentTriad = opN(currentTriad);
+            addHistoryEntry("N", oldTriad, currentTriad);
+            updateUI();
+            displayOperationExplanation("N");
+            updateHexatonicCircleVisualization(currentTriad);
+            highlightActiveOperation(event.target.dataset.op);
+        });
+
+        document.getElementById("opH").addEventListener("click", (event) => {
+            const oldTriad = currentTriad;
+            currentTriad = opH(currentTriad);
+            addHistoryEntry("H", oldTriad, currentTriad);
+            updateUI();
+            displayOperationExplanation("H");
+            updateHexatonicCircleVisualization(currentTriad);
+            highlightActiveOperation(event.target.dataset.op);
+        });
+
+        document.getElementById("opS").addEventListener("click", (event) => {
+            const oldTriad = currentTriad;
+            currentTriad = opS(currentTriad);
+            addHistoryEntry("S", oldTriad, currentTriad);
+            updateUI();
+            displayOperationExplanation("S");
+            updateHexatonicCircleVisualization(currentTriad);
+            highlightActiveOperation(event.target.dataset.op);
+        });
+
+        // Initial setup on page load
+        window.onload = () => {
+            populateStartChordSelect();
+            initializeApp();
+            drawFullTonnetz(); // Draw the new dynamic Tonnetz visualization
+        };
+    </script>
+</body>
+</html>
+
+
