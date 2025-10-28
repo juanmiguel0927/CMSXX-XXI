@@ -92,6 +92,39 @@
     <div id="app-root" class="container mx-auto py-8 px-4">
         <!-- El contenido de la aplicación se construirá aquí por JS -->
     </div>
+    
+    <!-- NUEVO: Contenedor del Modal de Configuración (Oculto por defecto) -->
+    <div id="settings-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden no-print"></div>
+    <div id="settings-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-xl z-50 w-full max-w-lg hidden no-print">
+        
+        <!-- Contenido del Modal -->
+        <div class="p-6 relative">
+            <!-- Título y Botón de Cerrar -->
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <span data-lucide="Settings" class="mr-2 text-blue-600"></span>
+                    Configuración del Semestre
+                </h2>
+                <button id="settings-modal-close" class="p-2 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
+                    <span data-lucide="X"></span>
+                </button>
+            </div>
+            
+            <p class="text-gray-600 mb-6">Ajusta las fechas de inicio del semestre y del receso. Estos cambios se guardarán en tu navegador para futuras visitas.</p>
+
+            <!-- Aquí irán los selectores de fecha (movidos desde el header) -->
+            <div id="date-selector-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Se llenará con JS -->
+            </div>
+            
+            <!-- Botón de Actualizar (movido desde el header) -->
+            <div id="date-button-container" class="mt-6 flex justify-end">
+                <!-- Se llenará con JS -->
+            </div>
+        </div>
+    </div>
+    <!-- FIN Modal -->
+
 
     <script>
         // --- Datos del Cronograma ---
@@ -611,7 +644,7 @@
               "Distinguir las diferencias estilísticas entre ellos."
             ],
             activities: [
-              "Clase magistral: Presentación de los estilos y sus exponentes.",
+              "Clase magistral: Presentación de los estilos y sus exponents.",
               "Audición dirigida: Comparación de obras de Cool Jazz y Hard Bop.",
               "Taller: Análisis de progresiones armónicas en estos estilos."
             ],
@@ -907,10 +940,18 @@
         let selectedCourseId = 'MUS4000';
         let selectedWeek = 1; // Este valor se sobrescribirá al inicio
         let dismissedAlerts = JSON.parse(localStorage.getItem('dismissedAlerts')) || [];
+        
+        // --- Variables de Fecha Globales ---
+        let courseStartDate; // Se seteará en initApp()
+        let recessStartDate; // Se seteará en initApp()
+        let recessEndDate; // Se seteará en initApp()
+        const DEFAULT_START_DATE = '2025-07-28'; // Formato YYYY-MM-DD
+        const DEFAULT_RECESS_START = '2025-10-06';
+        const DEFAULT_RECESS_END = '2025-10-10';
+
 
         // --- CONSTANTES ---
-        // Se usa la fecha real del sistema
-        const TODAY = new Date();
+        const TODAY = new Date(); // Usar la fecha real del sistema
 
 
         // --- Caché de elementos del DOM ---
@@ -919,18 +960,33 @@
             courseTitle: null,
             btnMus4000: null,
             btnMus4005: null,
-            searchBox: null, // NUEVO: Para búsqueda
-            clearSearchButton: null, // NUEVO: Para limpiar búsqueda
+            
+            // Elementos del Modal
+            settingsButton: null, // NUEVO: El icono de 'Settings'
+            settingsModalOverlay: null, // NUEVO
+            settingsModalPanel: null, // NUEVO
+            settingsModalClose: null, // NUEVO
+            dateSelectorContainer: null, // NUEVO: Contenedor *dentro* del modal
+            dateButtonContainer: null, // NUEVO: Contenedor *dentro* del modal
+            
+            // Inputs de fecha (se cachean pero se crean en `buildModalContent`)
+            dateSelectorInput: null,
+            recessStartDateInput: null,
+            recessEndDateInput: null,
+            dateSelectorButton: null,
+            
+            searchBox: null,
+            clearSearchButton: null,
             courseDescription: null,
             courseObjectivesList: null,
             learningOutcomesList: null,
             weekNavLabel: null,
-            weekNavControls: null, // NUEVO: Contenedor de botones prev/next
+            weekNavControls: null,
             prevWeekButton: null,
             nextWeekButton: null,
             weekSelectorContainer: null,
             weekDetailContainer: null,
-            noResultsMessage: null, // NUEVO: Para búsqueda
+            noResultsMessage: null,
             bibliographyList: null,
             importantDatesSection: null
         };
@@ -978,18 +1034,21 @@
                 const parts = cleanStr.split(' ');
                 let day, monthName, year;
 
+                // Asumir el año de la fecha de inicio del curso
+                const startYear = courseStartDate ? courseStartDate.getUTCFullYear() : new Date().getUTCFullYear();
+
                 if (parts.length === 4 && parts[1] === 'de') { // "28 de julio 2025"
                     day = parseInt(parts[0]);
                     monthName = parts[2];
                     year = parseInt(parts[3]);
-                } else if (parts.length === 3 && parts[1] === 'de') { // "06 de octubre" (asume 2025)
+                } else if (parts.length === 3 && parts[1] === 'de') { // "06 de octubre"
                     day = parseInt(parts[0]);
                     monthName = parts[2];
-                    year = 2025;
+                    year = startYear; // Asumir el año actual del curso
                 } else if (parts.length === 5 && parts[1] === 'al') { // "06 al 10 de octubre"
                     day = parseInt(parts[0]);
                     monthName = parts[4];
-                    year = 2025;
+                    year = startYear; // Asumir el año actual del curso
                 } else {
                     return null; // Formato no reconocido
                 }
@@ -1023,17 +1082,17 @@
          * Pre-procesa los arrays del cronograma para añadir rangos de fechas.
          */
         function preprocessScheduleData() {
-            const courseStartDate = new Date('2025-07-28T12:00:00Z'); // Lunes, 28 de Julio 2025
-            const recessStartDate = new Date('2025-10-06T12:00:00Z'); // Semana de receso
-
+            // Usa las variables globales que se setean en initApp() o handleDateUpdate()
             const processArray = (scheduleArray) => {
                 let currentDate = new Date(courseStartDate.valueOf());
                 for (const week of scheduleArray) {
-                    // Si la semana actual comienza en la semana de receso, la saltamos
-                    if (currentDate.getTime() === recessStartDate.getTime()) {
+                    
+                    // Mientras la semana actual caiga DENTRO del rango de receso,
+                    // saltar a la siguiente semana.
+                    while (currentDate.getTime() >= recessStartDate.getTime() && currentDate.getTime() <= recessEndDate.getTime()) {
                         currentDate = addDays(currentDate, 7);
                     }
-                    
+
                     const weekStart = new Date(currentDate.valueOf());
                     const weekEnd = addDays(weekStart, 4); // Asume clases Lun-Vie
                     
@@ -1051,7 +1110,7 @@
         }
         
         /**
-         * NUEVA FUNCIÓN: Encuentra la semana en curso basada en la fecha de HOY.
+         * Encuentra la semana en curso basada en la fecha de HOY.
          * @param {Array} scheduleData - El array de schedule del curso.
          * @returns {number} El número de la semana en curso, o 1 si no está en sesión.
          */
@@ -1102,6 +1161,84 @@
             iconSpan.setAttribute('height', size);
             return iconSpan;
         }
+        
+        // --- NUEVO: Funciones del Modal de Configuración ---
+        
+        /**
+         * Abre el modal de configuración.
+         */
+        function openSettingsModal() {
+            domElements.settingsModalOverlay.style.display = 'block';
+            domElements.settingsModalPanel.style.display = 'block';
+        }
+
+        /**
+         * Cierra el modal de configuración.
+         */
+        function closeSettingsModal() {
+            domElements.settingsModalOverlay.style.display = 'none';
+            domElements.settingsModalPanel.style.display = 'none';
+        }
+        
+        
+        /**
+         * Maneja la actualización de las fechas del semestre.
+         */
+        function handleDateUpdate() {
+            const newStartDate = domElements.dateSelectorInput.value; // 'YYYY-MM-DD'
+            const newRecessStart = domElements.recessStartDateInput.value;
+            const newRecessEnd = domElements.recessEndDateInput.value;
+
+            if (!newStartDate || !newRecessStart || !newRecessEnd) {
+                return; // Evitar si alguna fecha está vacía
+            }
+
+            // 1. Guardar en localStorage
+            localStorage.setItem('courseStartDate', newStartDate);
+            localStorage.setItem('recessStartDate', newRecessStart);
+            localStorage.setItem('recessEndDate', newRecessEnd);
+
+            // 2. Actualizar variables globales
+            courseStartDate = new Date(`${newStartDate}T12:00:00Z`);
+            recessStartDate = new Date(`${newRecessStart}T12:00:00Z`);
+            recessEndDate = new Date(`${newRecessEnd}T12:00:00Z`);
+
+            // 3. Recalcular todos los datos de las semanas
+            preprocessScheduleData();
+
+            // 4. Re-renderizar todo
+            // Recalcular la semana actual basada en las *nuevas* fechas
+            selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData);
+            updateHash(); // Actualizar hash para reflejar la nueva semana "actual"
+            updateCourseView(selectedCourseId, false); // Re-renderizar sin tocar el hash
+            
+            // 5. Re-renderizar las fechas importantes (para que usen el año nuevo)
+            domElements.importantDatesSection.remove(); // Quitar la sección vieja
+            domElements.appRoot.insertBefore(renderImportantDatesSection(), domElements.appRoot.querySelector('#schedule-section')); // Insertar la nueva
+            lucide.createIcons({ nodes: [domElements.importantDatesSection] }); // Renderizar iconos en la nueva sección
+
+            // 6. Mostrar confirmación visual en el botón
+            const button = domElements.dateSelectorButton;
+            button.innerHTML = '<span data-lucide="Check" class="mr-2" width="16" height="16"></span>¡Guardado!';
+            button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            button.classList.add('bg-green-600');
+            button.disabled = true;
+            
+            lucide.createIcons({ nodes: [button] }); // Re-renderizar icono
+
+            // 7. Resetear botón y CERRAR MODAL después de 2 segundos
+            setTimeout(() => {
+                button.innerHTML = '<span data-lucide="Save" class="mr-2" width="16" height="16"></span>Actualizar Fechas';
+                button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                button.classList.remove('bg-green-600');
+                button.disabled = false;
+                lucide.createIcons({ nodes: [button] }); // Re-renderizar icono
+                
+                closeSettingsModal(); // Cerrar el modal
+            }, 2000);
+            
+        }
+
 
         // --- Funciones de Sincronización de URL (Hash) ---
 
@@ -1117,27 +1254,24 @@
          */
         function getStateFromHash() {
             const hash = window.location.hash.slice(1); // Quita el '#'
-            if (!hash) {
-                selectedCourseId = 'MUS4000'; // Predeterminado al curso I
-                // --- CAMBIO AQUÍ ---
-                // Calcular la semana en curso en lugar de usar 1
-                selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData);
-                // --- FIN DEL CAMBIO ---
-                return;
-            }
-
             const params = new URLSearchParams(hash);
             const course = params.get('course');
             const week = parseInt(params.get('week'), 10);
 
+            // Establecer curso (default MUS4000)
             if (course && courses[course]) {
                 selectedCourseId = course;
+            } else {
+                selectedCourseId = 'MUS4000';
             }
-            // Si hay un hash, PERO no especifica la semana, calculamos la actual
+            
+            // Establecer semana
             if (week && week >= 1 && week <= courses[selectedCourseId].scheduleData.length) {
+                // Si el hash INCLUYE una semana, respetarla
                 selectedWeek = week;
             } else {
-                 selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData);
+                // Si el hash NO incluye semana (o es inválida), calcular la actual
+                selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData);
             }
         }
 
@@ -1252,7 +1386,7 @@
         function renderImportantDatesSection() {
             const section = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-orange-500 print-no-shadow print-bg-white print-break-inside-avoid');
             section.id = 'important-dates-section'; // Cachear
-            domElements.importantDatesSection = section;
+            domElements.importantDatesSection = section; // Guardar en caché
 
             const notificationArea = createElement('div', 'mb-6 space-y-2 no-print'); // Ocultar notificaciones al imprimir
             let upcomingEvents = [];
@@ -1607,6 +1741,65 @@
             // 8. Renderizar todos los iconos (ya que actualizamos varias secciones)
             lucide.createIcons();
         }
+        
+        /**
+         * NUEVO: Construye el contenido del modal de configuración.
+         */
+        function buildModalContent(savedStartDate, savedRecessStart, savedRecessEnd) {
+             // Contenedor de inputs
+            const dateSelectorContainer = domElements.dateSelectorContainer;
+            
+            // Columna 1: Inicio Semestre
+            const startDateDiv = createElement('div', 'flex flex-col');
+            const dateLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Inicio Semestre:');
+            dateLabel.htmlFor = 'start-date-input';
+            const dateInput = createElement('input', 'p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full');
+            dateInput.type = 'date';
+            dateInput.id = 'start-date-input';
+            dateInput.value = savedStartDate; // Setear el valor actual
+            startDateDiv.appendChild(dateLabel);
+            startDateDiv.appendChild(dateInput);
+            
+            // Columna 2: Inicio Receso
+            const recessStartDiv = createElement('div', 'flex flex-col');
+            const recessStartLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Inicio Receso:');
+            recessStartLabel.htmlFor = 'recess-start-date-input';
+            const recessStartInput = createElement('input', 'p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full');
+            recessStartInput.type = 'date';
+            recessStartInput.id = 'recess-start-date-input';
+            recessStartInput.value = savedRecessStart; // Setear el valor actual
+            recessStartDiv.appendChild(recessStartLabel);
+            recessStartDiv.appendChild(recessStartInput);
+
+            // Columna 3: Fin Receso (en una nueva fila en móvil)
+            const recessEndDiv = createElement('div', 'flex flex-col md:col-span-2'); // Ocupa 2 columnas en desktop para centrarlo
+            const recessEndLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Fin Receso:');
+            recessEndLabel.htmlFor = 'recess-end-date-input';
+            const recessEndInput = createElement('input', 'p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full');
+            recessEndInput.type = 'date';
+            recessEndInput.id = 'recess-end-date-input';
+            recessEndInput.value = savedRecessEnd; // Setear el valor actual
+            recessEndDiv.appendChild(recessEndLabel);
+            recessEndDiv.appendChild(recessEndInput);
+
+            dateSelectorContainer.appendChild(startDateDiv);
+            dateSelectorContainer.appendChild(recessStartDiv);
+            dateSelectorContainer.appendChild(recessEndDiv);
+
+            // Contenedor de botón
+            const dateButtonContainer = domElements.dateButtonContainer;
+            const dateButton = createElement('button', 'w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors flex items-center justify-center');
+            dateButton.innerHTML = '<span data-lucide="Save" class="mr-2" width="16" height="16"></span>Actualizar Fechas';
+            dateButton.onclick = handleDateUpdate; // Asignar handler
+            dateButtonContainer.appendChild(dateButton);
+
+            // Cachear elementos
+            domElements.dateSelectorInput = dateInput;
+            domElements.recessStartDateInput = recessStartInput;
+            domElements.recessEndDateInput = recessEndInput;
+            domElements.dateSelectorButton = dateButton;
+        }
+
 
         /**
          * Construye el esqueleto de la aplicación una sola vez.
@@ -1618,17 +1811,45 @@
                 return;
             }
 
-            // --- 0. Pre-procesar datos ---
+            // --- 0. Set Initial Date ---
+            // Cargar fechas desde localStorage o usar defaults
+            const savedStartDate = localStorage.getItem('courseStartDate') || DEFAULT_START_DATE;
+            const savedRecessStart = localStorage.getItem('recessStartDate') || DEFAULT_RECESS_START;
+            const savedRecessEnd = localStorage.getItem('recessEndDate') || DEFAULT_RECESS_END;
+            
+            // Setear variables globales (como objetos Date UTC)
+            courseStartDate = new Date(`${savedStartDate}T12:00:00Z`); 
+            recessStartDate = new Date(`${savedRecessStart}T12:00:00Z`);
+            recessEndDate = new Date(`${savedRecessEnd}T12:00:00Z`);
+            
+            // --- 1. Pre-procesar datos ---
+            // Calcular todos los rangos de fechas de las semanas
             preprocessScheduleData();
 
-            // --- 1. Header ---
+            // --- 2. Header ---
             const header = createElement('header', 'relative bg-white rounded-2xl shadow-xl p-6 mb-8 text-center border-b-4 border-blue-500 print-no-shadow print-bg-white');
             
+            // --- Contenedor de Botones de Herramientas (arriba a la derecha) ---
+            const toolsDiv = createElement('div', 'absolute top-6 right-6 flex gap-2 no-print');
+            
+            // Botón de Configuración (NUEVO)
+            const settingsButton = createElement('button', 'p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-blue-100 transition-all');
+            settingsButton.setAttribute('aria-label', 'Configurar semestre');
+            settingsButton.innerHTML = '<span data-lucide="Settings" width="20" height="20"></span>';
+            settingsButton.onclick = openSettingsModal;
+            toolsDiv.appendChild(settingsButton);
+            domElements.settingsButton = settingsButton; // Cachear
+
             // Botón de Imprimir
-            const printButton = createElement('button', 'absolute top-6 right-6 p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-blue-100 transition-all no-print', '<span data-lucide="Printer" width="20" height="20"></span>');
+            const printButton = createElement('button', 'p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-blue-100 transition-all');
             printButton.setAttribute('aria-label', 'Imprimir cronograma');
+            printButton.innerHTML = '<span data-lucide="Printer" width="20" height="20"></span>';
             printButton.onclick = () => window.print();
-            header.appendChild(printButton);
+            toolsDiv.appendChild(printButton);
+            
+            header.appendChild(toolsDiv);
+            // --- FIN Botones de Herramientas ---
+
 
             const h1 = createElement('h1', 'text-4xl sm:text-5xl font-extrabold text-blue-900 mb-2 flex items-center justify-center print-text-black');
             h1.id = 'course-title'; // ID para actualizar
@@ -1647,7 +1868,7 @@
             header.appendChild(headerInfoDiv);
 
             // Selector de Cursos
-            const courseSelectorDiv = createElement('div', 'mt-6 flex flex-wrap justify-center gap-4 no-print');
+            const courseSelectorDiv = createElement('div', 'mt-6 pt-6 border-t border-gray-200 flex flex-wrap justify-center gap-4 no-print');
             const btnMus4000 = createElement('button', `px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center`);
             btnMus4000.appendChild(createIconElement('SwatchBook', 'mr-2', 20));
             btnMus4000.innerHTML += `Conceptos I`;
@@ -1664,9 +1885,9 @@
 
             header.appendChild(courseSelectorDiv);
 
-            // --- NUEVO: Sección de Búsqueda ---
+            // Sección de Búsqueda
             const searchDiv = createElement('div', 'mt-6 relative max-w-lg mx-auto no-print');
-            const searchLabel = createElement('label', 'sr-only', 'Buscar en el cronograma'); // Para A11y
+            const searchLabel = createElement('label', 'sr-only', 'Buscar en el cronograma');
             searchLabel.htmlFor = 'search-box';
             
             const searchIcon = createElement('div', 'absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none');
@@ -1690,11 +1911,10 @@
             searchDiv.appendChild(searchBox);
             searchDiv.appendChild(clearSearchButton);
             header.appendChild(searchDiv);
-            // --- FIN BÚSQUEDA ---
             
             domElements.appRoot.appendChild(header);
 
-            // --- 2. Sección de Descripción y Objetivos ---
+            // --- 3. Sección de Descripción y Objetivos ---
             const descriptionSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-purple-500 print-no-shadow print-bg-white print-break-inside-avoid');
             descriptionSection.id = 'course-description-section';
             const descH2 = createElement('h2', 'text-3xl font-bold text-purple-800 mb-4 flex items-center print-text-black');
@@ -1715,7 +1935,7 @@
 
             domElements.appRoot.appendChild(descriptionSection);
 
-            // --- 3. Resultados de Aprendizaje y Evaluación ---
+            // --- 4. Resultados de Aprendizaje y Evaluación ---
             const raEvalSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-r-4 border-red-500 print-no-shadow print-bg-white print-break-inside-avoid');
             const raDiv = createElement('div');
             const raH2 = createElement('h2', 'text-3xl font-bold text-red-800 mb-4 flex items-center print-text-black');
@@ -1751,11 +1971,11 @@
             
             domElements.appRoot.appendChild(raEvalSection);
 
-            // --- 4. Sección de Fechas Importantes ---
+            // --- 5. Sección de Fechas Importantes ---
             // Esta sección se renderiza con JS para incluir la lógica de alertas
             domElements.appRoot.appendChild(renderImportantDatesSection());
 
-            // --- 5. Navegación y Contenido de Semanas ---
+            // --- 6. Navegación y Contenido de Semanas ---
             const scheduleSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500 print-no-shadow print-bg-white');
             scheduleSection.id = 'schedule-section'; // ID para anclaje
             const scheduleH2 = createElement('h2', 'text-3xl font-bold text-blue-800 mb-6 text-center flex items-center justify-center print-text-black');
@@ -1797,7 +2017,7 @@
             scheduleSection.appendChild(weekSelector);
             domElements.weekSelectorContainer = weekSelector; // Cachear <select>
 
-            // --- NUEVO: Mensaje de No Resultados ---
+            // Mensaje de No Resultados
             const noResultsMessage = createElement('div', 'hidden p-6 text-center text-gray-600 bg-gray-50 rounded-lg no-print');
             noResultsMessage.id = 'no-results-message';
             noResultsMessage.appendChild(createIconElement('SearchX', 'mx-auto text-gray-400 mb-2', 40));
@@ -1805,7 +2025,6 @@
             noResultsMessage.appendChild(createElement('p', 'text-sm', 'Intenta con un término de búsqueda diferente.'));
             scheduleSection.appendChild(noResultsMessage);
             domElements.noResultsMessage = noResultsMessage; // Cachear
-            // --- FIN No Resultados ---
 
             // Detalles de la Semana Actual (Contenedor)
             const weekDetailContainer = createElement('div');
@@ -1815,7 +2034,7 @@
             
             domElements.appRoot.appendChild(scheduleSection);
 
-            // --- 6. Sección de Bibliografía ---
+            // --- 7. Sección de Bibliografía ---
             const bibliographySection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mt-8 border-b-4 border-green-500 print-no-shadow print-bg-white print-break-inside-avoid');
             const biblioH2 = createElement('h2', 'text-3xl font-bold text-green-800 mb-4 flex items-center print-text-black');
             biblioH2.innerHTML = '<span data-lucide="BookOpen" class="mr-3 text-green-600 no-print" width="30" height="30"></span>Bibliografía Recomendada';
@@ -1827,14 +2046,28 @@
 
             domElements.appRoot.appendChild(bibliographySection);
 
-            // --- 7. Footer ---
+            // --- 8. Footer ---
             const footer = createElement('footer', 'text-center text-gray-500 text-sm py-4 print-text-black no-print');
             footer.innerHTML = '<p>© 2025 Juan Miguel Ríos Redondo. Todos los derechos reservados.</p>';
             domElements.appRoot.appendChild(footer);
 
-            // --- 8. Estado Inicial y Event Listeners ---
+            // --- 9. Cachear y construir Modal ---
+            domElements.settingsModalOverlay = document.getElementById('settings-modal-overlay');
+            domElements.settingsModalPanel = document.getElementById('settings-modal-panel');
+            domElements.settingsModalClose = document.getElementById('settings-modal-close');
+            domElements.dateSelectorContainer = document.getElementById('date-selector-container');
+            domElements.dateButtonContainer = document.getElementById('date-button-container');
             
-            // Obtener estado inicial del hash
+            // Construir el contenido del modal (inputs y botón)
+            buildModalContent(savedStartDate, savedRecessStart, savedRecessEnd);
+            
+            // --- 10. Estado Inicial y Event Listeners ---
+            
+            // Listeners para el Modal
+            domElements.settingsModalClose.onclick = closeSettingsModal;
+            domElements.settingsModalOverlay.onclick = closeSettingsModal;
+
+            // Obtener estado inicial del hash (esto setea 'selectedCourseId' y 'selectedWeek')
             getStateFromHash();
             
             // Renderizar el curso y semana iniciales
