@@ -16,42 +16,87 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            /* Scroll suave para la navegación hash */
+            scroll-behavior: smooth;
         }
-        /* Estilos adicionales para la tabla de fechas importantes */
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        /* Estilo para el <select> de semanas */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.25em;
+            padding-right: 3rem; /* Espacio para el icono */
         }
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0; /* gray-200 */
+        /* Oculta el icono 'X' de limpiar en input[type=search] */
+        input[type="search"]::-webkit-search-cancel-button {
+            -webkit-appearance: none;
+            appearance: none;
         }
-        thead th {
-            background-color: #f8fafc; /* gray-50 */
-            font-weight: 600;
-            color: #4a5568; /* gray-700 */
+
+        /* Estilos para Impresión */
+        @media print {
+            body {
+                font-family: 'Inter', sans-serif;
+                background-color: #ffffff;
+            }
+            #app-root {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+            .no-print {
+                display: none !important; /* Oculta todo lo que no queremos imprimir */
+            }
+            .print-only {
+                display: block; /* Muestra elementos solo de impresión */
+            }
+            .print-no-shadow {
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0;
+            }
+            .print-break-after {
+                page-break-after: always;
+            }
+            .print-break-inside-avoid {
+                page-break-inside: avoid;
+            }
+            .print-text-black {
+                color: #000000 !important;
+            }
+            .print-bg-white {
+                background-color: #ffffff !important;
+            }
+
+            /* Asegurar que el contenido del cronograma se muestre */
+            #schedule-section {
+                padding: 0;
+            }
+            #week-detail-container div {
+                padding: 0.5rem;
+                margin-bottom: 1rem;
+                border: 1px solid #ccc;
+            }
+            #course-title, #course-description-section {
+                color: #000;
+            }
         }
-        tbody tr:nth-child(odd) {
-            background-color: #ffffff;
-        }
-        tbody tr:nth-child(even) {
-            background-color: #fbfdff; /* slightly off-white */
-        }
-        tbody tr:hover {
-            background-color: #edf2f7; /* gray-100 */
-        }
+
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800">
 
-    <div id="app-root" class="container mx-auto py-8">
-        <!-- Contenido de la aplicación se renderizará aquí -->
+    <div id="app-root" class="container mx-auto py-8 px-4">
+        <!-- El contenido de la aplicación se construirá aquí por JS -->
     </div>
 
     <script>
         // --- Datos del Cronograma ---
         // Estos datos definen el contenido de cada semana para ambos cursos.
+        // Se añadirán 'dateRange' dinámicamente.
 
         // Datos del cronograma para Conceptos de Música del Siglo XX y XXI I (MUS 4000)
         const scheduleDataI = [
@@ -115,7 +160,7 @@
               "Audición: Escuchar obras de Ravel, prestando atención a la instrumentación."
             ],
             repertoire: [
-              "Maurice Ravel: Miroirs ('Noctuelles', 'Oiseaux tristes', 'Une barque sur l'océan')",
+              "Maurice Ravel: Miroirs ('Noctuelles', 'Oiseaux tristes', 'Une barque sur l'ocean')",
               "Maurice Ravel: Gaspard de la Nuit ('Ondine', 'Le Gibet', 'Scarbo')",
               "Maurice Ravel: Valses nobles et sentimentales"
             ]
@@ -858,11 +903,155 @@
           { event: "Fecha límite registro de notas finales", date: "06 de diciembre 2025" },
         ];
 
-        // --- Variables de estado global (simulando useState de React) ---
+        // --- Variables de estado global ---
         let selectedCourseId = 'MUS4000';
         let selectedWeek = 1;
+        let dismissedAlerts = JSON.parse(localStorage.getItem('dismissedAlerts')) || [];
 
-        // --- Funciones para manipular el DOM y renderizar la interfaz ---
+        // --- CONSTANTES ---
+        // Se usa la fecha real del sistema
+        const TODAY = new Date();
+
+
+        // --- Caché de elementos del DOM ---
+        const domElements = {
+            appRoot: null,
+            courseTitle: null,
+            btnMus4000: null,
+            btnMus4005: null,
+            searchBox: null, // NUEVO: Para búsqueda
+            clearSearchButton: null, // NUEVO: Para limpiar búsqueda
+            courseDescription: null,
+            courseObjectivesList: null,
+            learningOutcomesList: null,
+            weekNavLabel: null,
+            weekNavControls: null, // NUEVO: Contenedor de botones prev/next
+            prevWeekButton: null,
+            nextWeekButton: null,
+            weekSelectorContainer: null,
+            weekDetailContainer: null,
+            noResultsMessage: null, // NUEVO: Para búsqueda
+            bibliographyList: null,
+            importantDatesSection: null
+        };
+
+
+        // --- Funciones de Utilidad de Fechas ---
+
+        /**
+         * Mapa para parsear meses en español
+         */
+        const spanishMonths = {
+            'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3, 'mayo': 4, 'junio': 5,
+            'julio': 6, 'agosto': 7, 'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11
+        };
+
+        /**
+         * Añade días a un objeto Date.
+         * @param {Date} date - La fecha inicial.
+         * @param {number} days - Número de días a añadir.
+         * @returns {Date} La nueva fecha.
+         */
+        function addDays(date, days) {
+            const newDate = new Date(date.valueOf());
+            newDate.setDate(newDate.getDate() + days);
+            return newDate;
+        }
+
+        /**
+         * Formatea una fecha a "DD Mes" (ej. "28 Jul").
+         * @param {Date} date - La fecha a formatear.
+         * @returns {string} La fecha formateada.
+         */
+        function formatDate(date) {
+            return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).replace('.', '');
+        }
+
+        /**
+         * Parsea una cadena de fecha en español (ej. "28 de julio 2025") a un objeto Date en UTC.
+         * @param {string} dateString - La cadena de fecha.
+         * @returns {Date | null} El objeto Date o null si no es válido.
+         */
+        function parseSpanishDate(dateString) {
+            try {
+                let cleanStr = dateString.toLowerCase().replace('del ', '');
+                const parts = cleanStr.split(' ');
+                let day, monthName, year;
+
+                if (parts.length === 4 && parts[1] === 'de') { // "28 de julio 2025"
+                    day = parseInt(parts[0]);
+                    monthName = parts[2];
+                    year = parseInt(parts[3]);
+                } else if (parts.length === 3 && parts[1] === 'de') { // "06 de octubre" (asume 2025)
+                    day = parseInt(parts[0]);
+                    monthName = parts[2];
+                    year = 2025;
+                } else if (parts.length === 5 && parts[1] === 'al') { // "06 al 10 de octubre"
+                    day = parseInt(parts[0]);
+                    monthName = parts[4];
+                    year = 2025;
+                } else {
+                    return null; // Formato no reconocido
+                }
+
+                const month = spanishMonths[monthName];
+                if (month === undefined) return null;
+
+                // Devolvemos la fecha en UTC para evitar problemas de timezone
+                return new Date(Date.UTC(year, month, day, 12)); 
+            } catch (e) {
+                console.error("Error parseando fecha:", dateString, e);
+                return null;
+            }
+        }
+
+        /**
+         * Calcula los días entre dos fechas (ignorando la hora).
+         * @param {Date} date1 - Fecha de inicio (ej. "hoy").
+         * @param {Date} date2 - Fecha de fin (ej. "evento").
+         * @returns {number} Días restantes. Negativo si ya pasó.
+         */
+        function daysUntil(date1, date2) {
+            const msPerDay = 1000 * 60 * 60 * 24;
+            // Usar UTC para evitar problemas de DST
+            const utc1 = Date.UTC(date1.getUTCFullYear(), date1.getUTCMonth(), date1.getUTCDate());
+            const utc2 = Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth(), date2.getUTCDate());
+            return Math.floor((utc2 - utc1) / msPerDay);
+        }
+
+        /**
+         * Pre-procesa los arrays del cronograma para añadir rangos de fechas.
+         */
+        function preprocessScheduleData() {
+            const courseStartDate = new Date('2025-07-28T12:00:00Z'); // Lunes, 28 de Julio 2025
+            const recessStartDate = new Date('2025-10-06T12:00:00Z'); // Semana de receso
+
+            const processArray = (scheduleArray) => {
+                let currentDate = new Date(courseStartDate.valueOf());
+                for (const week of scheduleArray) {
+                    // Si la semana actual comienza en la semana de receso, la saltamos
+                    if (currentDate.getTime() === recessStartDate.getTime()) {
+                        currentDate = addDays(currentDate, 7);
+                    }
+                    
+                    const weekStart = new Date(currentDate.valueOf());
+                    const weekEnd = addDays(weekStart, 4); // Asume clases Lun-Vie
+                    
+                    week.startDate = weekStart; // Guardamos el objeto Date
+                    week.endDate = weekEnd;
+                    week.dateRange = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+                    
+                    // Avanza al siguiente lunes
+                    currentDate = addDays(currentDate, 7);
+                }
+            };
+            
+            processArray(scheduleDataI);
+            processArray(scheduleDataII);
+        }
+
+
+        // --- Funciones de Utilidad de DOM ---
 
         /**
          * Crea un elemento HTML con clases y contenido opcional.
@@ -897,80 +1086,133 @@
             return iconSpan;
         }
 
+        // --- Funciones de Sincronización de URL (Hash) ---
+
+        /**
+         * Actualiza el hash de la URL para reflejar el estado actual.
+         */
+        function updateHash() {
+            window.location.hash = `course=${selectedCourseId}&week=${selectedWeek}`;
+        }
+
+        /**
+         * Obtiene el estado de la URL hash y actualiza las variables globales.
+         */
+        function getStateFromHash() {
+            const hash = window.location.hash.slice(1); // Quita el '#'
+            if (!hash) {
+                selectedCourseId = 'MUS4000';
+                selectedWeek = 1;
+                return;
+            }
+
+            const params = new URLSearchParams(hash);
+            const course = params.get('course');
+            const week = parseInt(params.get('week'), 10);
+
+            if (course && courses[course]) {
+                selectedCourseId = course;
+            }
+            if (week && week >= 1 && week <= courses[selectedCourseId].scheduleData.length) {
+                selectedWeek = week;
+            } else {
+                selectedWeek = 1; // Resetea a la semana 1 si no es válida
+            }
+        }
+
+        /**
+         * Manejador para el evento 'hashchange' (botones de atrás/adelante del navegador).
+         */
+        function handleHashChange() {
+            getStateFromHash();
+            // Llama a updateCourseView pero sin volver a actualizar el hash
+            updateCourseView(selectedCourseId, false);
+        }
+
+
+        // --- Funciones de Renderizado (Componentes) ---
+
         /**
          * Renderiza los detalles de una semana específica.
          * @param {Object} weekData - Objeto con los datos de la semana.
          * @returns {HTMLElement} El elemento div que contiene los detalles de la semana.
          */
         function renderWeekDetail(weekData) {
-            const weekDetailDiv = createElement('div', 'p-6 bg-white rounded-xl shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.005] border border-gray-100');
+            // Contenedor principal de la semana
+            const weekDetailDiv = createElement('div', 'p-6 bg-white rounded-xl shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.005] border border-gray-100 print-no-shadow print-bg-white print-break-inside-avoid');
+            weekDetailDiv.setAttribute('id', `week-${weekData.week}`); // ID para anclaje
 
-            const titleH3 = createElement('h3', 'text-3xl font-extrabold text-blue-800 mb-4 flex items-center');
-            titleH3.appendChild(createIconElement('Calendar', 'mr-3 text-blue-600', 32));
+            // Título de la semana
+            const titleH3 = createElement('h3', 'text-3xl font-extrabold text-blue-800 mb-2 flex items-center print-text-black');
+            titleH3.appendChild(createIconElement('Calendar', 'mr-3 text-blue-600 no-print', 32));
             titleH3.innerHTML += `Semana ${weekData.week}: ${weekData.title}`;
             weekDetailDiv.appendChild(titleH3);
+            
+            // Subtítulo con rango de fechas
+            const dateRangeP = createElement('p', 'text-lg font-semibold text-gray-500 mb-6 ml-12 print-text-black', weekData.dateRange);
+            weekDetailDiv.appendChild(dateRangeP);
 
             const contentDiv = createElement('div', 'space-y-6');
 
-            // Objetivos Clave
+            // --- Sección de Objetivos ---
             const objectivesDiv = createElement('div');
-            const objectivesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center');
-            objectivesH4.appendChild(createIconElement('Target', 'mr-2 text-green-500', 20));
+            const objectivesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black');
+            objectivesH4.appendChild(createIconElement('Target', 'mr-2 text-green-500 no-print', 20));
             objectivesH4.innerHTML += `Objetivos Clave`;
             objectivesDiv.appendChild(objectivesH4);
-            const objectivesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1');
+            const objectivesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black');
             weekData.objectives.forEach(obj => {
                 const li = createElement('li', 'flex items-start');
-                li.appendChild(createIconElement('CheckCircle', 'text-green-400 mr-2 mt-1 flex-shrink-0', 16));
+                li.appendChild(createIconElement('CheckCircle', 'text-green-400 mr-2 mt-1 flex-shrink-0 no-print', 16));
                 li.innerHTML += `<span>${obj}</span>`;
                 objectivesList.appendChild(li);
             });
             objectivesDiv.appendChild(objectivesList);
             contentDiv.appendChild(objectivesDiv);
 
-            // Actividades en Clase
+            // --- Sección de Actividades ---
             const activitiesDiv = createElement('div');
-            const activitiesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center');
-            activitiesH4.appendChild(createIconElement('Activity', 'mr-2 text-purple-500', 20));
+            const activitiesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black');
+            activitiesH4.appendChild(createIconElement('Activity', 'mr-2 text-purple-500 no-print', 20));
             activitiesH4.innerHTML += `Actividades en Clase`;
             activitiesDiv.appendChild(activitiesH4);
-            const activitiesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1');
+            const activitiesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black');
             weekData.activities.forEach(act => {
                 const li = createElement('li', 'flex items-start');
-                li.appendChild(createIconElement('Lightbulb', 'text-purple-400 mr-2 mt-1 flex-shrink-0', 16));
+                li.appendChild(createIconElement('Lightbulb', 'text-purple-400 mr-2 mt-1 flex-shrink-0 no-print', 16));
                 li.innerHTML += `<span>${act}</span>`;
                 activitiesList.appendChild(li);
             });
             activitiesDiv.appendChild(activitiesList);
             contentDiv.appendChild(activitiesDiv);
 
-            // Desafío Independiente
+            // --- Sección de Desafío Independiente ---
             const independentWorkDiv = createElement('div');
-            const independentWorkH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center');
-            independentWorkH4.appendChild(createIconElement('ClipboardList', 'mr-2 text-orange-500', 20));
+            const independentWorkH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black');
+            independentWorkH4.appendChild(createIconElement('ClipboardList', 'mr-2 text-orange-500 no-print', 20));
             independentWorkH4.innerHTML += `Desafío Independiente`;
             independentWorkDiv.appendChild(independentWorkH4);
-            const independentWorkList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1');
+            const independentWorkList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black');
             weekData.independentWork.forEach(work => {
                 const li = createElement('li', 'flex items-start');
-                li.appendChild(createIconElement('BookOpen', 'text-orange-400 mr-2 mt-1 flex-shrink-0', 16));
+                li.appendChild(createIconElement('BookOpen', 'text-orange-400 mr-2 mt-1 flex-shrink-0 no-print', 16));
                 li.innerHTML += `<span>${work}</span>`;
                 independentWorkList.appendChild(li);
             });
             independentWorkDiv.appendChild(independentWorkList);
             contentDiv.appendChild(independentWorkDiv);
 
-            // Repertorio Sugerido
+            // --- Sección de Repertorio ---
             if (weekData.repertoire && weekData.repertoire.length > 0 && weekData.repertoire[0] !== "N/A") {
                 const repertoireDiv = createElement('div');
-                const repertoireH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center');
-                repertoireH4.appendChild(createIconElement('Music', 'mr-2 text-red-500', 20));
+                const repertoireH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black');
+                repertoireH4.appendChild(createIconElement('Music', 'mr-2 text-red-500 no-print', 20));
                 repertoireH4.innerHTML += `Repertorio Sugerido`;
                 repertoireDiv.appendChild(repertoireH4);
-                const repertoireList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1');
+                const repertoireList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black');
                 weekData.repertoire.forEach(rep => {
                     const li = createElement('li', 'flex items-start');
-                    li.appendChild(createIconElement('Music', 'text-red-400 mr-2 mt-1 flex-shrink-0', 16));
+                    li.appendChild(createIconElement('Music', 'text-red-400 mr-2 mt-1 flex-shrink-0 no-print', 16));
                     li.innerHTML += `<span>${rep}</span>`;
                     repertoireList.appendChild(li);
                 });
@@ -983,126 +1225,494 @@
         }
 
         /**
-         * Renderiza la sección de Fechas Importantes.
+         * Renderiza la sección de Fechas Importantes con AVISOS (ahora descartables).
          * @returns {HTMLElement} El elemento section con las fechas.
          */
         function renderImportantDatesSection() {
-            const section = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-orange-500');
-            const h2 = createElement('h2', 'text-3xl font-bold text-orange-800 mb-4 flex items-center');
-            h2.appendChild(createIconElement('Clock', 'mr-3 text-orange-600', 30));
-            h2.innerHTML += `Fechas Importantes`;
+            const section = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-orange-500 print-no-shadow print-bg-white print-break-inside-avoid');
+            section.id = 'important-dates-section'; // Cachear
+            domElements.importantDatesSection = section;
+
+            const notificationArea = createElement('div', 'mb-6 space-y-2 no-print'); // Ocultar notificaciones al imprimir
+            let upcomingEvents = [];
+            let eventRows = ''; // String para construir el HTML de la tabla
+            let hasUpcomingEvents = false; // Flag para saber si mostrar el título "Avisos"
+
+            importantDates.forEach((item) => {
+                const eventDate = parseSpanishDate(item.date);
+                let badge = '';
+                let daysDiff = null;
+
+                if (eventDate) {
+                    daysDiff = daysUntil(TODAY, eventDate);
+
+                    if (daysDiff < 0) {
+                        badge = '<span class="ml-2 bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium no-print">Vencido</span>';
+                    } else if (daysDiff === 0) {
+                        badge = '<span class="ml-2 bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse no-print">¡Hoy!</span>';
+                        upcomingEvents.push({ ...item, daysDiff });
+                    } else if (daysDiff <= 7) {
+                        badge = `<span class="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full text-xs font-medium no-print">En ${daysDiff} días</span>`;
+                        upcomingEvents.push({ ...item, daysDiff });
+                    }
+                }
+                
+                eventRows += `
+                    <tr class="hover:bg-gray-50 print-bg-white">
+                        <td class="p-3 text-sm text-gray-800 border-b border-gray-100 print-text-black">${item.event}</td>
+                        <td class="p-3 text-sm text-gray-800 border-b border-gray-100 print-text-black">${item.date} ${badge}</td>
+                    </tr>
+                `;
+            });
+
+            // --- Añadir Notificaciones ---
+            if (upcomingEvents.length > 0) {
+                // Ordenar eventos por proximidad
+                upcomingEvents.sort((a, b) => a.daysDiff - b.daysDiff).forEach(item => {
+                    const isToday = item.daysDiff === 0;
+                    // Crear un ID único para la alerta
+                    const alertId = `alert-${item.event.replace(/\s/g, '-')}-${item.date.replace(/\s/g, '-')}`;
+                    
+                    // Si la alerta ya fue descartada, no la renderices
+                    if (dismissedAlerts.includes(alertId)) {
+                        return;
+                    }
+
+                    hasUpcomingEvents = true; // Hay al menos un aviso para mostrar
+                    const notifElement = createElement('div', `p-3 rounded-lg border flex items-center ${isToday ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'}`);
+                    
+                    const iconClass = isToday ? 'text-red-600' : 'text-orange-600';
+                    notifElement.appendChild(createIconElement('CalendarCheck', `mr-3 flex-shrink-0 ${iconClass}`, 20));
+                    
+                    const textDiv = createElement('div', 'flex-grow');
+                    const textTitle = createElement('strong', 'text-gray-900', item.event);
+                    const textBody = createElement('p', 'text-sm text-gray-700', `Vence ${isToday ? 'hoy' : `en ${item.daysDiff} días`} (${item.date})`);
+                    textDiv.appendChild(textTitle);
+                    textDiv.appendChild(textBody);
+                    notifElement.appendChild(textDiv);
+
+                    // Botón de descartar
+                    const dismissButton = createElement('button', 'ml-2 p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-200 no-print');
+                    dismissButton.setAttribute('aria-label', 'Descartar aviso');
+                    dismissButton.appendChild(createIconElement('X', '', 16));
+                    dismissButton.onclick = (e) => {
+                        e.stopPropagation();
+                        // Animación de salida
+                        notifElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease';
+                        notifElement.style.opacity = '0';
+                        notifElement.style.transform = 'scale(0.95)';
+                        notifElement.style.maxHeight = '0px';
+                        notifElement.style.paddingTop = '0px';
+                        notifElement.style.paddingBottom = '0px';
+                        notifElement.style.marginBottom = '0px';
+                        
+                        setTimeout(() => {
+                            notifElement.remove();
+                        }, 300);
+
+                        // Guardar en localStorage
+                        dismissedAlerts.push(alertId);
+                        localStorage.setItem('dismissedAlerts', JSON.stringify(dismissedAlerts));
+                    };
+                    notifElement.appendChild(dismissButton);
+                    
+                    notificationArea.appendChild(notifElement);
+                });
+
+                // Solo añadir el título si se renderizó al menos un aviso
+                if (hasUpcomingEvents) {
+                    const notifTitle = createElement('h3', 'text-xl font-bold text-orange-800 mb-2 flex items-center', '<span data-lucide="AlertTriangle" class="mr-2 text-orange-600" width="20" height="20"></span>Avisos Próximos');
+                    notificationArea.prepend(notifTitle); // Añadir al principio
+                    section.appendChild(notificationArea);
+                }
+            }
+
+
+            const h2 = createElement('h2', 'text-3xl font-bold text-orange-800 mb-4 flex items-center print-text-black');
+            h2.appendChild(createIconElement('Clock', 'mr-3 text-orange-600 no-print', 30));
+            h2.innerHTML += `Calendario de Fechas Importantes`;
             section.appendChild(h2);
 
-            const tableContainer = createElement('div', 'overflow-x-auto rounded-lg shadow-md border border-gray-200');
-            const table = createElement('table', 'min-w-full bg-white rounded-lg');
-            const thead = createElement('thead', 'bg-gray-100 border-b border-gray-200');
-            const trHead = createElement('tr');
-            trHead.appendChild(createElement('th', 'py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tl-lg', 'Evento'));
-            trHead.appendChild(createElement('th', 'py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tr-lg', 'Fecha'));
-            thead.appendChild(trHead);
+            // Contenedor de la tabla
+            const tableContainer = createElement('div', 'overflow-x-auto rounded-lg shadow-md border border-gray-200 print-no-shadow');
+            const table = createElement('table', 'w-full text-left border-collapse');
+            tableContainer.appendChild(table);
+
+            // Encabezado de la tabla
+            const thead = createElement('thead');
+            thead.innerHTML = `
+                <tr class="bg-gray-100 print-bg-white">
+                    <th class="p-3 font-semibold text-sm text-gray-700 border-b border-gray-200 print-text-black">Evento</th>
+                    <th class="p-3 font-semibold text-sm text-gray-700 border-b border-gray-200 print-text-black">Fecha y Estado</th>
+                </tr>
+            `;
             table.appendChild(thead);
 
-            const tbody = createElement('tbody');
-            importantDates.forEach((item, index) => {
-                const tr = createElement('tr', 'border-b border-gray-100 last:border-b-0 hover:bg-gray-50');
-                tr.appendChild(createElement('td', 'py-3 px-4 text-sm text-gray-800', item.event));
-                tr.appendChild(createElement('td', 'py-3 px-4 text-sm text-gray-800', item.date));
-                tbody.appendChild(tr);
-            });
+            // Cuerpo de la tabla
+            const tbody = createElement('tbody', 'bg-white');
+            tbody.innerHTML = eventRows; // Insertar las filas pre-construidas
             table.appendChild(tbody);
-            tableContainer.appendChild(table);
             section.appendChild(tableContainer);
+
             return section;
         }
 
 
+        // --- Funciones de Búsqueda ---
+        
         /**
-         * La función principal para renderizar toda la aplicación.
+         * Comprueba si una semana coincide con el término de búsqueda.
+         * @param {Object} week - El objeto de la semana.
+         * @param {string} term - El término de búsqueda (en minúsculas).
+         * @returns {boolean} True si hay coincidencia.
          */
-        function renderApp() {
-            const appRoot = document.getElementById('app-root');
-            appRoot.innerHTML = ''; // Limpiar el contenido existente
+        function checkWeekForTerm(week, term) {
+            if (!term) return true; // Si no hay término, todas coinciden
+            
+            // Comprobar título
+            if (week.title.toLowerCase().includes(term)) return true;
+            
+            // Comprobar objetivos
+            if (week.objectives.some(item => item.toLowerCase().includes(term))) return true;
+            
+            // Comprobar actividades
+            if (week.activities.some(item => item.toLowerCase().includes(term))) return true;
+            
+            // Comprobar trabajo independiente
+            if (week.independentWork.some(item => item.toLowerCase().includes(term))) return true;
+            
+            // Comprobar repertorio
+            if (week.repertoire.some(item => item.toLowerCase().includes(term))) return true;
+
+            return false; // No se encontraron coincidencias
+        }
+
+        /**
+         * Maneja el evento 'keyup' del campo de búsqueda.
+         * @param {Event} e - El evento del input.
+         */
+        function handleSearch(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            domElements.clearSearchButton.style.display = searchTerm ? 'flex' : 'none'; // Mostrar/ocultar 'X'
+
+            const currentSchedule = courses[selectedCourseId].scheduleData;
+            const filteredWeeks = currentSchedule.filter(week => checkWeekForTerm(week, searchTerm));
+
+            // Re-renderizar el selector con las semanas filtradas
+            renderWeekSelector(filteredWeeks);
+
+            if (filteredWeeks.length === 0) {
+                // No hay resultados
+                domElements.weekDetailContainer.style.display = 'none';
+                domElements.noResultsMessage.style.display = 'block';
+                domElements.weekNavControls.style.display = 'none';
+            } else {
+                // Hay resultados
+                domElements.weekDetailContainer.style.display = 'block';
+                domElements.noResultsMessage.style.display = 'none';
+                domElements.weekNavControls.style.display = 'flex';
+
+                // Comprobar si la semana seleccionada sigue estando en la lista filtrada
+                const newSelectedWeek = filteredWeeks.some(w => w.week === selectedWeek) ? selectedWeek : filteredWeeks[0].week;
+                
+                if (newSelectedWeek !== selectedWeek) {
+                    selectedWeek = newSelectedWeek;
+                }
+                
+                // Actualizar la vista (esto ajustará el select y renderizará la semana)
+                updateWeekView(selectedWeek, true); 
+            }
+        }
+
+        /**
+         * Limpia el campo de búsqueda y restaura la vista.
+         */
+        function clearSearch() {
+            domElements.searchBox.value = '';
+            handleSearch({ target: { value: '' } }); // Disparar búsqueda con valor vacío
+        }
+
+
+        // --- Funciones de Actualización de Vista (Controladores) ---
+
+        /**
+         * Actualiza SOLAMENTE la vista de la semana.
+         * @param {number} weekNumber - El número de la semana a mostrar.
+         * @param {boolean} [updateHashFlag=true] - Si debe actualizar el hash de la URL.
+         */
+        function updateWeekView(weekNumber, updateHashFlag = true) {
+            selectedWeek = weekNumber;
+            if (updateHashFlag) {
+                updateHash();
+            }
 
             const currentCourse = courses[selectedCourseId];
             const currentScheduleData = currentCourse.scheduleData;
             const currentWeekData = currentScheduleData.find(week => week.week === selectedWeek);
 
-            // --- Header del Curso ---
-            const header = createElement('header', 'bg-white rounded-2xl shadow-xl p-6 mb-8 text-center border-b-4 border-blue-500');
-            const h1 = createElement('h1', 'text-4xl sm:text-5xl font-extrabold text-blue-900 mb-2 flex items-center justify-center');
-            h1.appendChild(createIconElement('GraduationCap', 'mr-4 text-blue-600', 48));
-            h1.innerHTML += `Cronograma: ${currentCourse.name}`;
-            header.appendChild(h1);
-            header.appendChild(createElement('p', 'text-lg text-gray-600', 'Profesor: Juan Miguel Ríos Redondo | Email: mrjuan@uninorte.edu.co'));
-            const headerInfoDiv = createElement('div', 'mt-4 flex flex-wrap justify-center gap-4 text-gray-700 text-sm');
-            headerInfoDiv.appendChild(createElement('span', 'flex items-center', `<span data-lucide="Users" width="16" height="16" class="mr-1 text-gray-500"></span> Créditos: 2`));
-            headerInfoDiv.appendChild(createElement('span', 'flex items-center', `<span data-lucide="Calendar" width="16" height="16" class="mr-1 text-gray-500"></span> Horas Semanales: 2h Teóricas / 2h Prácticas`));
-            headerInfoDiv.appendChild(createElement('span', 'flex items-center', `<span data-lucide="Home" width="16" height="16" class="mr-1 text-gray-500"></span> Modalidad: Presencial`));
-            header.appendChild(headerInfoDiv);
+            // Actualizar contenedor de detalles de la semana
+            if (currentWeekData) {
+                domElements.weekDetailContainer.innerHTML = ''; // Limpiar solo la semana
+                domElements.weekDetailContainer.appendChild(renderWeekDetail(currentWeekData));
+                domElements.weekDetailContainer.style.display = 'block';
+                domElements.noResultsMessage.style.display = 'none';
+                domElements.weekNavControls.style.display = 'flex';
+            } else if (domElements.searchBox && domElements.searchBox.value) {
+                // No hay data Y hay un término de búsqueda (la semana fue filtrada)
+                domElements.weekDetailContainer.style.display = 'none';
+                domElements.noResultsMessage.style.display = 'block';
+                domElements.weekNavControls.style.display = 'none';
+            }
 
-            // Selector de Cursos
-            const courseSelectorDiv = createElement('div', 'mt-6 flex flex-wrap justify-center gap-4');
-            const btnMus4000 = createElement('button', `px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center ${selectedCourseId === 'MUS4000' ? 'bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-blue-100'}`);
-            btnMus4000.appendChild(createIconElement('SwatchBook', 'mr-2', 20));
-            btnMus4000.innerHTML += `Conceptos I`;
-            btnMus4000.onclick = () => {
-                selectedCourseId = 'MUS4000';
-                selectedWeek = 1; // Reset week when course changes
-                renderApp();
-            };
-            courseSelectorDiv.appendChild(btnMus4000);
+            // Actualizar etiqueta de navegación
+            domElements.weekNavLabel.textContent = `Semana ${selectedWeek} de ${currentScheduleData.length}`;
 
-            const btnMus4005 = createElement('button', `px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center ${selectedCourseId === 'MUS4005' ? 'bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-purple-100'}`);
-            btnMus4005.appendChild(createIconElement('SwatchBook', 'mr-2', 20));
-            btnMus4005.innerHTML += `Conceptos II`;
-            btnMus4005.onclick = () => {
-                selectedCourseId = 'MUS4005';
-                selectedWeek = 1; // Reset week when course changes
-                renderApp();
-            };
-            courseSelectorDiv.appendChild(btnMus4005);
-            header.appendChild(courseSelectorDiv);
-            appRoot.appendChild(header);
+            // Actualizar estado de botones de navegación
+            domElements.prevWeekButton.disabled = selectedWeek === 1;
+            domElements.nextWeekButton.disabled = selectedWeek === currentScheduleData.length;
 
-            // --- Sección de Descripción y Objetivos ---
-            const descriptionSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-purple-500');
-            const descH2 = createElement('h2', 'text-3xl font-bold text-purple-800 mb-4 flex items-center');
-            descH2.appendChild(createIconElement('BookOpen', 'mr-3 text-purple-600', 30));
-            descH2.innerHTML += `Descripción General del Curso`;
-            descriptionSection.appendChild(descH2);
-            descriptionSection.appendChild(createElement('p', 'text-gray-700 leading-relaxed mb-6', currentCourse.description));
+            // Actualizar el <select> de semanas
+            if(domElements.weekSelectorContainer) {
+                domElements.weekSelectorContainer.value = selectedWeek;
+            }
 
-            const objectivesH2 = createElement('h2', 'text-3xl font-bold text-green-800 mb-4 flex items-center');
-            objectivesH2.appendChild(createIconElement('Target', 'mr-3 text-green-600', 30));
-            objectivesH2.innerHTML += `Objetivos del Curso`;
-            descriptionSection.appendChild(objectivesH2);
-            const objList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2');
-            currentCourse.generalObjectives.forEach(obj => objList.appendChild(createElement('li', '', obj)));
-            descriptionSection.appendChild(objList);
-            appRoot.appendChild(descriptionSection);
 
-            // --- Resultados de Aprendizaje y Evaluación ---
-            const raEvalSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-r-4 border-red-500');
-            const raDiv = createElement('div');
-            const raH2 = createElement('h2', 'text-3xl font-bold text-red-800 mb-4 flex items-center');
-            raH2.appendChild(createIconElement('Award', 'mr-3 text-red-600', 30));
-            raH2.innerHTML += `Resultados de Aprendizaje Clave`;
-            raDiv.appendChild(raH2);
-            const raList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2');
+            // Renderizar iconos solo en la sección actualizada
+            lucide.createIcons({
+                nodes: [domElements.weekDetailContainer]
+            });
+        }
+
+        /**
+         * (Re)Renderiza el selector de semanas (el <select>) con un set de semanas.
+         * @param {Array} weeksToRender - El array de semanas a mostrar (puede estar filtrado).
+         */
+        function renderWeekSelector(weeksToRender) {
+            domElements.weekSelectorContainer.innerHTML = ''; // Limpiar <option> anteriores
+            
+            if (weeksToRender.length === 0) {
+                const option = createElement('option', '', 'No se encontraron resultados');
+                option.disabled = true;
+                option.selected = true;
+                domElements.weekSelectorContainer.appendChild(option);
+                return;
+            }
+
+            weeksToRender.forEach(week => {
+                const option = createElement('option');
+                option.value = week.week;
+                
+                // Truncar título largo
+                const shortTitle = week.title.length > 40 ? week.title.substring(0, 40) + '...' : week.title;
+                let optionText = `Semana ${week.week} (${week.dateRange}): ${shortTitle}`;
+
+                // Resaltar semana actual
+                if (week.startDate && TODAY >= week.startDate && TODAY <= addDays(week.endDate, 2)) { // Da margen hasta el domingo
+                    optionText = `📍 ${optionText} (Semana Actual)`;
+                }
+
+                option.textContent = optionText;
+                
+                if (week.week === selectedWeek) {
+                    option.selected = true;
+                }
+                domElements.weekSelectorContainer.appendChild(option);
+            });
+            
+            // Asegurarse de que el valor del select coincide con la semana seleccionada
+            domElements.weekSelectorContainer.value = selectedWeek;
+        }
+
+
+        /**
+         * Actualiza toda la vista del curso (descripción, objetivos, etc.).
+         * @param {string} courseId - El ID del curso (ej. 'MUS4000').
+         * @param {boolean} [updateHashFlag=true] - Si debe actualizar el hash de la URL.
+         */
+        function updateCourseView(courseId, updateHashFlag = true) {
+            selectedCourseId = courseId;
+            const currentCourse = courses[selectedCourseId];
+            
+            // Si venimos de un cambio de curso, reseteamos a la semana 1 y limpiamos búsqueda
+            if (updateHashFlag) {
+                selectedWeek = 1;
+                updateHash();
+                clearSearch(); // Limpiar búsqueda al cambiar de curso
+            }
+
+            // 1. Actualizar Header
+            domElements.courseTitle.innerHTML = ''; // Limpiar título
+            domElements.courseTitle.appendChild(createIconElement('GraduationCap', 'mr-4 text-blue-600 no-print', 48));
+            domElements.courseTitle.innerHTML += `Cronograma: ${currentCourse.name}`;
+
+            // 2. Actualizar botones de curso
+            // --- CORRECCIÓN AQUÍ ---
+            // Asegurarse de que no hay typos (btnMus400Go5)
+            if (selectedCourseId === 'MUS4000') {
+                domElements.btnMus4000.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg no-print';
+                domElements.btnMus4005.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 text-gray-700 hover:bg-purple-100 no-print';
+            } else {
+                domElements.btnMus4000.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 text-gray-700 hover:bg-blue-100 no-print';
+                domElements.btnMus4005.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg no-print';
+            }
+            // --- FIN CORRECCIÓN ---
+
+            // 3. Actualizar Descripción y Objetivos
+            domElements.courseDescription.innerHTML = currentCourse.description;
+            domElements.courseObjectivesList.innerHTML = ''; // Limpiar lista
+            currentCourse.generalObjectives.forEach(obj => {
+                domElements.courseObjectivesList.appendChild(createElement('li', '', obj));
+            });
+
+            // 4. Actualizar Resultados de Aprendizaje
+            domElements.learningOutcomesList.innerHTML = ''; // Limpiar lista
             currentCourse.learningOutcomes.forEach(ra => {
                 const li = createElement('li');
                 li.innerHTML = `<strong>${ra.id}:</strong> ${ra.text}`;
-                raList.appendChild(li);
+                domElements.learningOutcomesList.appendChild(li);
             });
+            // El contenido de Evaluación es estático, no necesita actualizarse.
+
+            // 5. Actualizar Bibliografía
+            domElements.bibliographyList.innerHTML = ''; // Limpiar lista
+            currentCourse.bibliography.forEach(item => {
+                domElements.bibliographyList.appendChild(createElement('li', '', item));
+            });
+            
+            // 6. (Re)Renderizar el selector de semanas (con la data completa)
+            renderWeekSelector(currentCourse.scheduleData);
+
+            // 7. Actualizar la vista de la semana a la 'selectedWeek' (que es 1 si se cambió de curso)
+            updateWeekView(selectedWeek, false); // false para evitar doble update de hash
+
+            // 8. Renderizar todos los iconos (ya que actualizamos varias secciones)
+            lucide.createIcons();
+        }
+
+        /**
+         * Construye el esqueleto de la aplicación una sola vez.
+         */
+        function initApp() {
+            domElements.appRoot = document.getElementById('app-root');
+            if (!domElements.appRoot) {
+                console.error("Error: Elemento #app-root no encontrado.");
+                return;
+            }
+
+            // --- 0. Pre-procesar datos ---
+            preprocessScheduleData();
+
+            // --- 1. Header ---
+            const header = createElement('header', 'relative bg-white rounded-2xl shadow-xl p-6 mb-8 text-center border-b-4 border-blue-500 print-no-shadow print-bg-white');
+            
+            // Botón de Imprimir
+            const printButton = createElement('button', 'absolute top-6 right-6 p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-blue-100 transition-all no-print', '<span data-lucide="Printer" width="20" height="20"></span>');
+            printButton.setAttribute('aria-label', 'Imprimir cronograma');
+            printButton.onclick = () => window.print();
+            header.appendChild(printButton);
+
+            const h1 = createElement('h1', 'text-4xl sm:text-5xl font-extrabold text-blue-900 mb-2 flex items-center justify-center print-text-black');
+            h1.id = 'course-title'; // ID para actualizar
+            header.appendChild(h1);
+            domElements.courseTitle = h1; // Cachear
+            
+            const profInfo = createElement('p', 'text-lg text-gray-600 print-text-black', 'Profesor: Juan Miguel Ríos Redondo | Email: mrjuan@uninorte.edu.co');
+            header.appendChild(profInfo);
+
+            const headerInfoDiv = createElement('div', 'mt-4 flex flex-wrap justify-center gap-4 text-gray-700 text-sm no-print');
+            headerInfoDiv.innerHTML = `
+                <span class="flex items-center"><span data-lucide="Users" width="16" height="16" class="mr-1 text-gray-500"></span> Créditos: 2</span>
+                <span class="flex items-center"><span data-lucide="Calendar" width="16" height="16" class="mr-1 text-gray-500"></span> Horas Semanales: 2h Teóricas / 2h Prácticas</span>
+                <span class="flex items-center"><span data-lucide="Home" width="16" height="16" class="mr-1 text-gray-500"></span> Modalidad: Presencial</span>
+            `;
+            header.appendChild(headerInfoDiv);
+
+            // Selector de Cursos
+            const courseSelectorDiv = createElement('div', 'mt-6 flex flex-wrap justify-center gap-4 no-print');
+            const btnMus4000 = createElement('button', `px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center`);
+            btnMus4000.appendChild(createIconElement('SwatchBook', 'mr-2', 20));
+            btnMus4000.innerHTML += `Conceptos I`;
+            btnMus4000.onclick = () => updateCourseView('MUS4000', true);
+            courseSelectorDiv.appendChild(btnMus4000);
+            domElements.btnMus4000 = btnMus4000; // Cachear botón
+
+            const btnMus4005 = createElement('button', `px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center`);
+            btnMus4005.appendChild(createIconElement('SwatchBook', 'mr-2', 20));
+            btnMus4005.innerHTML += `Conceptos II`;
+            btnMus4005.onclick = () => updateCourseView('MUS4005', true);
+            courseSelectorDiv.appendChild(btnMus4005);
+            domElements.btnMus4005 = btnMus4005; // Cachear botón
+
+            header.appendChild(courseSelectorDiv);
+
+            // --- NUEVO: Sección de Búsqueda ---
+            const searchDiv = createElement('div', 'mt-6 relative max-w-lg mx-auto no-print');
+            const searchLabel = createElement('label', 'sr-only', 'Buscar en el cronograma'); // Para A11y
+            searchLabel.htmlFor = 'search-box';
+            
+            const searchIcon = createElement('div', 'absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none');
+            searchIcon.appendChild(createIconElement('Search', 'text-gray-400', 20));
+            
+            const searchBox = createElement('input', 'w-full pl-10 pr-10 py-3 rounded-full bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500');
+            searchBox.id = 'search-box';
+            searchBox.type = 'search';
+            searchBox.placeholder = 'Buscar término (ej. "Bartók", "Jazz")...';
+            searchBox.onkeyup = handleSearch;
+            domElements.searchBox = searchBox; // Cachear
+            
+            const clearSearchButton = createElement('button', 'absolute inset-y-0 right-0 pr-3 items-center hidden'); // Oculto por defecto
+            clearSearchButton.appendChild(createIconElement('XCircle', 'text-gray-400 hover:text-gray-600', 20));
+            clearSearchButton.setAttribute('aria-label', 'Limpiar búsqueda');
+            clearSearchButton.onclick = clearSearch;
+            domElements.clearSearchButton = clearSearchButton; // Cachear
+
+            searchDiv.appendChild(searchLabel);
+            searchDiv.appendChild(searchIcon);
+            searchDiv.appendChild(searchBox);
+            searchDiv.appendChild(clearSearchButton);
+            header.appendChild(searchDiv);
+            // --- FIN BÚSQUEDA ---
+            
+            domElements.appRoot.appendChild(header);
+
+            // --- 2. Sección de Descripción y Objetivos ---
+            const descriptionSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-purple-500 print-no-shadow print-bg-white print-break-inside-avoid');
+            descriptionSection.id = 'course-description-section';
+            const descH2 = createElement('h2', 'text-3xl font-bold text-purple-800 mb-4 flex items-center print-text-black');
+            descH2.innerHTML = '<span data-lucide="BookOpen" class="mr-3 text-purple-600 no-print" width="30" height="30"></span>Descripción General del Curso';
+            descriptionSection.appendChild(descH2);
+            const descP = createElement('p', 'text-gray-700 leading-relaxed mb-6 print-text-black');
+            descP.id = 'course-description'; // ID para actualizar
+            descriptionSection.appendChild(descP);
+            domElements.courseDescription = descP; // Cachear
+
+            const objectivesH2 = createElement('h2', 'text-3xl font-bold text-green-800 mb-4 flex items-center print-text-black');
+            objectivesH2.innerHTML = '<span data-lucide="Target" class="mr-3 text-green-600 no-print" width="30" height="30"></span>Objetivos del Curso';
+            descriptionSection.appendChild(objectivesH2);
+            const objList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
+            objList.id = 'course-objectives-list'; // ID para actualizar
+            descriptionSection.appendChild(objList);
+            domElements.courseObjectivesList = objList; // Cachear
+
+            domElements.appRoot.appendChild(descriptionSection);
+
+            // --- 3. Resultados de Aprendizaje y Evaluación ---
+            const raEvalSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-r-4 border-red-500 print-no-shadow print-bg-white print-break-inside-avoid');
+            const raDiv = createElement('div');
+            const raH2 = createElement('h2', 'text-3xl font-bold text-red-800 mb-4 flex items-center print-text-black');
+            raH2.innerHTML = '<span data-lucide="Award" class="mr-3 text-red-600 no-print" width="30" height="30"></span>Resultados de Aprendizaje Clave';
+            raDiv.appendChild(raH2);
+            const raList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
+            raList.id = 'learning-outcomes-list'; // ID para actualizar
             raDiv.appendChild(raList);
-            raEvalSection.appendChild(raDiv);
+            domElements.learningOutcomesList = raList; // Cachear
 
             const evalDiv = createElement('div');
-            const evalH2 = createElement('h2', 'text-3xl font-bold text-indigo-800 mb-4 flex items-center');
-            evalH2.appendChild(createIconElement('ClipboardList', 'mr-3 text-indigo-600', 30));
-            evalH2.innerHTML += `Sistema de Evaluación`;
+            const evalH2 = createElement('h2', 'text-3xl font-bold text-indigo-800 mb-4 flex items-center print-text-black');
+            evalH2.innerHTML = '<span data-lucide="ClipboardList" class="mr-3 text-indigo-600 no-print" width="30" height="30"></span>Sistema de Evaluación';
             evalDiv.appendChild(evalH2);
-            const evalList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2');
+            const evalList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
+            // Contenido estático, no necesita ID
             evalList.innerHTML = `
                 <li>**Examen Parcial I:** 25% (Cubre Semanas 1-5)</li>
                 <li>**Examen Parcial II:** 25% (Cubre Semanas 7-11)</li>
@@ -1110,87 +1720,118 @@
                 <li>**Materiales (Trabajos, Tareas, Ejercicios):** 15%</li>
                 <li>**Participación (Clase, Lecturas):** 10%</li>
                 <li class="font-bold mt-2">**TOTAL: 100%**</li>
-                <li class="text-red-600 font-semibold mt-4 flex items-start">
+                <li class="text-red-600 font-semibold mt-4 flex items-start no-print">
                     <span data-lucide="CheckCircle" width="16" height="16" class="text-red-500 mr-2 mt-1 flex-shrink-0"></span>
                     **Importante:** La inasistencia a más del 25% de las clases (más de 8 horas o 4 faltas) resultará en la pérdida del derecho a presentar el examen parcial final.
                 </li>
             `;
             evalDiv.appendChild(evalList);
+            
+            raEvalSection.appendChild(raDiv);
             raEvalSection.appendChild(evalDiv);
-            appRoot.appendChild(raEvalSection);
+            
+            domElements.appRoot.appendChild(raEvalSection);
 
-            // --- Sección de Fechas Importantes ---
-            appRoot.appendChild(renderImportantDatesSection());
+            // --- 4. Sección de Fechas Importantes ---
+            // Esta sección se renderiza con JS para incluir la lógica de alertas
+            domElements.appRoot.appendChild(renderImportantDatesSection());
 
-            // --- Navegación y Contenido de Semanas ---
-            const scheduleSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500');
-            const scheduleH2 = createElement('h2', 'text-3xl font-bold text-blue-800 mb-6 text-center flex items-center justify-center');
-            scheduleH2.appendChild(createIconElement('Calendar', 'mr-3 text-blue-600', 30));
-            scheduleH2.innerHTML += `Cronograma Semanal`;
+            // --- 5. Navegación y Contenido de Semanas ---
+            const scheduleSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500 print-no-shadow print-bg-white');
+            scheduleSection.id = 'schedule-section'; // ID para anclaje
+            const scheduleH2 = createElement('h2', 'text-3xl font-bold text-blue-800 mb-6 text-center flex items-center justify-center print-text-black');
+            scheduleH2.innerHTML = '<span data-lucide="Calendar" class="mr-3 text-blue-600 no-print" width="30" height="30"></span>Cronograma Semanal';
             scheduleSection.appendChild(scheduleH2);
 
-            // Controles de Navegación
-            const navControlsDiv = createElement('div', 'flex justify-center items-center mb-8 space-x-4');
+            // Controles de Navegación (botones)
+            const navControlsDiv = createElement('div', 'flex justify-between items-center mb-4 space-x-4 no-print');
+            navControlsDiv.id = 'week-nav-controls'; // ID para cachear
+            domElements.weekNavControls = navControlsDiv; // Cachear
+
             const prevButton = createElement('button', 'p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105', `<span data-lucide="ChevronLeft" width="24" height="24"></span>`);
-            prevButton.disabled = selectedWeek === 1;
-            prevButton.onclick = () => {
-                selectedWeek = Math.max(1, selectedWeek - 1);
-                renderApp();
-            };
+            prevButton.setAttribute('aria-label', 'Semana anterior'); // MEJORA A11y
+            prevButton.onclick = () => updateWeekView(selectedWeek - 1, true);
             navControlsDiv.appendChild(prevButton);
-            navControlsDiv.appendChild(createElement('span', 'text-2xl font-semibold text-blue-800', `Semana ${selectedWeek} de ${currentScheduleData.length}`));
+            domElements.prevWeekButton = prevButton; // Cachear
+
+            const weekNavLabel = createElement('span', 'text-2xl font-semibold text-blue-800 text-center');
+            weekNavLabel.id = 'week-nav-label'; // ID para actualizar
+            navControlsDiv.appendChild(weekNavLabel);
+            domElements.weekNavLabel = weekNavLabel; // Cachear
+
             const nextButton = createElement('button', 'p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105', `<span data-lucide="ChevronRight" width="24" height="24"></span>`);
-            nextButton.disabled = selectedWeek === currentScheduleData.length;
-            nextButton.onclick = () => {
-                selectedWeek = Math.min(currentScheduleData.length, selectedWeek + 1);
-                renderApp();
-            };
+            nextButton.setAttribute('aria-label', 'Semana siguiente'); // MEJORA A11y
+            nextButton.onclick = () => updateWeekView(selectedWeek + 1, true);
             navControlsDiv.appendChild(nextButton);
+            domElements.nextWeekButton = nextButton; // Cachear
+
             scheduleSection.appendChild(navControlsDiv);
 
-            // Selector de Semanas (para pantallas más grandes)
-            const weekSelectorDiv = createElement('div', 'hidden md:flex flex-wrap justify-center gap-2 mb-8');
-            currentScheduleData.forEach(week => {
-                const weekButton = createElement('button', `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 ${selectedWeek === week.week ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-blue-100'}`, `Semana ${week.week}`);
-                weekButton.onclick = () => {
-                    selectedWeek = week.week;
-                    renderApp();
-                };
-                weekSelectorDiv.appendChild(weekButton);
-            });
-            scheduleSection.appendChild(weekSelectorDiv);
+            // Selector de Semanas (Dropdown)
+            const weekSelectorLabel = createElement('label', 'block text-sm font-medium text-gray-700 mb-1 no-print', 'Saltar a la semana:');
+            weekSelectorLabel.htmlFor = 'week-selector-dropdown';
+            scheduleSection.appendChild(weekSelectorLabel);
+            
+            const weekSelector = createElement('select', 'w-full p-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-8 no-print');
+            weekSelector.id = 'week-selector-dropdown';
+            weekSelector.onchange = (e) => updateWeekView(parseInt(e.target.value), true);
+            scheduleSection.appendChild(weekSelector);
+            domElements.weekSelectorContainer = weekSelector; // Cachear <select>
 
-            // Detalles de la Semana Actual
-            if (currentWeekData) {
-                scheduleSection.appendChild(renderWeekDetail(currentWeekData));
-            }
-            appRoot.appendChild(scheduleSection);
+            // --- NUEVO: Mensaje de No Resultados ---
+            const noResultsMessage = createElement('div', 'hidden p-6 text-center text-gray-600 bg-gray-50 rounded-lg no-print');
+            noResultsMessage.id = 'no-results-message';
+            noResultsMessage.appendChild(createIconElement('SearchX', 'mx-auto text-gray-400 mb-2', 40));
+            noResultsMessage.appendChild(createElement('p', 'font-semibold', 'No se encontraron resultados'));
+            noResultsMessage.appendChild(createElement('p', 'text-sm', 'Intenta con un término de búsqueda diferente.'));
+            scheduleSection.appendChild(noResultsMessage);
+            domElements.noResultsMessage = noResultsMessage; // Cachear
+            // --- FIN No Resultados ---
 
-            // --- Sección de Bibliografía ---
-            const bibliographySection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mt-8 border-b-4 border-green-500');
-            const biblioH2 = createElement('h2', 'text-3xl font-bold text-green-800 mb-4 flex items-center');
-            biblioH2.appendChild(createIconElement('BookOpen', 'mr-3 text-green-600', 30));
-            biblioH2.innerHTML += `Bibliografía Recomendada`;
+            // Detalles de la Semana Actual (Contenedor)
+            const weekDetailContainer = createElement('div');
+            weekDetailContainer.id = 'week-detail-container'; // ID para actualizar
+            scheduleSection.appendChild(weekDetailContainer);
+            domElements.weekDetailContainer = weekDetailContainer; // Cachear
+
+D:            domElements.appRoot.appendChild(scheduleSection);
+
+            // --- 6. Sección de Bibliografía ---
+            const bibliographySection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mt-8 border-b-4 border-green-500 print-no-shadow print-bg-white print-break-inside-avoid');
+            const biblioH2 = createElement('h2', 'text-3xl font-bold text-green-800 mb-4 flex items-center print-text-black');
+            biblioH2.innerHTML = '<span data-lucide="BookOpen" class="mr-3 text-green-600 no-print" width="30" height="30"></span>Bibliografía Recomendada';
             bibliographySection.appendChild(biblioH2);
-            const biblioList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2');
-            currentCourse.bibliography.forEach(item => {
-                const li = createElement('li', '', item);
-                biblioList.appendChild(li);
-            });
+            const biblioList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
+            biblioList.id = 'bibliography-list'; // ID para actualizar
             bibliographySection.appendChild(biblioList);
-            appRoot.appendChild(bibliographySection);
+            domElements.bibliographyList = biblioList; // Cachear
 
-            // --- Footer ---
-            const footer = createElement('footer', 'text-center text-gray-500 text-sm py-4');
-            footer.appendChild(createElement('p', '', '© 2025 Aplicación de Cronograma Musical. Todos los derechos reservados.'));
-            appRoot.appendChild(footer);
+            domElements.appRoot.appendChild(bibliographySection);
 
-            // Renderizar los iconos de Lucide después de que el DOM esté actualizado
+            // --- 7. Footer ---
+            const footer = createElement('footer', 'text-center text-gray-500 text-sm py-4 print-text-black no-print');
+            footer.innerHTML = '<p>© 2025 Juan Miguel Ríos Redondo. Todos los derechos reservados.</p>';
+            domElements.appRoot.appendChild(footer);
+
+            // --- 8. Estado Inicial y Event Listeners ---
+            
+            // Obtener estado inicial del hash
+            getStateFromHash();
+            
+            // Renderizar el curso y semana iniciales
+            updateCourseView(selectedCourseId, false); // false para no escribir el hash
+            
+            // Escuchar cambios en el hash (botones atrás/adelante)
+            window.addEventListener('hashchange', handleHashChange);
+
+            // Renderizar todos los iconos de Lucide por primera vez
             lucide.createIcons();
         }
 
+
+        // --- Ejecución ---
         // Ejecutar la aplicación cuando el DOM esté completamente cargado
-        document.addEventListener('DOMContentLoaded', renderApp);
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
