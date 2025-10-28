@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es"> <!-- Clase 'dark' eliminada -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,16 +10,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Script inicial de modo oscuro ELIMINADO -->
+    
     <style>
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            /* Scroll suave para la navegación hash */
             scroll-behavior: smooth;
         }
-        /* Estilo para el <select> de semanas */
         select {
             -webkit-appearance: none;
             -moz-appearance: none;
@@ -28,9 +29,10 @@
             background-repeat: no-repeat;
             background-position: right 1rem center;
             background-size: 1.25em;
-            padding-right: 3rem; /* Espacio para el icono */
+            padding-right: 3rem; 
         }
-        /* Oculta el icono 'X' de limpiar en input[type=search] */
+        /* Estilos dark: para select ELIMINADOS */
+        
         input[type="search"]::-webkit-search-cancel-button {
             -webkit-appearance: none;
             appearance: none;
@@ -40,7 +42,8 @@
         @media print {
             body {
                 font-family: 'Inter', sans-serif;
-                background-color: #ffffff;
+                background-color: #ffffff !important; /* Forzar blanco */
+                color: #000000 !important; /* Forzar negro */
             }
             #app-root {
                 width: 100%;
@@ -48,1764 +51,162 @@
                 padding: 0;
                 box-shadow: none;
             }
-            .no-print {
-                display: none !important; /* Oculta todo lo que no queremos imprimir */
-            }
-            .print-only {
-                display: block; /* Muestra elementos solo de impresión */
-            }
-            .print-no-shadow {
-                box-shadow: none !important;
-                border: 1px solid #e2e8f0;
-            }
-            .print-break-after {
-                page-break-after: always;
-            }
-            .print-break-inside-avoid {
-                page-break-inside: avoid;
-            }
-            .print-text-black {
-                color: #000000 !important;
-            }
-            .print-bg-white {
-                background-color: #ffffff !important;
-            }
-
-            /* Asegurar que el contenido del cronograma se muestre */
-            #schedule-section {
-                padding: 0;
-            }
-            #week-detail-container div {
-                padding: 0.5rem;
-                margin-bottom: 1rem;
-                border: 1px solid #ccc;
-            }
-            #course-title, #course-description-section {
-                color: #000;
-            }
+            .no-print { display: none !important; }
+            .print-only { display: block; }
+            .print-no-shadow { box-shadow: none !important; border: 1px solid #e2e8f0; }
+            .print-break-after { page-break-after: always; }
+            .print-break-inside-avoid { page-break-inside: avoid; }
+            .print-text-black { color: #000000 !important; }
+            .print-bg-white { background-color: #ffffff !important; }
+            #schedule-section { padding: 0; }
+            #week-detail-container div { padding: 0.5rem; margin-bottom: 1rem; border: 1px solid #ccc; }
+            #course-title, #course-description-section { color: #000 !important; }
+             /* Se eliminan reglas @media print específicas para .dark */
         }
 
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800">
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800 transition-colors duration-300"> 
+    <!-- Clases dark: eliminadas del body -->
 
     <div id="app-root" class="container mx-auto py-8 px-4">
         <!-- El contenido de la aplicación se construirá aquí por JS -->
     </div>
     
-    <!-- Contenedor del Modal de Configuración (Oculto por defecto) -->
-    <div id="settings-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden no-print"></div>
-    <div id="settings-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-xl z-50 w-full max-w-lg hidden no-print">
+    <!-- Contenedor del Modal de Configuración -->
+    <div id="settings-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden no-print"></div> 
+    <div id="settings-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-xl z-50 w-full max-w-lg hidden no-print"> 
+        <!-- Clases dark: eliminadas -->
         
         <!-- Contenido del Modal -->
         <div class="p-6 relative">
             <!-- Título y Botón de Cerrar -->
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold text-gray-800 flex items-center">
-                    <span data-lucide="Settings" class="mr-2 text-blue-600"></span>
+                    <span data-lucide="Settings" class="mr-2 text-blue-600"></span> 
                     Configuración del Semestre
                 </h2>
-                <button id="settings-modal-close" class="p-2 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
+                <button id="settings-modal-close" class="p-2 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100"> 
                     <span data-lucide="X"></span>
                 </button>
             </div>
             
-            <p class="text-gray-600 mb-6">Ajusta las fechas de inicio del semestre y del receso. Estos cambios se guardarán en tu navegador para futuras visitas.</p>
+            <p class="text-gray-600 mb-6">Ajusta las fechas de inicio del semestre y del receso. Estos cambios se guardarán en tu navegador para futuras visitas.</p> 
 
-            <!-- Aquí irán los selectores de fecha (movidos desde el header) -->
+            <!-- Selectores de fecha -->
             <div id="date-selector-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Se llenará con JS -->
             </div>
             
-            <!-- Botón de Actualizar (movido desde el header) -->
+            <!-- Botón de Actualizar -->
             <div id="date-button-container" class="mt-6 flex justify-end">
                 <!-- Se llenará con JS -->
             </div>
         </div>
     </div>
     <!-- FIN Modal -->
+    
+    <!-- Botón "Volver Arriba" -->
+    <button id="scroll-to-top" class="hidden no-print fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 opacity-0 transform translate-y-2"> 
+        <span data-lucide="ArrowUp" width="24" height="24"></span>
+    </button>
 
 
     <script>
-        // --- Datos del Cronograma ---
-        // Estos datos definen el contenido de cada semana para ambos cursos.
-        // Se añadirán 'dateRange' dinámicamente.
-
-        // Datos del cronograma para Conceptos de Música del Siglo XX y XXI I (MUS 4000)
-        const scheduleDataI = [
-          {
-            week: 1,
-            title: "El Crepúsculo Tonal y el Amanecer Modal",
-            objectives: [
-              "Introducir el contexto musical de finales del siglo XIX.",
-              "Comprender el concepto de transición de la tonalidad.",
-              "Familiarizarse con los rudimentos teóricos de acordes y escalas modales."
-            ],
-            activities: [
-              "Clase magistral: Presentación de lineamientos técnico-teóricos.",
-              "Taller: Ejercicios de identificación de escalas y acordes modales básicos.",
-              "Audición dirigida: Ejemplos de obras con elementos de transición tonal."
-            ],
-            independentWork: [
-              "Lectura: Capítulo introductorio sobre la armonía de finales del siglo XIX y principios del XX (Persichetti, Ulehla).",
-              "Ejercicios de escritura: Identificación de modos y construcción de acordes modales."
-            ],
-            repertoire: [
-              "Richard Wagner: Preludio de Tristán e Isolda",
-              "Franz Liszt: Nuages gris",
-              "Modest Mussorgsky: Cuadros de una exposición (original para piano)"
-            ]
-          },
-          {
-            week: 2,
-            title: "Debussy: La Paleta Sonora del Impresionismo",
-            objectives: [
-              "Analizar las características armónicas y melódicas de la música de Debussy.",
-              "Comprender el cuartalismo y el modalismo en su obra."
-            ],
-            activities: [
-              "Clase magistral: Análisis de obras clave de Debussy (ej. Preludios, La Mer).",
-              "Taller: Ejercicios de composición corta aplicando cuartalismo y modalismo debussyniano.",
-              "Discusión crítica: Sobre la ruptura con la tonalidad tradicional en Debussy."
-            ],
-            independentWork: [
-              "Audición dirigida (con score): Análisis de 2-3 piezas de Debussy, identificando elementos modales y cuartales.",
-              "Composición: Pequeña pieza de 8-16 compases en estilo impresionista."
-            ],
-            repertoire: [
-              "Claude Debussy: Préludes (Libro I y II, selecciones como 'Voiles', 'La Cathédrale engloutie')",
-              "Claude Debussy: Estampes ('Pagodes', 'La soirée dans Grenade', 'Jardins sous la pluie')",
-              "Claude Debussy: Children's Corner ('Golliwogg's Cakewalk')"
-            ]
-          },
-          {
-            week: 3,
-            title: "Ravel: Claridad y Brillo Impresionista",
-            objectives: [
-              "Distinguir las características de Ravel en comparación con Debussy."
-            ],
-            activities: [
-              "Clase magistral: Análisis comparativo de obras de Ravel (ej. Daphnis et Chloé, Bolero).",
-              "Simulacro de examen: Avance de composición realizada con contenidos de las semanas anteriores."
-            ],
-            independentWork: [
-              "Lectura: Sección sobre Ravel en textos de armonía del siglo XX (Persichetti).",
-              "Audición: Escuchar obras de Ravel, prestando atención a la instrumentación."
-            ],
-            repertoire: [
-              "Maurice Ravel: Miroirs ('Noctuelles', 'Oiseaux tristes', 'Une barque sur l'ocean')",
-              "Maurice Ravel: Gaspard de la Nuit ('Ondine', 'Le Gibet', 'Scarbo')",
-              "Maurice Ravel: Valses nobles et sentimentales"
-            ]
-          },
-          {
-            week: 4,
-            title: "Bartók: Folclore y el Sistema de Ejes",
-            objectives: [
-              "Comprender el concepto de nacionalismo musical en Europa del Este.",
-              "Analizar el Sistema de Ejes de Béla Bartók."
-            ],
-            activities: [
-              "Clase magistral: Explicación del sistema de ejes y análisis de obras de Bartók (ej. Mikrokosmos, Cuartetos de cuerda).",
-              "Taller: Ejercicios de escritura aplicando el sistema de ejes.",
-              "Audición dirigida: Obras de Bartók."
-            ],
-            independentWork: [
-              "Lectura: La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX (Antokoletz, Lendvai).",
-              "Composición: Pequeña pieza en estilo de ejes Bartok."
-            ],
-            repertoire: [
-              "Béla Bartók: Mikrokosmos (selecciones, especialmente piezas con elementos modales o de ejes)",
-              "Béla Bartók: Allegro Barbaro",
-              "Béla Bartók: Seis Danzas Rumanas (versión para piano)"
-            ]
-          },
-          {
-            week: 5,
-            title: "Stravinsky y Hindemith: El Retorno a la Forma",
-            objectives: [
-              "Identificar las características del Neoclasicismo musical.",
-              "Analizar las obras de Stravinsky y Hindemith dentro de este estilo."
-            ],
-            activities: [
-              "Clase magistral: Análisis de obras clave de Stravinsky (ej. Pulcinella, Sinfonía de los Salmos) y Hindemith (ej. Ludus Tonalis).",
-              "Taller: Ejercicios de escritura con elementos neoclásicos.",
-              "Discusión crítica: Sobre la estética neoclásica."
-            ],
-            independentWork: [
-              "Audición dirigida (con score): Obras neoclásicas.",
-              "Preparación para Parcial I."
-            ],
-            repertoire: [
-              "Igor Stravinsky: Pulcinella Suite (versión de concierto)",
-              "Igor Stravinsky: Octeto para instrumentos de viento",
-              "Paul Hindemith: Sonata para piano No. 2",
-              "Paul Hindemith: Ludus Tonalis (selecciones de fugas e interludios)"
-            ]
-          },
-          {
-            week: 6,
-            title: "Prokofiev y Contrastes Estilísticos / EXAMEN PARCIAL I",
-            objectives: [
-              "Continuar el análisis del Neoclasicismo con Prokofiev.",
-              "Establecer comparaciones estilísticas entre los compositores vistos hasta ahora."
-            ],
-            activities: [
-              "Clase magistral: Análisis de obras de Prokofiev (ej. Sinfonía Clásica).",
-              "Taller: Ejercicios de análisis comparativo de fragmentos musicales.",
-              "Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."
-            ],
-            independentWork: [
-              "Revisión de los temas para el parcial."
-            ],
-            repertoire: [
-              "Sergei Prokofiev: Sinfonía Clásica (Movimientos selectos)",
-              "Sergei Prokofiev: Visions Fugitives (selecciones)",
-              "Comparación: Johann Sebastian Bach (ej. una invención a dos voces) y Arnold Schönberg (ej. una de las Seis pequeñas piezas para piano, Op. 19)"
-            ]
-          },
-          {
-            week: 7,
-            title: "Los Seis: La Vanguardia Francesa",
-            objectives: [
-              "Conocer a los miembros y la filosofía del Grupo de Los Seis.",
-              "Analizar la politonalidad de Darius Milhaud y su influencia."
-            ],
-            activities: [
-              "Clase magistral: Presentación de los compositores y sus ideas estéticas.",
-              "Taller: Ejercicios de escritura con elementos politonales simples.",
-              "Audición dirigida: Obras representativas de Los Seis."
-            ],
-            independentWork: [
-              "Lectura: Sobre el Grupo de Los Seis.",
-              "Composición: Pequeño ejercicio explorando la bitonalidad."
-            ],
-            repertoire: [
-              "Darius Milhaud: Scaramouche (para dos pianos o saxofón y piano)",
-              "Francis Poulenc: Les Biches (Suite de ballet)",
-              "Arthur Honegger: Pacific 231",
-              "Erik Satie: Gymnopédies y Gnossiennes"
-            ]
-          },
-          {
-            week: 8,
-            title: "Ragtime y New Orleans: Cuna del Jazz",
-            objectives: [
-              "Comprender los orígenes del Jazz.",
-              "Analizar las características del Ragtime y el Estilo New Orleans."
-            ],
-            activities: [
-              "Clase magistral: Historia y evolución del Jazz temprano.",
-              "Audición dirigida: Obras de Scott Joplin y grabaciones de New Orleans Jazz.",
-              "Discusión crítica: Sobre la importancia de la improvisación en el Jazz."
-            ],
-            independentWork: [
-              "Audición: Escuchar más ejemplos de Ragtime y New Orleans Jazz.",
-              "Investigación: Breve biografía de Scott Joplin."
-            ],
-            repertoire: [
-              "Scott Joplin: 'Maple Leaf Rag', 'The Entertainer'",
-              "Original Dixieland Jazz Band: 'Livery Stable Blues'",
-              "Jelly Roll Morton: 'King Porter Stomp'"
-            ]
-          },
-          {
-            week: 9,
-            title: "Chicago Jazz y el Legado de Louis Armstrong",
-            objectives: [
-              "Analizar la evolución del Jazz hacia el Estilo Chicago.",
-              "Reconocer la figura de Louis Armstrong y su impacto."
-            ],
-            activities: [
-              "Clase magistral: Análisis de grabaciones de Louis Armstrong.",
-              "Taller: Transcripción de solos sencillos de Jazz temprano.",
-              "Simulacro de examen: Avance de composición o análisis de obras."
-            ],
-            independentWork: [
-              "Audición: Comparar grabaciones de New Orleans y Chicago Jazz.",
-              "Preparación para Parcial II."
-            ],
-            repertoire: [
-              "Louis Armstrong & His Hot Five/Seven: 'West End Blues', 'Potato Head Blues', 'Cornet Chop Suey'",
-              "Bix Beiderbecke: 'Singin' the Blues'"
-            ]
-          },
-          {
-            week: 10,
-            title: "Modalismo en el Jazz y Armonías Cuartales",
-            objectives: [
-              "Comprender la aplicación del modalismo en el Jazz.",
-              "Analizar las arquitecturas acordales cuartales en el Jazz."
-            ],
-            activities: [
-              "Clase magistral: Ejemplos de Jazz modal y uso de acordes cuartales.",
-              "Taller: Ejercicios de escritura de progresiones modales y acordes cuartales en un contexto de Jazz.",
-              "Audición dirigida: Ejemplos de Jazz con estas características."
-            ],
-            independentWork: [
-              "Lectura: Modal Jazz Composition & Harmony Volumen 1 (Miller).",
-              "Ejercicios de improvisación sobre vamps modales."
-            ],
-            repertoire: [
-              "Miles Davis: 'So What' (del álbum Kind of Blue) - para modalismo",
-              "Herbie Hancock: 'Maiden Voyage' - para acordes cuartales",
-              "McCoy Tyner: 'Passion Dance' - para acordes cuartales"
-            ]
-          },
-          {
-            week: 11,
-            title: "Pianistas del Jazz Temprano I",
-            objectives: [
-              "Reconocer las características interpretativas de los primeros pianistas de Jazz.",
-              "Analizar su estilo de improvisación."
-            ],
-            activities: [
-              "Clase magistral: Presentación de los pianistas y sus estilos.",
-              "Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."
-            ],
-            independentWork: [
-              "Audición: Escuchar grabaciones de los pianistas estudiados.",
-              "Preparar análisis de improvisaciones."
-            ],
-            repertoire: [
-              "Scott Joplin: Grabaciones de sus rags.",
-              "Jelly Roll Morton: Grabaciones de sus solos.",
-              "James P. Johnson: 'Carolina Shout'",
-              "Willie 'The Lion' Smith: Grabaciones de su estilo Stride.",
-              "Earl Hines: 'Fifty-Seven Varieties'"
-            ]
-          },
-          {
-            week: 12,
-            title: "Pianistas del Jazz Temprano II / EXAMEN PARCIAL II",
-            objectives: [
-              "Continuar el reconocimiento de pianistas clave.",
-              "Consolidar la comprensión de los conceptos de Jazz y la escuela francesa."
-            ],
-            activities: [
-              "Clase magistral: Continuación de la presentación de pianistas.",
-              "Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."
-            ],
-            independentWork: [
-              "Revisión de los temas para el parcial."
-            ],
-            repertoire: [
-              "Fats Waller: 'Honeysuckle Rose'",
-              "Teddy Wilson: Grabaciones con Billie Holiday o Benny Goodman.",
-              "Duke Ellington (solos de piano): 'Solitude', 'Mood Indigo'",
-              "Art Tatum: 'Tiger Rag', 'Tea for Two'",
-              "Meade Lux Lewis: 'Honky Tonk Train Blues'",
-              "Pete Johnson: 'Roll 'Em Pete'",
-              "Jimmy Yancey: Grabaciones de boogie-woogie."
-            ]
-          },
-          {
-            week: 13,
-            title: "Armonía Funcional, Motivo y Conjunto en el Siglo XX",
-            objectives: [
-              "Revisar y aplicar conceptos de armonía funcional en un contexto ampliado.",
-              "Comprender el uso del motivo y el conjunto en la música del siglo XX."
-            ],
-            activities: [
-              "Clase magistral: Ejemplos de análisis de obras que demuestran el uso de motivo y conjunto.",
-              "Taller: Ejercicios de desarrollo motívico.",
-              "Discusión crítica: Sobre la persistencia de elementos tradicionales en la música moderna."
-            ],
-            independentWork: [
-              "Lectura: Armonía funcional (Gabis).",
-              "Análisis de partituras: Identificación de motivos y su desarrollo."
-            ],
-            repertoire: [
-              "Arnold Schoenberg: Pierrot Lunaire (selecciones, para motivo y conjunto atonal)",
-              "Alban Berg: Wozzeck (fragmentos, para leitmotivs y conjuntos)",
-              "Anton Webern: Sinfonía, Op. 21 (para serialismo y organización motívica)"
-            ]
-          },
-          {
-            week: 14,
-            title: "Aplicación de Materiales en Composición: Forma Binaria y Ternaria",
-            objectives: [
-              "Aplicar los materiales armónicos y melódicos aprendidos en composiciones formales.",
-              "Realizar composiciones cortas en forma binaria y/o ternaria."
-            ],
-            activities: [
-              "Clase magistral: Revisión de las formas binaria y ternaria.",
-              "Taller: Sesión de composición guiada, trabajando en la estructura de las piezas.",
-              "Simulacro de examen: Presentación de avances de composición."
-            ],
-            independentWork: [
-              "Composición: Desarrollo de una pieza corta en forma binaria o ternaria, aplicando los conceptos vistos."
-            ],
-            repertoire: [
-              "Ejemplos de piezas cortas del siglo XX que utilizan estas formas con lenguajes modernos (ej. Béla Bartók Mikrokosmos, Paul Hindemith Ludus Tonalis)."
-            ]
-          },
-          {
-            week: 15,
-            title: "Análisis de Repertorio Modal y Preparación Final",
-            objectives: [
-              "Realizar un análisis profundo de repertorio modal.",
-              "Consolidar todos los conocimientos adquiridos a lo largo del semestre."
-            ],
-            activities: [
-              "Clase magistral: Análisis de obras complejas que integren varios conceptos.",
-              "Taller: Sesión de preguntas y respuestas, resolución de dudas.",
-              "Audición dirigida (con score): Análisis en clase."
-            ],
-            independentWork: [
-              "Repaso general para el examen final.",
-              "Pulir la composición final."
-            ],
-            repertoire: [
-              "Olivier Messiaen: Quatuor pour la fin du temps (selecciones, para modos de transposición limitada)",
-              "Béla Bartók: Concierto para Orquesta (movimientos selectos, para integración de elementos folclóricos y modales)",
-              "Jazz modal avanzado: John Coltrane 'Giant Steps' (aunque complejo, para entender la progresión modal rápida), Bill Evans 'Waltz for Debby'."
-            ]
-          },
-          {
-            week: 16,
-            title: "EXAMEN FINAL y Presentación de Proyectos",
-            objectives: [
-              "Evaluar la comprensión global de los conceptos del curso.",
-              "Presentar y sustentar el proceso creativo de la composición final."
-            ],
-            activities: [
-              "Examen Parcial III (25%): Evaluación final de los contenidos del curso.",
-              "Presentación de composiciones: Cada estudiante sustentará su proceso creativo."
-            ],
-            independentWork: [
-              "Finalización de la composición y preparación de la sustentación."
-            ],
-            repertoire: [
-              "N/A"
-            ]
-          }
-        ];
-
-        // Datos del cronograma para Conceptos de Música del Siglo XX y XXI II (MUS 4005)
-        const scheduleDataII = [
-          {
-            week: 1,
-            title: "Introducción a la Música del Siglo XX y XXI: Conceptos Estéticos",
-            objectives: [
-              "Introducir el contexto de la música del siglo XX y XXI.",
-              "Comprender los conceptos estéticos de indeterminación, electroacústica, mixta y estocástica.",
-              "Aproximación filosófica a conceptos estéticos de vanguardia."
-            ],
-            activities: [
-              "Clase magistral: Presentación de las corrientes estéticas y sus fundamentos filosóficos.",
-              "Audiciones dirigidas: Ejemplos de obras representativas.",
-              "Discusión crítica: Análisis de las implicaciones de estas estéticas en la creación musical."
-            ],
-            independentWork: [
-              "Lectura: Introducción a las estéticas musicales del siglo XX (Lester, Enfoques analíticos de la música del siglo XX).",
-              "Investigación: Breve reseña sobre un compositor representativo de alguna de estas estéticas."
-            ],
-            repertoire: [
-              "John Cage: 4'33\" (indeterminación)",
-              "Karlheinz Stockhausen: Gesang der Jünglinge (música electrónica)",
-              "Iannis Xenakis: Metastaseis (música estocástica)"
-            ]
-          },
-          {
-            week: 2,
-            title: "Ritmo, Metro y Formas de Organización en el Siglo XX",
-            objectives: [
-              "Analizar las innovaciones en ritmo y metro en la música de finales del siglo XIX y principios del XX.",
-              "Comprender la armonía modal en este periodo."
-            ],
-            activities: [
-              "Clase magistral: Ejemplos de polirritmia, cambios de compás y ritmos aditivos.",
-              "Taller: Ejercicios de escritura rítmica compleja.",
-              "Audición dirigida: Identificación de elementos rítmicos y métricos."
-            ],
-            independentWork: [
-              "Lectura: Sobre ritmo y metro en el siglo XX (Grabner, Teoría General De La Musica).",
-              "Análisis de partituras: Fragmentos con ritmos complejos."
-            ],
-            repertoire: [
-              "Igor Stravinsky: La consagración de la primavera (selecciones)",
-              "Béla Bartók: Concierto para Orquesta (movimientos rítmicos)",
-              "Olivier Messiaen: Quatuor pour la fin du temps (selecciones rítmicas)"
-            ]
-          },
-          {
-            week: 3,
-            title: "Introducción a la Teoría Post Tonal: Dodecafonismo",
-            objectives: [
-              "Comprender los fundamentos del Dodecafonismo.",
-              "Analizar la organización de alturas en la música dodecafónica."
-            ],
-            activities: [
-              "Clase magistral: Explicación de la serie de doce tonos y sus transformaciones.",
-              "Taller: Construcción de series dodecafónicas y sus formas básicas.",
-              "Audición dirigida: Ejemplos de música dodecafónica."
-            ],
-            independentWork: [
-              "Lectura: Introducción al Dodecafonismo (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).",
-              "Análisis: Identificación de series en fragmentos musicales."
-            ],
-            repertoire: [
-              "Arnold Schönberg: Suite para piano, Op. 25 (selecciones)",
-              "Anton Webern: Variaciones para piano, Ор. 27",
-              "Alban Berg: Concierto para violín (fragmentos)"
-            ]
-          },
-          {
-            week: 4,
-            title: "Teoría de Conjunto (Set Theory) I: Intervalos y Vectores",
-            objectives: [
-              "Introducir los conceptos de equivalencias interválicas y clase de intervalo.",
-              "Comprender el vector interválico."
-            ],
-            activities: [
-              "Clase magistral: Explicación de las clases de intervalos y cálculo de vectores interválicos.",
-              "Taller: Ejercicios de análisis de conjuntos de notas utilizando vectores interválicos.",
-              "Audición dirigida: Obras de Bartók."
-            ],
-            independentWork: [
-              "Lectura: Teoría de conjuntos básica (Forte, The structure of atonal music).",
-              "Análisis: Fragmentos de Mikrokosmos Vol. 5 y 6 de Bartók."
-            ],
-            repertoire: [
-              "Béla Bartók: Mikrokosmos (Vol. 5 y 6, selecciones)",
-              "Béla Bartók: Cuarteto de Cuerdas No. 4 (fragmentos)"
-            ]
-          },
-          {
-            week: 5,
-            title: "Teoría de Conjunto (Set Theory) II: Forma Normal y Forma Prima",
-            objectives: [
-              "Dominar la determinación de la forma normal y la forma prima de un conjunto.",
-              "Comprender las operaciones de transposición e inversión."
-            ],
-            activities: [
-              "Clase magistral: Demostración de cómo derivar la forma normal y prima.",
-              "Taller: Ejercicios prácticos de transposición e inversión de conjuntos.",
-              "Simulacro de examen: Presentación de compositores latinoamericanos y establecimiento del tipo de estética."
-            ],
-            independentWork: [
-              "Lectura: Forma normal y prima (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).",
-              "Análisis: Ejercicios de segmentación musical."
-            ],
-            repertoire: [
-              "Anton Webern: Cinco piezas para orchestra, Op. 10 (para análisis de conjuntos pequeños)",
-              "Alban Berg: Sonata para piano, Op. 1 (para análisis de estructuras post-tonales tempranas)"
-            ]
-          },
-          {
-            week: 6,
-            title: "Teoría de Conjunto (Set Theory) III: Relaciones entre Conjuntos / EXAMEN PARCIAL I",
-            objectives: [
-              "Comprender las relaciones Z, complemento, superconjunto y subconjunto.",
-              "Aplicar la teoría de conjunto en el análisis de obras."
-            ],
-            activities: [
-              "Clase magistral: Explicación de las relaciones entre conjuntos y su significado musical.",
-              "Taller: Ejercicios de identificación de relaciones entre conjuntos en fragmentos musicales.",
-              "Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."
-            ],
-            independentWork: [
-              "Revisión de los temas para el parcial."
-            ],
-            repertoire: [
-              "Elliott Carter: Cuarteto de Cuerdas No. 1 (fragmentos, para análisis de relaciones complejas)",
-              "Milton Babbitt: Composition for Four Instruments (para análisis serial y de conjuntos)"
-            ]
-          },
-          {
-            week: 7,
-            title: "Conceptos del Jazz de 1930 a 1980: Swing y Bebop",
-            objectives: [
-              "Comprender la evolución del Jazz desde el Swing hasta el Bebop.",
-              "Identificar las características distintivas de cada estilo."
-            ],
-            activities: [
-              "Clase magistral: Historia y desarrollo de los estilos Swing y Bebop.",
-              "Audición dirigida: Ejemplos de obras representativas.",
-              "Discusión crítica: Sobre la influencia del Bebop en la música posterior."
-            ],
-            independentWork: [
-              "Audición: Escuchar grabaciones de las eras Swing y Bebop.",
-              "Investigación: Breve biografía de un músico clave de cada estilo."
-            ],
-            repertoire: [
-              "Duke Ellington: 'Take the 'A' Train', 'Cotton Tail' (Swing)",
-              "Count Basie: 'One O'Clock Jump' (Swing)",
-              "Charlie Parker: 'Ko-Ko', 'Donna Lee' (Bebop)",
-              "Dizzy Gillespie: 'Salt Peanuts', 'A Night in Tunisia' (Bebop)"
-            ]
-          },
-          {
-            week: 8,
-            title: "Conceptos del Jazz de 1930 a 1980: Cool Jazz y Hard Bop",
-            objectives: [
-              "Analizar las características del Cool Jazz y el Hard Bop.",
-              "Distinguir las diferencias estilísticas entre ellos."
-            ],
-            activities: [
-              "Clase magistral: Presentación de los estilos y sus exponents.",
-              "Audición dirigida: Comparación de obras de Cool Jazz y Hard Bop.",
-              "Taller: Análisis de progresiones armónicas en estos estilos."
-            ],
-            independentWork: [
-              "Audición: Escuchar más ejemplos de Cool Jazz y Hard Bop.",
-              "Preparación para Parcial II."
-            ],
-            repertoire: [
-              "Miles Davis: Birth of the Cool (Cool Jazz)",
-              "Dave Brubeck Quartet: 'Take Five' (Cool Jazz)",
-              "Art Blakey & The Jazz Messengers: 'Moanin'' (Hard Bop)",
-              "Horace Silver: 'Song for My Father' (Hard Bop)"
-            ]
-          },
-          {
-            week: 9,
-            title: "Conceptos del Jazz de 1930 a 1980: Jazz Modal y Free Jazz",
-            objectives: [
-              "Comprender el desarrollo del Jazz Modal y el Free Jazz.",
-              "Analizar las implicaciones de la improvisación modal y la libertad atonal."
-            ],
-            activities: [
-              "Clase magistral: Explicación de los conceptos y sus figuras clave.",
-              "Audición dirigida: Ejemplos de Jazz Modal y Free Jazz.",
-              "Simulacro de examen: Avance de composición o análisis de obras."
-            ],
-            independentWork: [
-              "Audición: Escuchar grabaciones de Jazz Modal y Free Jazz.",
-              "Investigación: Breve reseña sobre John Coltrane o Ornette Coleman."
-            ],
-            repertoire: [
-              "Miles Davis: 'So What' (del álbum Kind of Blue) (Jazz Modal)",
-              "John Coltrane: 'My Favorite Things' (Jazz Modal)",
-              "Ornette Coleman: Free Jazz: A Collective Improvisation (Free Jazz)",
-              "Cecil Taylor: Unit Structures (Free Jazz)"
-            ]
-          },
-          {
-            week: 10,
-            title: "Pianistas del Jazz (1930-1980) I",
-            objectives: [
-              "Reconocer las características interpretativas de los pianistas de Jazz de la segunda mitad del siglo XX.",
-              "Analizar su estilo de improvisación."
-            ],
-            activities: [
-              "Clase magistral: Presentación de los pianistas y sus estilos distintivos.",
-              "Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."
-            ],
-            independentWork: [
-              "Audición: Escuchar grabaciones de los pianistas estudiados.",
-              "Preparar análisis de improvisaciones."
-            ],
-            repertoire: [
-              "Thelonius Monk: 'Round Midnight', 'Straight, No Chaser'",
-              "Bud Powell: 'Un Poco Loco', 'Cleopatra's Dream'",
-              "Oscar Peterson: 'Hymn to Freedom', 'Canadiana Suite'",
-              "Erroll Garner: 'Misty', 'Concert by the Sea'"
-            ]
-          },
-          {
-            week: 11,
-            title: "Pianistas del Jazz (1930-1980) II",
-            objectives: [
-              "Continuar el reconocimiento de pianistas clave del Jazz.",
-              "Analizar sus aportes a la improvisación y el lenguaje armónico."
-            ],
-            activities: [
-              "Clase magistral: Continuación de la presentación de pianistas.",
-              "Audición individual dirigida: Identificación de características de improvisación."
-            ],
-            independentWork: [
-              "Audición: Escuchar grabaciones de los pianistas estudiados.",
-              "Preparar análisis de improvisaciones."
-            ],
-            repertoire: [
-              "Lennie Tristano: 'Line Up', 'Wow'",
-              "Bill Evans: 'Waltz for Debby', 'Autumn Leaves'",
-              "Clare Fischer: 'Pensativa', 'Morning'",
-              "Jimmy Rowles: Grabaciones con Billie Holiday o Stan Getz."
-            ]
-          },
-          {
-            week: 12,
-            title: "Pianistas del Jazz (1930-1980) III y EXAMEN PARCIAL II",
-            objectives: [
-              "Completar el estudio de los pianistas de Jazz de este periodo.",
-              "Consolidar la comprensión de los conceptos de Jazz y la teoría post tonal."
-            ],
-            activities: [
-              "Clase magistral: Presentación de los últimos pianistas y sus innovaciones.",
-              "Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."
-            ],
-            independentWork: [
-              "Revisión de los temas para el parcial."
-            ],
-            repertoire: [
-              "Cecil Taylor: Grabaciones de sus improvisaciones libres.",
-              "Chick Corea: 'Spain', 'La Fiesta' (fusión, latin jazz)",
-              "Keith Jarrett: The Köln Concert (improvisación solo de piano)",
-              "Richie Beirach: Grabaciones de sus trabajos en solo o con grupos."
-            ]
-          },
-          {
-            week: 13,
-            title: "Corrientes Estéticas: Minimalismo y Espectralismo",
-            objectives: [
-              "Comprender los conceptos de Minimalismo y Espectralismo.",
-              "Analizar las técnicas compositivas asociadas a estas corrientes."
-            ],
-            activities: [
-              "Clase magistral: Explicación de las filosofías y técnicas de cada corriente.",
-              "Audición dirigida: Ejemplos de obras minimalistas y espectrales.",
-              "Taller: Ejercicios de composición con repetición y procesos lentos (minimalismo)."
-            ],
-            independentWork: [
-              "Lectura: Sobre Minimalismo y Espectralismo (Lester, Enfoques analíticos de la música del siglo XX).",
-              "Análisis: Fragmentos de obras representativas."
-            ],
-            repertoire: [
-              "Steve Reich: Music for 18 Musicians",
-              "Philip Glass: Einstein on the Beach (fragmentos)",
-              "Terry Riley: In C",
-              "Gérard Grisey: Partiels (Espectralismo)",
-              "Tristan Murail: Désintégrations (Espectralismo)"
-            ]
-          },
-          {
-            week: 14,
-            title: "Corrientes Estéticas: Nueva Simplicidad y Nueva Complejidad",
-            objectives: [
-              "Distinguir entre la Nueva Simplicidad y la Nueva Complejidad.",
-              "Analizar las técnicas compositivas de estas corrientes."
-            ],
-            activities: [
-              "Clase magistral: Presentación de las ideas detrás de cada corriente y sus compositores.",
-              "Audición dirigida: Ejemplos de obras.",
-              "Discusión crítica: Debates sobre la accesibilidad y la dificultad en la música contemporánea."
-            ],
-            independentWork: [
-              "Lectura: Sobre Nueva Simplicidad y Nueva Complejidad (Lester, Enfoques analíticos de la música del siglo XX).",
-              "Composición: Pequeño ejercicio explorando una de estas estéticas."
-            ],
-            repertoire: [
-              "Henryk Górecki: Sinfonía No. 3, 'Sinfonía de las Canciones Lamentativas' (Nueva Simplicidad)",
-              "Arvo Pärt: Spiegel im Spiegel (Nueva Simplicidad)",
-              "Brian Ferneyhough: Bone Alphabet (Nueva Complejidad)",
-              "Helmut Lachenmann: Guero (Nueva Complejidad)"
-            ]
-          },
-          {
-            week: 15,
-            title: "Otros Estilos y Composición en Set Theory",
-            objectives: [
-              "Explorar otros estilos relevantes del siglo XX.",
-              "Realizar composición en set theory utilizando software de notación musical."
-            ],
-            activities: [
-              "Clase magistral: Presentación de los compositores y sus técnicas innovadoras.",
-              "Taller práctico: Creación de pequeñas piezas en FINALE aplicando set theory.",
-              "Audición dirigida: Ejemplos de obras."
-            ],
-            independentWork: [
-              "Lectura: Sobre los compositores vistos (Graetzer, La Musica Contemporánea).",
-              "Finalización de la composición en FINALE."
-            ],
-            repertoire: [
-              "Luciano Berio: Sequenza III (para voz)",
-              "Henry Cowell: The Banshee (para técnicas extendidas en piano)",
-              "Conlon Nancarrow: Estudios para piano mecánico (selecciones)"
-            ]
-          },
-          {
-            week: 16,
-            title: "EXAMEN FINAL y Presentación de Proyectos",
-            objectives: [
-              "Evaluar la comprensión global de los conceptos del curso.",
-              "Presentar y sustentar el proceso creativo de la composición final."
-            ],
-            activities: [
-              "Examen Parcial III (25%): Evaluación final de los contenidos del curso.",
-              "Presentación de composiciones: Cada estudiante sustentará su proceso creativo."
-            ],
-            independentWork: [
-              "Finalización de la composición y preparación de la sustentación."
-            ],
-            repertoire: [
-              "N/A"
-            ]
-          }
-        ];
-
-        // Información de ambos cursos
-        const courses = {
-          'MUS4000': {
-            id: 'MUS4000',
-            name: 'Conceptos de Música del Siglo XX y XXI I',
-            code: 'MUS 4000',
-            // --- MODIFICADO: Se eliminaron las etiquetas <strong> ---
-            description: 'Esta asignatura es una inmersión profunda en la evolución de la música desde las postrimerías del siglo XIX hasta las vanguardias del siglo XXI. Exploraremos la fascinante transición de la tonalidad, desentrañando movimientos clave como el Nacionalismo, el Impresionismo y el Neoclasicismo. Analizaremos los innovadores sistemas de organización musical (como el Sistema de Ejes) y la influencia de escuelas fundamentales como la francesa ("Los Seis") y la inglesa. Además, dedicaremos un espacio vital a comprender los orígenes y la evolución temprana del Jazz.',
-            generalObjectives: [
-              "Conocer los sistemas de organización en la música del siglo XIX.",
-              "Establecer una línea transversal con los estilos: similitud y diferencia entre los países de Centro Europa.",
-              "Realizar composición corta en estilo modal del siglo XIX y en estilo de ejes Bartok, realizando detalle del proceso creativo.",
-              "Audición sobre compositores de finales del siglo XIX para entender y asimilar el resultado de dicho repertorio."
-            ],
-            learningOutcomes: [
-              { id: 'RA1', text: 'Analizar obras maestras del Impresionismo (Debussy, Ravel).' },
-              { id: 'RA2', text: 'Interpretar el movimiento nacionalista a través de la música de Bartok.' },
-              { id: 'RA3', text: 'Identificar y analizar obras del Neoclasicismo (Stravinsky, Hindemith, Prokofiev, Los Seis).' },
-              { id: 'RA4', text: 'Dominar los conceptos fundamentales del Jazz temprano (1890-1930).' },
-              { id: 'RA5', text: 'Reconocer el estilo interpretativo de pianistas icónicos de la primera mitad del siglo XX.' },
-              { id: 'RA6', text: 'Escribir e identificar escalas modales con precisión.' }
-            ],
-            // --- MODIFICADO: Se eliminaron los asteriscos (*) ---
-            bibliography: [
-              'Aguilar, M. d. (1989). Estructuras de la sintaxis musical.',
-              'Antokoletz, E. (2006). La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX.',
-              'Catalán, T. (2012). Sistema Compositivo Temperado En El Siglo XX.',
-              'Cormier, S. M. (2010). Modal Music Composition.',
-              'Desportes, Y., & Bernaud, A. (1995). Manual Practico Para El Reconocimiento De Los Estilos Desde Bach A Ravel.',
-              'Gabis, C. (2006). Armonía funcional.',
-              'Graetzer, G. (1980). La Musica Contemporánea.',
-              'Lendvai, E. (2003). Béla Bartok: un análisis de su música.',
-              'Miller, R. (1996). Modal Jazz Composition & Harmony Volumen 1.',
-              'Padilla Rincón, J. C. (2014). Armonia 1.',
-              'Persichetti, V. (1985). Armonía del siglo XX.',
-              'Ulehla, L. (1994). Comtemporary Harmony.',
-              'Vergés, L. (2007). El lenguaje de la armonía: de los inicios a la actualidad.'
-            ],
-            scheduleData: scheduleDataI
-          },
-          'MUS4005': {
-            id: 'MUS4005',
-            name: 'Conceptos de Música del Siglo XX y XXI II',
-            code: 'MUS 4005',
-            description: 'Estudia la transición de la tonalidad a la música del siglo XX apoyado en los elementos comunes en toda la música. Comparación entre J.S. Bach y A. Schönberg. Ritmo, metro, textura y timbre. El movimiento nacionalista y sistemas de organización musical (Sistema de ejes), Impresionismo (Debussy). Estructuración de alturas: altura, intervalo, melodía. Herramienta de análisis de música del siglo XX. Introducción al análisis de la música post tonal y elementos de construcción y análisis de líneas estéticas de la música del siglo XX y XXI.',
-            generalObjectives: [
-              "Conocer y dominar las técnicas de elaboración de finales del siglo XIX y primera etapa del siglo XX, en la obra de compositores de las escuelas europeas.",
-              "Realizar análisis de teoría de conjunto (set theory) en la música post tonal para potencializar la escucha y la interpretación en obras de compositores del siglo XX y XXI (Europa, América)."
-            ],
-            learningOutcomes: [
-              { id: 'RA1', text: 'Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así como sus técnicas de elaboración comprendidas en los siglos XX y XXI.' },
-              { id: 'RA2', text: 'Analizar las principales obras del repertorio de los siglos XX al XXI.' },
-              { id: 'RA3', text: 'Elaborar análisis por medio de la teoría de conjunto (set theory).' },
-              { id: 'RA4', text: 'Analizar música de Bela Bartok (microcosmos Vol 5 y 6) como introducción al análisis de teoría de conjunto (set theory).' },
-              { id: 'RA5', text: 'Reconocer segmentación musical, construcción musical (composición) a partir del set theory dentro de alguna forma tradicional.' },
-              { id: 'RA6', text: 'Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así asus técnicas de elaboración comprendidas a finales de siglo XIX y primera etapa del siglo XX.' },
-              { id: 'RA7', text: 'Elaborar análisis interpretativo teniendo en cuenta los conceptos y materiales desarrollados.' },
-              { id: 'RA8', text: 'Reconocer características interpretativas de pianistas de la segunda mitad del siglo XX hasta 1980: Thelonius Monk, Bud Powell, Oscar Peterson, Erroll Garner, Lennie Tristano, Bill Evans, Clare Fischer, Jimmy Rowles, Cecil Taylor, Chick Corea, Keith Jarrett, Richie Beirach.' }
-            ],
-            // --- MODIFICADO: Se eliminaron los asteriscos (*) ---
-            bibliography: [
-              'Aguilar, M. d. (1989). Estructuras de la sintaxis musical.',
-              'Antokoletz, E. (2006). La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX.',
-              'Brouwer, L. (1972). Síntesis De La Armonía Contemporánea.',
-              'Catalán, T., & Fernández Vidal, C. (2012). Musica No Tonal. Las Propuestas de Julien Falk y Ernst Krenek.',
-              'Catalán, T. (2012). Sistema Compositivo Temperado En El Siglo XX.',
-              'Forte, A. (1973). The structure of atonal music.',
-              'Gerou, T., & Lusk, L. (1996). Essential Dictionary Of Music Notation.',
-              'Gould, E. (2011). Behind Bars.',
-              'Grabner, H. (2001). Teoría General De La Musica.',
-              'Heussenstamm, G. (1987). The Norton Manual Of Music Notation.',
-              'Karkoschka, E. (1972). Notation in the New Music.',
-              'Lester, J. (2005). Enfoques analíticos de la música del siglo XX.',
-              'Read, G. (1979). Music Notation. A Manual Of Modern Practice.',
-              'Risatti, H. (1976). New Music Vocabulary.',
-              'Roig-Francolí, M. A. (2008). Understanding Post-Tonal Music.',
-              'Stone, K. (1980). Music Notation In The Twentieth Century.',
-              'Straus, J. N. (2004). Introduction to Post-Tonal Theory (3rd Edition).',
-              'Ulehla, L. (1994). Comtemporary Harmony.',
-              'Villa Rojo, J. (2003). Notacion Y Grafia Musical En El Siglo XX.'
-            ],
-            scheduleData: scheduleDataII
-          }
-        };
-
-        // --- Datos de Fechas Importantes ---
-        const importantDates = [
-          { event: "Inicio de clase", date: "28 de julio 2025" },
-          { event: "Fecha límite realización I parcial", date: "22 de agosto 2025" },
-          { event: "Fecha límite para el registro de notas del primer parcial", date: "29 de agosto 2025" },
-          { event: "Fecha límite realización del II parcial", date: "19 de septiembre 2025" },
-          { event: "Fecha límite registro de notas del II parcial", date: "19 de septiembre 2025" },
-          { event: "Semana de Receso", date: "Del 06 al 10 de octubre" },
-          { event: "Fecha límite registro del 40% de las notas del semestre PR. Semestre I", date: "22 de octubre 2025" },
-          { event: "Fecha límite realización del III parcial", date: "24 de octubre 2025" },
-          { event: "Fecha límite registro de nota del III parcial", date: "31 de octubre 2025" },
-          { event: "Fecha límite para retiro", date: "05 de noviembre 2025" },
-          { event: "Finalización de clases", date: "23 de noviembre 2025" },
-          { event: "Inicio Exámenes finales", date: "24 de noviembre 2025" },
-          { event: "Finalizan Exámenes Finales", date: "03 de diciembre 2025" },
-          { event: "Fecha límite registro de notas finales", date: "06 de diciembre 2025" },
-        ];
+        // --- Datos del Cronograma (Minificados) ---
+        const scheduleDataI = [{"week":1,"title":"El Crepúsculo Tonal y el Amanecer Modal","objectives":["Introducir el contexto musical de finales del siglo XIX.","Comprender el concepto de transición de la tonalidad.","Familiarizarse con los rudimentos teóricos de acordes y escalas modales."],"activities":["Clase magistral: Presentación de lineamientos técnico-teóricos.","Taller: Ejercicios de identificación de escalas y acordes modales básicos.","Audición dirigida: Ejemplos de obras con elementos de transición tonal."],"independentWork":["Lectura: Capítulo introductorio sobre la armonía de finales del siglo XIX y principios del XX (Persichetti, Ulehla).","Ejercicios de escritura: Identificación de modos y construcción de acordes modales."],"repertoire":["Richard Wagner: Preludio de Tristán e Isolda","Franz Liszt: Nuages gris","Modest Mussorgsky: Cuadros de una exposición (original para piano)"]},{"week":2,"title":"Debussy: La Paleta Sonora del Impresionismo","objectives":["Analizar las características armónicas y melódicas de la música de Debussy.","Comprender el cuartalismo y el modalismo en su obra."],"activities":["Clase magistral: Análisis de obras clave de Debussy (ej. Preludios, La Mer).","Taller: Ejercicios de composición corta aplicando cuartalismo y modalismo debussyniano.","Discusión crítica: Sobre la ruptura con la tonalidad tradicional en Debussy."],"independentWork":["Audición dirigida (con score): Análisis de 2-3 piezas de Debussy, identificando elementos modales y cuartales.","Composición: Pequeña pieza de 8-16 compases en estilo impresionista."],"repertoire":["Claude Debussy: Préludes (Libro I y II, selecciones como 'Voiles', 'La Cathédrale englottie')","Claude Debussy: Estampes ('Pagodes', 'La soirée dans Grenade', 'Jardins sous la pluie')","Claude Debussy: Children's Corner ('Golliwogg's Cakewalk')"]},{"week":3,"title":"Ravel: Claridad y Brillo Impresionista","objectives":["Distinguir las características de Ravel en comparación con Debussy."],"activities":["Clase magistral: Análisis comparativo de obras de Ravel (ej. Daphnis et Chloé, Bolero).","Simulacro de examen: Avance de composición realizada con contenidos de las semanas anteriores."],"independentWork":["Lectura: Sección sobre Ravel en textos de armonía del siglo XX (Persichetti).","Audición: Escuchar obras de Ravel, prestando atención a la instrumentación."],"repertoire":["Maurice Ravel: Miroirs ('Noctuelles', 'Oiseaux tristes', 'Une barque sur l'ocean')","Maurice Ravel: Gaspard de la Nuit ('Ondine', 'Le Gibet', 'Scarbo')","Maurice Ravel: Valses nobles et sentimentales"]},{"week":4,"title":"Bartók: Folclore y el Sistema de Ejes","objectives":["Comprender el concepto de nacionalismo musical en Europa del Este.","Analizar el Sistema de Ejes de Béla Bartók."],"activities":["Clase magistral: Explicación del sistema de ejes y análisis de obras de Bartók (ej. Mikrokosmos, Cuartetos de cuerda).","Taller: Ejercicios de escritura aplicando el sistema de ejes.","Audición dirigida: Obras de Bartók."],"independentWork":["Lectura: La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX (Antokoletz, Lendvai).","Composición: Pequeña pieza en estilo de ejes Bartok."],"repertoire":["Béla Bartók: Mikrokosmos (selecciones, especialmente piezas con elementos modales o de ejes)","Béla Bartók: Allegro Barbaro","Béla Bartók: Seis Danzas Rumanas (versión para piano)"]},{"week":5,"title":"Stravinsky y Hindemith: El Retorno a la Forma","objectives":["Identificar las características del Neoclasicismo musical.","Analizar las obras de Stravinsky y Hindemith dentro de este estilo."],"activities":["Clase magistral: Análisis de obras clave de Stravinsky (ej. Pulcinella, Sinfonía de los Salmos) y Hindemith (ej. Ludus Tonalis).","Taller: Ejercicios de escritura con elementos neoclásicos.","Discusión crítica: Sobre la estética neoclásica."],"independentWork":["Audición dirigida (con score): Obras neoclásicas.","Preparación para Parcial I."],"repertoire":["Igor Stravinsky: Pulcinella Suite (versión de concierto)","Igor Stravinsky: Octeto para instrumentos de viento","Paul Hindemith: Sonata para piano No. 2","Paul Hindemith: Ludus Tonalis (selecciones de fugas e interludios)"]},{"week":6,"title":"Prokofiev y Contrastes Estilísticos / EXAMEN PARCIAL I","objectives":["Continuar el análisis del Neoclasicismo con Prokofiev.","Establecer comparaciones estilísticas entre los compositores vistos hasta ahora."],"activities":["Clase magistral: Análisis de obras de Prokofiev (ej. Sinfonía Clásica).","Taller: Ejercicios de análisis comparativo de fragmentos musicales.","Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."],"independentWork":["Revisión de los temas para el parcial."],"repertoire":["Sergei Prokofiev: Sinfonía Clásica (Movimientos selectos)","Sergei Prokofiev: Visions Fugitives (selecciones)","Comparación: Johann Sebastian Bach (ej. una invención a dos voces) y Arnold Schönberg (ej. una de las Seis pequeñas piezas para piano, Op. 19)"]},{"week":7,"title":"Los Seis: La Vanguardia Francesa","objectives":["Conocer a los miembros y la filosofía del Grupo de Los Seis.","Analizar la politonalidad de Darius Milhaud y su influencia."],"activities":["Clase magistral: Presentación de los compositores y sus ideas estéticas.","Taller: Ejercicios de escritura con elementos politonales simples.","Audición dirigida: Obras representativas de Los Seis."],"independentWork":["Lectura: Sobre el Grupo de Los Seis.","Composición: Pequeño ejercicio explorando la bitonalidad."],"repertoire":["Darius Milhaud: Scaramouche (para dos pianos o saxofón y piano)","Francis Poulenc: Les Biches (Suite de ballet)","Arthur Honegger: Pacific 231","Erik Satie: Gymnopédies y Gnossiennes"]},{"week":8,"title":"Ragtime y New Orleans: Cuna del Jazz","objectives":["Comprender los orígenes del Jazz.","Analizar las características del Ragtime y el Estilo New Orleans."],"activities":["Clase magistral: Historia y evolución del Jazz temprano.","Audición dirigida: Obras de Scott Joplin y grabaciones de New Orleans Jazz.","Discusión crítica: Sobre la importancia de la improvisación en el Jazz."],"independentWork":["Audición: Escuchar más ejemplos de Ragtime y New Orleans Jazz.","Investigación: Breve biografía de Scott Joplin."],"repertoire":["Scott Joplin: 'Maple Leaf Rag', 'The Entertainer'","Original Dixieland Jazz Band: 'Livery Stable Blues'","Jelly Roll Morton: 'King Porter Stomp'"]},{"week":9,"title":"Chicago Jazz y el Legado de Louis Armstrong","objectives":["Analizar la evolución del Jazz hacia el Estilo Chicago.","Reconocer la figura de Louis Armstrong y su impacto."],"activities":["Clase magistral: Análisis de grabaciones de Louis Armstrong.","Taller: Transcripción de solos sencillos de Jazz temprano.","Simulacro de examen: Avance de composición o análisis de obras."],"independentWork":["Audición: Comparar grabaciones de New Orleans y Chicago Jazz.","Preparación para Parcial II."],"repertoire":["Louis Armstrong & His Hot Five/Seven: 'West End Blues', 'Potato Head Blues', 'Cornet Chop Suey'","Bix Beiderbecke: 'Singin' the Blues'"]},{"week":10,"title":"Modalismo en el Jazz y Armonías Cuartales","objectives":["Comprender la aplicación del modalismo en el Jazz.","Analizar las arquitecturas acordales cuartales en el Jazz."],"activities":["Clase magistral: Ejemplos de Jazz modal y uso de acordes cuartales.","Taller: Ejercicios de escritura de progresiones modales y acordes cuartales en un contexto de Jazz.","Audición dirigida: Ejemplos de Jazz con estas características."],"independentWork":["Lectura: Modal Jazz Composition & Harmony Volumen 1 (Miller).","Ejercicios de improvisación sobre vamps modales."],"repertoire":["Miles Davis: 'So What' (del álbum Kind of Blue) - para modalismo","Herbie Hancock: 'Maiden Voyage' - para acordes cuartales","McCoy Tyner: 'Passion Dance' - para acordes cuartales"]},{"week":11,"title":"Pianistas del Jazz Temprano I","objectives":["Reconocer las características interpretativas de los primeros pianistas de Jazz.","Analizar su estilo de improvisación."],"activities":["Clase magistral: Presentación de los pianistas y sus estilos.","Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."],"independentWork":["Audición: Escuchar grabaciones de los pianistas estudiados.","Preparar análisis de improvisaciones."],"repertoire":["Scott Joplin: Grabaciones de sus rags.","Jelly Roll Morton: Grabaciones de sus solos.","James P. Johnson: 'Carolina Shout'","Willie 'The Lion' Smith: Grabaciones de su estilo Stride.","Earl Hines: 'Fifty-Seven Varieties'"]},{"week":12,"title":"Pianistas del Jazz Temprano II / EXAMEN PARCIAL II","objectives":["Continuar el reconocimiento de pianistas clave.","Consolidar la comprensión de los conceptos de Jazz y la escuela francesa."],"activities":["Clase magistral: Continuación de la presentación de pianistas.","Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."],"independentWork":["Revisión de los temas para el parcial."],"repertoire":["Fats Waller: 'Honeysuckle Rose'","Teddy Wilson: Grabaciones con Billie Holiday o Benny Goodman.","Duke Ellington (solos de piano): 'Solitude', 'Mood Indigo'","Art Tatum: 'Tiger Rag', 'Tea for Two'","Meade Lux Lewis: 'Honky Tonk Train Blues'","Pete Johnson: 'Roll 'Em Pete'","Jimmy Yancey: Grabaciones de boogie-woogie."]},{"week":13,"title":"Armonía Funcional, Motivo y Conjunto en el Siglo XX","objectives":["Revisar y aplicar conceptos de armonía funcional en un contexto ampliado.","Comprender el uso del motivo y el conjunto en la música del siglo XX."],"activities":["Clase magistral: Ejemplos de análisis de obras que demuestran el uso de motivo y conjunto.","Taller: Ejercicios de desarrollo motívico.","Discusión crítica: Sobre la persistencia de elementos tradicionales en la música moderna."],"independentWork":["Lectura: Armonía funcional (Gabis).","Análisis de partituras: Identificación de motivos y su desarrollo."],"repertoire":["Arnold Schoenberg: Pierrot Lunaire (selecciones, para motivo y conjunto atonal)","Alban Berg: Wozzeck (fragmentos, para leitmotivs y conjuntos)","Anton Webern: Sinfonía, Op. 21 (para serialismo y organización motívica)"]},{"week":14,"title":"Aplicación de Materiales en Composición: Forma Binaria y Ternaria","objectives":["Aplicar los materiales armónicos y melódicos aprendidos en composiciones formales.","Realizar composiciones cortas en forma binaria y/o ternaria."],"activities":["Clase magistral: Revisión de las formas binaria y ternaria.","Taller: Sesión de composición guiada, trabajando en la estructura de las piezas.","Simulacro de examen: Presentación de avances de composición."],"independentWork":["Composición: Desarrollo de una pieza corta en forma binaria o ternaria, aplicando los conceptos vistos."],"repertoire":["Ejemplos de piezas cortas del siglo XX que utilizan estas formas con lenguajes modernos (ej. Béla Bartók Mikrokosmos, Paul Hindemith Ludus Tonalis)."]},{"week":15,"title":"Análisis de Repertorio Modal y Preparación Final","objectives":["Realizar un análisis profundo de repertorio modal.","Consolidar todos los conocimientos adquiridos a lo largo del semestre."],"activities":["Clase magistral: Análisis de obras complexas que integren varios conceptos.","Taller: Sesión de preguntas y respuestas, resolución de dudas.","Audición dirigida (con score): Análisis en clase."],"independentWork":["Repaso general para el examen final.","Pulir la composición final."],"repertoire":["Olivier Messiaen: Quatuor pour la fin du temps (selecciones, para modos de transposición limitada)","Béla Bartók: Concierto para Orquesta (movimientos selectos, para integración de elementos folcóricos y modales)","Jazz modal avanzado: John Coltrane 'Giant Steps' (aunque complejo, para entender la progresión modal rápida), Bill Evans 'Waltz for Debby'."]},{"week":16,"title":"EXAMEN FINAL y Presentación de Proyectos","objectives":["Evaluar la comprensión global de los conceptos del curso.","Presentar y sustentar el proceso creativo de la composición final."],"activities":["Examen Parcial III (25%): Evaluación final de los contenidos del curso.","Presentación de composiciones: Cada estudiante sustentará su proceso creativo."],"independentWork":["Finalización de la composición y preparación de la sustentación."],"repertoire":["N/A"]}];
+        const scheduleDataII = [{"week":1,"title":"Introducción a la Música del Siglo XX y XXI: Conceptos Estéticos","objectives":["Introducir el contexto de la música del siglo XX y XXI.","Comprender los conceptos estéticos de indeterminación, electroacústica, mixta y estocástica.","Aproximación filosófica a conceptos estéticos de vanguardia."],"activities":["Clase magistral: Presentación de las corrientes estéticas y sus fundamentos filosóficos.","Audiciones dirigidas: Ejemplos de obras representativas.","Discusión crítica: Análisis de las implicaciones de estas estéticas en la creación musical."],"independentWork":["Lectura: Introducción a las estéticas musicales del siglo XX (Lester, Enfoques analíticos de la música del siglo XX).","Investigación: Breve reseña sobre un compositor representativo de alguna de estas estéticas."],"repertoire":["John Cage: 4'33\" (indeterminación)","Karlheinz Stockhausen: Gesang der Jünglinge (música electrónica)","Iannis Xenakis: Metastaseis (música estocástica)"]},{"week":2,"title":"Ritmo, Metro y Formas de Organización en el Siglo XX","objectives":["Analizar las innovaciones en ritmo y metro en la música de finales del siglo XIX y principios del XX.","Comprender la armonía modal en este periodo."],"activities":["Clase magistral: Ejemplos de polirritmia, cambios de compás y ritmos aditivos.","Taller: Ejercicios de escritura rítmica compleja.","Audición dirigida: Identificación de elementos rítmicos y métricos."],"independentWork":["Lectura: Sobre ritmo y metro en el siglo XX (Grabner, Teoría General De La Musica).","Análisis de partituras: Fragmentos con ritmos complejos."],"repertoire":["Igor Stravinsky: La consagración de la primavera (selecciones)","Béla Bartók: Concierto para Orquesta (movimientos rítmicos)","Olivier Messiaen: Quatuor pour la fin du temps (selecciones rítmicas)"]},{"week":3,"title":"Introducción a la Teoría Post Tonal: Dodecafonismo","objectives":["Comprender los fundamentos del Dodecafonismo.","Analizar la organización de alturas en la música dodecafónica."],"activities":["Clase magistral: Explicación de la serie de doce tonos y sus transformaciones.","Taller: Construcción de series dodecafónicas y sus formas básicas.","Audición dirigida: Ejemplos de música dodecafónica."],"independentWork":["Lectura: Introducción al Dodecafonismo (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).","Análisis: Identificación de series en fragmentos musicales."],"repertoire":["Arnold Schönberg: Suite para piano, Op. 25 (selecciones)","Anton Webern: Variaciones para piano, Ор. 27","Alban Berg: Concierto para violín (fragmentos)"]},{"week":4,"title":"Teoría de Conjunto (Set Theory) I: Intervalos y Vectores","objectives":["Introducir los conceptos de equivalencias interválicas y clase de intervalo.","Comprender el vector interválico."],"activities":["Clase magistral: Explicación de las clases de intervalos y cálculo de vectores interválicos.","Taller: Ejercicios de análisis de conjuntos de notas utilizando vectores interválicos.","Audición dirigida: Obras de Bartók."],"independentWork":["Lectura: Teoría de conjuntos básica (Forte, The structure of atonal music).","Análisis: Fragmentos de Mikrokosmos Vol. 5 y 6 de Bartók."],"repertoire":["Béla Bartók: Mikrokosmos (Vol. 5 y 6, selecciones)","Béla Bartók: Cuarteto de Cuerdas No. 4 (fragmentos)"]},{"week":5,"title":"Teoría de Conjunto (Set Theory) II: Forma Normal y Forma Prima","objectives":["Dominar la determinación de la forma normal y la forma prima de un conjunto.","Comprender las operaciones de transposición e inversión."],"activities":["Clase magistral: Demostración de cómo derivar la forma normal y prima.","Taller: Ejercicios prácticos de transposición e inversión de conjuntos.","Simulacro de examen: Presentación de compositores latinoamericanos y establecimiento del tipo de estética."],"independentWork":["Lectura: Forma normal y prima (Roig-Francolí, Understanding Post-Tonal Music; Straus, Introduction to Post-Tonal Theory).","Análisis: Ejercicios de segmentación musical."],"repertoire":["Anton Webern: Cinco piezas para orchestra, Op. 10 (para análisis de conjuntos pequeños)","Alban Berg: Sonata para piano, Op. 1 (para análisis de estructuras post-tonales tempranas)"]},{"week":6,"title":"Teoría de Conjunto (Set Theory) III: Relaciones entre Conjuntos / EXAMEN PARCIAL I","objectives":["Comprender las relaciones Z, complemento, superconjunto y subconjunto.","Aplicar la teoría de conjunto en el análisis de obras."],"activities":["Clase magistral: Explicación de las relaciones entre conjuntos y su significado musical.","Taller: Ejercicios de identificación de relaciones entre conjuntos en fragmentos musicales.","Examen Parcial I (25%): Incluye contenidos de las semanas 1-5."],"independentWork":["Revisión de los temas para el parcial."],"repertoire":["Elliott Carter: Cuarteto de Cuerdas No. 1 (fragmentos, para análisis de relaciones complejas)","Milton Babbitt: Composition for Four Instruments (para análisis serial y de conjuntos)"]},{"week":7,"title":"Conceptos del Jazz de 1930 a 1980: Swing y Bebop","objectives":["Comprender la evolución del Jazz desde el Swing hasta el Bebop.","Identificar las características distintivas de cada estilo."],"activities":["Clase magistral: Historia y desarrollo de los estilos Swing y Bebop.","Audición dirigida: Ejemplos de obras representativas.","Discusión crítica: Sobre la influencia del Bebop en la música posterior."],"independentWork":["Audición: Escuchar grabaciones de las eras Swing y Bebop.","Investigación: Breve biografía de un músico clave de cada estilo."],"repertoire":["Duke Ellington: 'Take the 'A' Train', 'Cotton Tail' (Swing)","Count Basie: 'One O'Clock Jump' (Swing)","Charlie Parker: 'Ko-Ko', 'Donna Lee' (Bebop)","Dizzy Gillespie: 'Salt Peanuts', 'A Night in Tunisia' (Bebop)"]},{"week":8,"title":"Conceptos del Jazz de 1930 a 1980: Cool Jazz y Hard Bop","objectives":["Analizar las características del Cool Jazz y el Hard Bop.","Distinguir las diferencias estilísticas entre ellos."],"activities":["Clase magistral: Presentación de los estilos y sus exponents.","Audición dirigida: Comparación de obras de Cool Jazz y Hard Bop.","Taller: Análisis de progresiones armónicas en estos estilos."],"independentWork":["Audición: Escuchar más ejemplos de Cool Jazz y Hard Bop.","Preparación para Parcial II."],"repertoire":["Miles Davis: Birth of the Cool (Cool Jazz)","Dave Brubeck Quartet: 'Take Five' (Cool Jazz)","Art Blakey & The Jazz Messengers: 'Moanin'' (Hard Bop)","Horace Silver: 'Song for My Father' (Hard Bop)"]},{"week":9,"title":"Conceptos del Jazz de 1930 a 1980: Jazz Modal y Free Jazz","objectives":["Comprender el desarrollo del Jazz Modal y el Free Jazz.","Analizar las implicaciones de la improvisación modal y la libertad atonal."],"activities":["Clase magistral: Explicación de los conceptos y sus figuras clave.","Audición dirigida: Ejemplos de Jazz Modal y Free Jazz.","Simulacro de examen: Avance de composición o análisis de obras."],"independentWork":["Audición: Escuchar grabaciones de Jazz Modal y Free Jazz.","Investigación: Breve reseña sobre John Coltrane o Ornette Coleman."],"repertoire":["Miles Davis: 'So What' (del álbum Kind of Blue) (Jazz Modal)","John Coltrane: 'My Favorite Things' (Jazz Modal)","Ornette Coleman: Free Jazz: A Collective Improvisation (Free Jazz)","Cecil Taylor: Unit Structures (Free Jazz)"]},{"week":10,"title":"Pianistas del Jazz (1930-1980) I","objectives":["Reconocer las características interpretativas de los pianistas de Jazz de la segunda mitad del siglo XX.","Analizar su estilo de improvisación."],"activities":["Clase magistral: Presentación de los pianistas y sus estilos distintivos.","Audición individual dirigida: Identificación de características de improvisación en 3 temas distintos de cada pianista."],"independentWork":["Audición: Escuchar grabaciones de los pianistas estudiados.","Preparar análisis de improvisaciones."],"repertoire":["Thelonius Monk: 'Round Midnight', 'Straight, No Chaser'","Bud Powell: 'Un Poco Loco', 'Cleopatra's Dream'","Oscar Peterson: 'Hymn to Freedom', 'Canadiana Suite'","Erroll Garner: 'Misty', 'Concert by the Sea'"]},{"week":11,"title":"Pianistas del Jazz (1930-1980) II","objectives":["Continuar el reconocimiento de pianistas clave del Jazz.","Analizar sus aportes a la improvisación y el lenguaje armónico."],"activities":["Clase magistral: Continuación de la presentación de pianistas.","Audición individual dirigida: Identificación de características de improvisación."],"independentWork":["Audición: Escuchar grabaciones de los pianistas estudiados.","Preparar análisis de improvisaciones."],"repertoire":["Lennie Tristano: 'Line Up', 'Wow'","Bill Evans: 'Waltz for Debby', 'Autumn Leaves'","Clare Fischer: 'Pensativa', 'Morning'","Jimmy Rowles: Grabaciones con Billie Holiday o Stan Getz."]},{"week":12,"title":"Pianistas del Jazz (1930-1980) III y EXAMEN PARCIAL II","objectives":["Completar el estudio de los pianistas de Jazz de este periodo.","Consolidar la comprensión de los conceptos de Jazz y la teoría post tonal."],"activities":["Clase magistral: Presentación de los últimos pianistas y sus innovaciones.","Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."],"independentWork":["Revisión de los temas para el parcial."],"repertoire":["Cecil Taylor: Grabaciones de sus improvisaciones libres.","Chick Corea: 'Spain', 'La Fiesta' (fusión, latin jazz)","Keith Jarrett: The Köln Concert (improvisación solo de piano)","Richie Beirach: Grabaciones de sus trabajos en solo o con grupos."]},{"week":13,"title":"Corrientes Estéticas: Minimalismo y Espectralismo","objectives":["Comprender los conceptos de Minimalismo y Espectralismo.","Analizar las técnicas compositivas asociadas a estas corrientes."],"activities":["Clase magistral: Explicación de las filosofías y técnicas de cada corriente.","Audición dirigida: Ejemplos de obras minimalistas y espectrales.","Taller: Ejercicios de composición con repetición y procesos lentos (minimalismo)."],"independentWork":["Lectura: Sobre Minimalismo y Espectralismo (Lester, Enfoques analíticos de la música del siglo XX).","Análisis: Fragmentos de obras representativas."],"repertoire":["Steve Reich: Music for 18 Musicians","Philip Glass: Einstein on the Beach (fragmentos)","Terry Riley: In C","Gérard Grisey: Partiels (Espectralismo)","Tristan Murail: Désintégrations (Espectralismo)"]},{"week":14,"title":"Corrientes Estéticas: Nueva Simplicidad y Nueva Complejidad","objectives":["Distinguir entre la Nueva Simplicidad y la Nueva Complejidad.","Analizar las técnicas compositivas de estas corrientes."],"activities":["Clase magistral: Presentación de las ideas detrás de cada corriente y sus compositores.","Audición dirigida: Ejemplos de obras.","Discusión crítica: Debates sobre la accesibilidad y la dificultad en la música contemporánea."],"independentWork":["Lectura: Sobre Nueva Simplicidad y Nueva Complejidad (Lester, Enfoques analíticos de la música del siglo XX).","Composición: Pequeño ejercicio explorando una de estas estéticas."],"repertoire":["Henryk Górecki: Sinfonía No. 3, 'Sinfonía de las Canciones Lamentativas' (Nueva Simplicidad)","Arvo Pärt: Spiegel im Spiegel (Nueva Simplicidad)","Brian Ferneyhough: Bone Alphabet (Nueva Complejidad)","Helmut Lachenmann: Guero (Nueva Complejidad)"]},{"week":15,"title":"Otros Estilos y Composición en Set Theory","objectives":["Explorar otros estilos relevantes del siglo XX.","Realizar composición en set theory utilizando software de notación musical."],"activities":["Clase magistral: Presentación de los compositores y sus técnicas innovadoras.","Taller práctico: Creación de pequeñas piezas en FINALE aplicando set theory.","Audición dirigida: Ejemplos de obras."],"independentWork":["Lectura: Sobre los compositores vistos (Graetzer, La Musica Contemporánea).","Finalización de la composición en FINALE."],"repertoire":["Luciano Berio: Sequenza III (para voz)","Henry Cowell: The Banshee (para técnicas extendidas en piano)","Conlon Nancarrow: Estudios para piano mecánico (selecciones)"]},{"week":16,"title":"EXAMEN FINAL y Presentación de Proyectos","objectives":["Evaluar la comprensión global de los conceptos del curso.","Presentar y sustentar el proceso creativo de la composición final."],"activities":["Examen Parcial III (25%): Evaluación final de los contenidos del curso.","Presentación de composiciones: Cada estudiante sustentará su proceso creativo."],"independentWork":["Finalización de la composición y preparación de la sustentación."],"repertoire":["N/A"]}];
+        const courses = {"MUS4000":{"id":"MUS4000","name":"Conceptos de Música del Siglo XX y XXI I","code":"MUS 4000","description":"Esta asignatura es una inmersión profunda en la evolución de la música desde las postrimerías del siglo XIX hasta las vanguardias del siglo XXI. Exploraremos la fascinante transición de la tonalidad, desentrañando movimientos clave como el Nacionalismo, el Impresionismo y el Neoclasicismo. Analizaremos los innovadores sistemas de organización musical (como el Sistema de Ejes) y la influencia de escuelas fundamentales como la francesa (\"Los Seis\") y la inglesa. Además, dedicaremos un espacio vital a comprender los orígenes y la evolución temprana del Jazz.","generalObjectives":["Conocer los sistemas de organización en la música del siglo XIX.","Establecer una línea transversal con los estilos: similitud y diferencia entre los países de Centro Europa.","Realizar composición corta en estilo modal del siglo XIX y en estilo de ejes Bartok, realizando detalle del proceso creativo.","Audición sobre compositores de finales del siglo XIX para entender y asimilar el resultado de dicho repertorio."],"learningOutcomes":[{"id":"RA1","text":"Analizar obras maestras del Impresionismo (Debussy, Ravel)."},{"id":"RA2","text":"Interpretar el movimiento nacionalista a través de la música de Bartok."},{"id":"RA3","text":"Identificar y analizar obras del Neoclasicismo (Stravinsky, Hindemith, Prokofiev, Los Seis)."},{"id":"RA4","text":"Dominar los conceptos fundamentales del Jazz temprano (1890-1930)."},{"id":"RA5","text":"Reconocer el estilo interpretativo de pianistas icónicos de la primera mitad del siglo XX."},{"id":"RA6","text":"Escribir e identificar escalas modales con precisión."}],"bibliography":["Aguilar, M. d. (1s989). Estructuras de la sintaxis musical.","Antokoletz, E. (2006). La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX.","Catalán, T. (2012). Sistema Compositivo Temperado En El Siglo XX.","Cormier, S. M. (2010). Modal Music Composition.","Desportes, Y., & Bernaud, A. (1995). Manual Practico Para El Reconocimiento De Los Estilos Desde Bach A Ravel.","Gabis, C. (2006). Armonía funcional.","Graetzer, G. (1980). La Musica Contemporánea.","Lendvai, E. (2003). Béla Bartok: un análisis de su música.","Miller, R. (1996). Modal Jazz Composition & Harmony Volumen 1.","Padilla Rincón, J. C. (2014). Armonia 1.","Persichetti, V. (1985). Armonía del siglo XX.","Ulehla, L. (1994). Comtemporary Harmony.","Vergés, L. (2007). El lenguaje de la armonía: de los inicios a la actualidad."],"scheduleData":scheduleDataI},"MUS4005":{"id":"MUS4005","name":"Conceptos de Música del Siglo XX y XXI II","code":"MUS 4005","description":"Estudia la transición de la tonalidad a la música del siglo XX apoyado en los elementos comunes en toda la música. Comparación entre J.S. Bach y A. Schönberg. Ritmo, metro, textura y timbre. El movimiento nacionalista y sistemas de organización musical (Sistema de ejes), Impresionismo (Debussy). Estructuración de alturas: altura, intervalo, melodía. Herramienta de análisis de música del siglo XX. Introducción al análisis de la música post tonal y elementos de construcción y análisis de líneas estéticas de la música del siglo XX y XXI.","generalObjectives":["Conocer y dominar las técnicas de elaboración de finales del siglo XIX y primera etapa del siglo XX, en la obra de compositores de las escuelas europeas.","Realizar análisis de teoría de conjunto (set theory) en la música post tonal para potencializar la escucha y la interpretación en obras de compositores del siglo XX y XXI (Europa, América)."],"learningOutcomes":[{"id":"RA1","text":"Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así como sus técnicas de elaboración comprendidas en los siglos XX y XXI."},{"id":"RA2","text":"Analizar las principales obras del repertorio de los siglos XX al XXI."},{"id":"RA3","text":"Elaborar análisis por medio de la teoría de conjunto (set theory)."},{"id":"RA4","text":"Analizar música de Bela Bartok (microcosmos Vol 5 y 6) como introducción al análisis de teoría de conjunto (set theory)."},{"id":"RA5","text":"Reconocer segmentación musical, construcción musical (composición) a partir del set theory dentro de alguna forma tradicional."},{"id":"RA6","text":"Conocer los procedimientos de análisis de estructuras, proporciones y texturas musicales, así asus técnicas de elaboración comprendidas a finales de siglo XIX y primera etapa del siglo XX."},{"id":"RA7","text":"Elaborar análisis interpretativo teniendo en cuenta los conceptos y materiales desarrollados."},{"id":"RA8","text":"Reconocer características interpretativas de pianistas de la segunda mitad del siglo XX hasta 1980: Thelonius Monk, Bud Powell, Oscar Peterson, Erroll Garner, Lennie Tristano, Bill Evans, Clare Fischer, Jimmy Rowles, Cecil Taylor, Chick Corea, Keith Jarrett, Richie Beirach."}],"bibliography":["Aguilar, M. d. (1989). Estructuras de la sintaxis musical.","Antokoletz, E. (2006). La Música De Béla Bartók. Un estudio De La Tonalidad Y La Progresión En La Música Del Siglo XX.","Brouwer, L. (1972). Síntesis De La Armonía Contemporánea.","Catalán, T., & Fernández Vidal, C. (2012). Musica No Tonal. Las Propuestas de Julien Falk y Ernst Krenek.","Catalán, T. (2012). Sistema Compositivo Temperado En El Siglo XX.","Forte, A. (1973). The structure of atonal music.","Gerou, T., & Lusk, L. (1996). Essential Dictionary Of Music Notation.","Gould, E. (2011). Behind Bars.","Grabner, H. (2001). Teoría General De La Musica.","Heussenstamm, G. (1987). The Norton Manual Of Music Notation.","Karkoschka, E. (1972). Notation in the New Music.","Lester, J. (2005). Enfoques analíticos de la música del siglo XX.","Read, G. (1979). Music Notation. A Manual Of Modern Practice.","Risatti, H. (1976). New Music Vocabulary.","Roig-Francolí, M. A. (2008). Understanding Post-Tonal Music.","Stone, K. (1980). Music Notation In The Twentieth Century.","Straus, J. N. (2004). Introduction to Post-Tonal Theory (3rd Edition).","Ulehla, L. (1994). Comtemporary Harmony.","Villa Rojo, J. (2003). Notacion Y Grafia Musical En El Siglo XX."],"scheduleData":scheduleDataII}};
+        const importantDates = [{"event":"Inicio de clase","date":"28 de julio 2025"},{"event":"Fecha límite realización I parcial","date":"22 de agosto 2025"},{"event":"Fecha límite para el registro de notas del primer parcial","date":"29 de agosto 2025"},{"event":"Fecha límite realización del II parcial","date":"19 de septiembre 2025"},{"event":"Fecha límite registro de notas del II parcial","date":"19 de septiembre 2025"},{"event":"Semana de Receso","date":"Del 06 al 10 de octubre"},{"event":"Fecha límite registro del 40% de las notas del semestre PR. Semestre I","date":"22 de octubre 2025"},{"event":"Fecha límite realización del III parcial","date":"24 de octubre 2025"},{"event":"Fecha límite registro de nota del III parcial","date":"31 de octubre 2025"},{"event":"Fecha límite para retiro","date":"05 de noviembre 2025"},{"event":"Finalización de clases","date":"23 de noviembre 2025"},{"event":"Inicio Exámenes finales","date":"24 de noviembre 2025"},{"event":"Finalizan Exámenes Finales","date":"03 de diciembre 2025"},{"event":"Fecha límite registro de notas finales","date":"06 de diciembre 2025"}];
 
         // --- Variables de estado global ---
         let selectedCourseId = 'MUS4000';
-        let selectedWeek = 1; // Este valor se sobrescribirá al inicio
+        let selectedWeek = 1; 
         let dismissedAlerts = JSON.parse(localStorage.getItem('dismissedAlerts')) || [];
         
         // --- Variables de Fecha Globales ---
-        let courseStartDate; // Se seteará en initApp()
-        let recessStartDate; // Se seteará en initApp()
-        let recessEndDate; // Se seteará en initApp()
-        const DEFAULT_START_DATE = '2025-07-28'; // Formato YYYY-MM-DD
+        let courseStartDate; 
+        let recessStartDate; 
+        let recessEndDate; 
+        const DEFAULT_START_DATE = '2025-07-28'; 
         const DEFAULT_RECESS_START = '2025-10-06';
         const DEFAULT_RECESS_END = '2025-10-10';
 
 
         // --- CONSTANTES ---
-        const TODAY = new Date(); // Usar la fecha real del sistema
+        const TODAY = new Date(); 
 
 
         // --- Caché de elementos del DOM ---
         const domElements = {
-            appRoot: null,
-            courseTitle: null,
-            btnMus4000: null,
-            btnMus4005: null,
-            
-            // Elementos del Modal
-            settingsButton: null,
-            settingsModalOverlay: null,
-            settingsModalPanel: null,
-            settingsModalClose: null,
-            dateSelectorContainer: null,
-            dateButtonContainer: null,
-            
-            // Inputs de fecha (se cachean pero se crean en `buildModalContent`)
-            dateSelectorInput: null,
-            recessStartDateInput: null,
-            recessEndDateInput: null,
-            dateSelectorButton: null,
-            
-            searchBox: null,
-            clearSearchButton: null,
-            courseDescription: null,
-            courseObjectivesList: null,
-            learningOutcomesList: null,
-            weekNavLabel: null,
-            weekNavControls: null,
-            prevWeekButton: null,
-            nextWeekButton: null,
-            weekSelectorContainer: null,
-            weekDetailContainer: null,
-            noResultsMessage: null,
-            bibliographyList: null,
-            importantDatesSection: null
+            appRoot: null, courseTitle: null, btnMus4000: null, btnMus4005: null,
+            settingsButton: null, settingsModalOverlay: null, settingsModalPanel: null, settingsModalClose: null,
+            dateSelectorContainer: null, dateButtonContainer: null, dateSelectorInput: null, recessStartDateInput: null,
+            recessEndDateInput: null, dateSelectorButton: null, /* darkModeToggle ELIMINADO */ scrollToTopButton: null,
+            searchBox: null, clearSearchButton: null, courseDescription: null, courseObjectivesList: null,
+            learningOutcomesList: null, weekNavLabel: null, weekNavControls: null, prevWeekButton: null,
+            nextWeekButton: null, weekSelectorContainer: null, weekDetailContainer: null, noResultsMessage: null,
+            bibliographyList: null, importantDatesSection: null
         };
 
 
         // --- Funciones de Utilidad de Fechas ---
-
-        /**
-         * Mapa para parsear meses en español
-         */
-        const spanishMonths = {
-            'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3, 'mayo': 4, 'junio': 5,
-            'julio': 6, 'agosto': 7, 'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11
-        };
-
-        /**
-         * Añade días a un objeto Date.
-         * @param {Date} date - La fecha inicial.
-         * @param {number} days - Número de días a añadir.
-         * @returns {Date} La nueva fecha.
-         */
-        function addDays(date, days) {
-            const newDate = new Date(date.valueOf());
-            newDate.setDate(newDate.getDate() + days);
-            return newDate;
-        }
-
-        /**
-         * Formatea una fecha a "DD Mes" (ej. "28 Jul").
-         * @param {Date} date - La fecha a formatear.
-         * @returns {string} La fecha formateada.
-         */
-        function formatDate(date) {
-            return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).replace('.', '');
-        }
-
-        /**
-         * Parsea una cadena de fecha en español (ej. "28 de julio 2025") a un objeto Date en UTC.
-         * @param {string} dateString - La cadena de fecha.
-         * @returns {Date | null} El objeto Date o null si no es válido.
-         */
-        function parseSpanishDate(dateString) {
-            try {
-                let cleanStr = dateString.toLowerCase().replace('del ', '');
-                const parts = cleanStr.split(' ');
-                let day, monthName, year;
-
-                // Asumir el año de la fecha de inicio del curso
-                const startYear = courseStartDate ? courseStartDate.getUTCFullYear() : new Date().getUTCFullYear();
-
-                if (parts.length === 4 && parts[1] === 'de') { // "28 de julio 2025"
-                    day = parseInt(parts[0]);
-                    monthName = parts[2];
-                    year = parseInt(parts[3]);
-                } else if (parts.length === 3 && parts[1] === 'de') { // "06 de octubre"
-                    day = parseInt(parts[0]);
-                    monthName = parts[2];
-                    year = startYear; // Asumir el año actual del curso
-                } else if (parts.length === 5 && parts[1] === 'al') { // "06 al 10 de octubre"
-                    day = parseInt(parts[0]);
-                    monthName = parts[4];
-                    year = startYear; // Asumir el año actual del curso
-                } else {
-                    return null; // Formato no reconocido
-                }
-
-                const month = spanishMonths[monthName];
-                if (month === undefined) return null;
-
-                // Devolvemos la fecha en UTC para evitar problemas de timezone
-                return new Date(Date.UTC(year, month, day, 12)); 
-            } catch (e) {
-                console.error("Error parseando fecha:", dateString, e);
-                return null;
-            }
-        }
-
-        /**
-         * Calcula los días entre dos fechas (ignorando la hora).
-         * @param {Date} date1 - Fecha de inicio (ej. "hoy").
-         * @param {Date} date2 - Fecha de fin (ej. "evento").
-         * @returns {number} Días restantes. Negativo si ya pasó.
-         */
-        function daysUntil(date1, date2) {
-            const msPerDay = 1000 * 60 * 60 * 24;
-            // Usar UTC para evitar problemas de DST
-            const utc1 = Date.UTC(date1.getUTCFullYear(), date1.getUTCMonth(), date1.getUTCDate());
-            const utc2 = Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth(), date2.getUTCDate());
-            return Math.floor((utc2 - utc1) / msPerDay);
-        }
-
-        /**
-         * Pre-procesa los arrays del cronograma para añadir rangos de fechas.
-         */
-        function preprocessScheduleData() {
-            // Usa las variables globales que se setean en initApp() o handleDateUpdate()
-            const processArray = (scheduleArray) => {
-                let currentDate = new Date(courseStartDate.valueOf());
-                for (const week of scheduleArray) {
-                    
-                    // Mientras la semana actual caiga DENTRO del rango de receso,
-                    // saltar a la siguiente semana.
-                    while (currentDate.getTime() >= recessStartDate.getTime() && currentDate.getTime() <= recessEndDate.getTime()) {
-                        currentDate = addDays(currentDate, 7);
-                    }
-
-                    const weekStart = new Date(currentDate.valueOf());
-                    const weekEnd = addDays(weekStart, 4); // Asume clases Lun-Vie
-                    
-                    week.startDate = weekStart; // Guardamos el objeto Date
-                    week.endDate = weekEnd;
-                    week.dateRange = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
-                    
-                    // Avanza al siguiente lunes
-                    currentDate = addDays(currentDate, 7);
-                }
-            };
-            
-            processArray(scheduleDataI);
-            processArray(scheduleDataII);
-        }
-        
-        /**
-         * Encuentra la semana en curso basada en la fecha de HOY.
-         * @param {Array} scheduleData - El array de schedule del curso.
-         * @returns {number} El número de la semana en curso, o 1 si no está en sesión.
-         */
-        function findCurrentWeek(scheduleData) {
-            const today = TODAY; // Usar la constante global
-            for (const week of scheduleData) {
-                // Comprueba si HOY está dentro del rango de la semana (Lun a Vie + 2 días de margen hasta Dom)
-                if (today >= week.startDate && today <= addDays(week.endDate, 2)) {
-                    return week.week;
-                }
-            }
-            // Si el loop termina, HOY no está en ninguna semana (antes o después del curso)
-            return 1; // Devolver 1 como predeterminado
-        }
+        const spanishMonths = {"enero":0,"febrero":1,"marzo":2,"abril":3,"mayo":4,"junio":5,"julio":6,"agosto":7,"septiembre":8,"octubre":9,"noviembre":10,"diciembre":11};
+        function addDays(date, days) {const newDate = new Date(date.valueOf());newDate.setDate(newDate.getDate() + days);return newDate;}
+        function formatDate(date) {return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).replace('.', '');}
+        function parseSpanishDate(dateString) { try { let cleanStr = dateString.toLowerCase().replace('del ', ''); const parts = cleanStr.split(' '); let day, monthName, year; const startYear = courseStartDate ? courseStartDate.getUTCFullYear() : new Date().getUTCFullYear(); if (parts.length === 4 && parts[1] === 'de') { day = parseInt(parts[0]); monthName = parts[2]; year = parseInt(parts[3]); } else if (parts.length === 3 && parts[1] === 'de') { day = parseInt(parts[0]); monthName = parts[2]; year = startYear; } else if (parts.length === 5 && parts[1] === 'al') { day = parseInt(parts[0]); monthName = parts[4]; year = startYear; } else { return null; } const month = spanishMonths[monthName]; if (month === undefined) return null; return new Date(Date.UTC(year, month, day, 12)); } catch (e) { console.error("Error parseando fecha:", dateString, e); return null; } }
+        function daysUntil(date1, date2) { const msPerDay = 1000 * 60 * 60 * 24; const utc1 = Date.UTC(date1.getUTCFullYear(), date1.getUTCMonth(), date1.getUTCDate()); const utc2 = Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth(), date2.getUTCDate()); return Math.floor((utc2 - utc1) / msPerDay); }
+        function preprocessScheduleData() { const processArray = (scheduleArray) => { let currentDate = new Date(courseStartDate.valueOf()); for (const week of scheduleArray) { while (currentDate.getTime() >= recessStartDate.getTime() && currentDate.getTime() <= recessEndDate.getTime()) { currentDate = addDays(currentDate, 7); } const weekStart = new Date(currentDate.valueOf()); const weekEnd = addDays(weekStart, 4); week.startDate = weekStart; week.endDate = weekEnd; week.dateRange = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`; currentDate = addDays(currentDate, 7); } }; processArray(scheduleDataI); processArray(scheduleDataII); }
+        function findCurrentWeek(scheduleData) { const today = TODAY; for (const week of scheduleData) { if (today >= week.startDate && today <= addDays(week.endDate, 2)) { return week.week; } } return 1; }
 
 
         // --- Funciones de Utilidad de DOM ---
-
-        /**
-         * Crea un elemento HTML con clases y contenido opcional.
-         * @param {string} tagName - El nombre de la etiqueta HTML (ej. 'div', 'p').
-         * @param {string} classes - Clases de Tailwind CSS como una cadena.
-         * @param {string} innerHTML - Contenido HTML interno (opcional).
-         * @returns {HTMLElement} El elemento HTML creado.
-         */
-        function createElement(tagName, classes = '', innerHTML = '') {
-            const element = document.createElement(tagName);
-            if (classes) {
-                element.className = classes;
-            }
-            if (innerHTML) {
-                element.innerHTML = innerHTML;
-            }
-            return element;
-        }
-
-        /**
-         * Crea un elemento con un icono de Lucide.
-         * @param {string} iconName - Nombre del icono de Lucide (ej. 'Calendar').
-         * @param {string} classes - Clases de Tailwind CSS para el icono.
-         * @param {number} size - Tamaño del icono.
-         * @returns {HTMLElement} El elemento span que contiene el icono.
-         */
-        function createIconElement(iconName, classes = '', size = 24) {
-            const iconSpan = createElement('span', classes);
-            iconSpan.setAttribute('data-lucide', iconName);
-            iconSpan.setAttribute('width', size);
-            iconSpan.setAttribute('height', size);
-            return iconSpan;
-        }
+        function createElement(tagName, classes = '', innerHTML = '') { const element = document.createElement(tagName); if (classes) { element.className = classes; } if (innerHTML) { element.innerHTML = innerHTML; } return element; }
+        function createIconPlaceholder(iconName, classes = '', size = 24) { const iconSpan = createElement('span', classes); iconSpan.setAttribute('data-lucide', iconName); iconSpan.setAttribute('width', size); iconSpan.setAttribute('height', size); return iconSpan; }
         
         // --- Funciones del Modal de Configuración ---
-        
-        /**
-         * Abre el modal de configuración.
-         */
-        function openSettingsModal() {
-            domElements.settingsModalOverlay.style.display = 'block';
-            domElements.settingsModalPanel.style.display = 'block';
-        }
-
-        /**
-         * Cierra el modal de configuración.
-         */
-        function closeSettingsModal() {
-            domElements.settingsModalOverlay.style.display = 'none';
-            domElements.settingsModalPanel.style.display = 'none';
-        }
-        
-        
-        /**
-         * Maneja la actualización de las fechas del semestre.
-         */
-        function handleDateUpdate() {
-            const newStartDate = domElements.dateSelectorInput.value; // 'YYYY-MM-DD'
-            const newRecessStart = domElements.recessStartDateInput.value;
-            const newRecessEnd = domElements.recessEndDateInput.value;
-
-            if (!newStartDate || !newRecessStart || !newRecessEnd) {
-                return; // Evitar si alguna fecha está vacía
-            }
-
-            // 1. Guardar en localStorage
-            localStorage.setItem('courseStartDate', newStartDate);
-            localStorage.setItem('recessStartDate', newRecessStart);
-            localStorage.setItem('recessEndDate', newRecessEnd);
-
-            // 2. Actualizar variables globales
-            courseStartDate = new Date(`${newStartDate}T12:00:00Z`);
-            recessStartDate = new Date(`${newRecessStart}T12:00:00Z`);
-            recessEndDate = new Date(`${newRecessEnd}T12:00:00Z`);
-
-            // 3. Recalcular todos los datos de las semanas
-            preprocessScheduleData();
-
-            // 4. Re-renderizar todo
-            // Recalcular la semana actual basada en las *nuevas* fechas
-            selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData);
-            updateHash(); // Actualizar hash para reflejar la nueva semana "actual"
-            updateCourseView(selectedCourseId, false); // Re-renderizar sin tocar el hash
-            
-            // 5. Re-renderizar las fechas importantes (para que usen el año nuevo)
-            domElements.importantDatesSection.remove(); // Quitar la sección vieja
-            domElements.appRoot.insertBefore(renderImportantDatesSection(), domElements.appRoot.querySelector('#schedule-section')); // Insertar la nueva
-            lucide.createIcons({ nodes: [domElements.importantDatesSection] }); // Renderizar iconos en la nueva sección
-
-            // 6. Mostrar confirmación visual en el botón
-            const button = domElements.dateSelectorButton;
-            button.innerHTML = '<span data-lucide="Check" class="mr-2" width="16" height="16"></span>¡Guardado!';
-            button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-            button.classList.add('bg-green-600');
-            button.disabled = true;
-            
-            lucide.createIcons({ nodes: [button] }); // Re-renderizar icono
-
-            // 7. Resetear botón y CERRAR MODAL después de 2 segundos
-            setTimeout(() => {
-                button.innerHTML = '<span data-lucide="Save" class="mr-2" width="16" height="16"></span>Actualizar Fechas';
-                button.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                button.classList.remove('bg-green-600');
-                button.disabled = false;
-                lucide.createIcons({ nodes: [button] }); // Re-renderizar icono
-                
-                closeSettingsModal(); // Cerrar el modal
-            }, 2000);
-            
-        }
+        function openSettingsModal() { domElements.settingsModalOverlay.classList.remove('hidden'); domElements.settingsModalPanel.classList.remove('hidden'); if(domElements.dateSelectorInput) domElements.dateSelectorInput.focus(); }
+        function closeSettingsModal() { domElements.settingsModalOverlay.classList.add('hidden'); domElements.settingsModalPanel.classList.add('hidden'); }
+        function handleDateUpdate() { const newStartDate = domElements.dateSelectorInput.value; const newRecessStart = domElements.recessStartDateInput.value; const newRecessEnd = domElements.recessEndDateInput.value; if (!newStartDate || !newRecessStart || !newRecessEnd) { console.error("Todas las fechas deben ser seleccionadas."); return; } localStorage.setItem('courseStartDate', newStartDate); localStorage.setItem('recessStartDate', newRecessStart); localStorage.setItem('recessEndDate', newRecessEnd); courseStartDate = new Date(`${newStartDate}T12:00:00Z`); recessStartDate = new Date(`${newRecessStart}T12:00:00Z`); recessEndDate = new Date(`${newRecessEnd}T12:00:00Z`); preprocessScheduleData(); selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData); updateHash(); updateCourseView(selectedCourseId, false); if (domElements.importantDatesSection) { domElements.importantDatesSection.remove(); } const scheduleSectionElement = domElements.appRoot.querySelector('#schedule-section'); if(scheduleSectionElement) { domElements.appRoot.insertBefore(renderImportantDatesSection(), scheduleSectionElement); } else { domElements.appRoot.appendChild(renderImportantDatesSection()); } const button = domElements.dateSelectorButton; button.innerHTML = ''; button.appendChild(createIconPlaceholder('Check', 'mr-2', 16)); button.innerHTML += '¡Guardado!'; button.classList.remove('bg-blue-600', 'hover:bg-blue-700'); button.classList.add('bg-green-600'); button.disabled = true; lucide.createIcons({ nodes: [button] }); setTimeout(() => { button.innerHTML = ''; button.appendChild(createIconPlaceholder('Save', 'mr-2', 16)); button.innerHTML += 'Actualizar Fechas'; button.classList.add('bg-blue-600', 'hover:bg-blue-700'); button.classList.remove('bg-green-600'); button.disabled = false; lucide.createIcons({ nodes: [button] }); closeSettingsModal(); }, 2000); }
 
 
         // --- Funciones de Sincronización de URL (Hash) ---
-
-        /**
-         * Actualiza el hash de la URL para reflejar el estado actual.
-         */
-        function updateHash() {
-            window.location.hash = `course=${selectedCourseId}&week=${selectedWeek}`;
-        }
-
-        /**
-         * Obtiene el estado de la URL hash y actualiza las variables globales.
-         */
-        function getStateFromHash() {
-            const hash = window.location.hash.slice(1); // Quita el '#'
-            const params = new URLSearchParams(hash);
-            const course = params.get('course');
-            const week = parseInt(params.get('week'), 10);
-
-            // Establecer curso (default MUS4000)
-            if (course && courses[course]) {
-                selectedCourseId = course;
-            } else {
-                selectedCourseId = 'MUS4000';
-            }
-            
-            // Establecer semana
-            if (week && week >= 1 && week <= courses[selectedCourseId].scheduleData.length) {
-                // Si el hash INCLUYE una semana, respetarla
-                selectedWeek = week;
-            } else {
-                // Si el hash NO incluye semana (o es inválida), calcular la actual
-                selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData);
-            }
-        }
-
-        /**
-         * Manejador para el evento 'hashchange' (botones de atrás/adelante del navegador).
-         */
-        function handleHashChange() {
-            getStateFromHash();
-            // Llama a updateCourseView pero sin volver a actualizar el hash
-            updateCourseView(selectedCourseId, false);
-        }
+        function updateHash() { const newHash = `#course=${selectedCourseId}&week=${selectedWeek}`; if (window.location.hash !== newHash) { window.location.hash = newHash; } }
+        function getStateFromHash() { const hash = window.location.hash.slice(1); const params = new URLSearchParams(hash); const course = params.get('course'); const week = parseInt(params.get('week'), 10); if (course && courses[course]) { selectedCourseId = course; } else { selectedCourseId = 'MUS4000'; } const maxWeeks = courses[selectedCourseId].scheduleData.length; if (week && week >= 1 && week <= maxWeeks) { selectedWeek = week; } else { selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData); } }
+        function handleHashChange() { const currentHash = window.location.hash; const params = new URLSearchParams(currentHash.slice(1)); const courseFromHash = params.get('course') || 'MUS4000'; const weekFromHash = parseInt(params.get('week'), 10); const maxWeeks = courses[courseFromHash].scheduleData.length; const validWeekFromHash = (weekFromHash && weekFromHash >= 1 && weekFromHash <= maxWeeks) ? weekFromHash : findCurrentWeek(courses[courseFromHash].scheduleData); if (selectedCourseId === courseFromHash && selectedWeek === validWeekFromHash) { return; } const previousCourseId = selectedCourseId; selectedCourseId = courseFromHash; selectedWeek = validWeekFromHash; const courseChanged = previousCourseId !== selectedCourseId; updateCourseView(selectedCourseId, false, courseChanged); }
 
 
         // --- Funciones de Renderizado (Componentes) ---
-
-        /**
-         * Renderiza los detalles de una semana específica.
-         * @param {Object} weekData - Objeto con los datos de la semana.
-         * @returns {HTMLElement} El elemento div que contiene los detalles de la semana.
-         */
-        function renderWeekDetail(weekData) {
-            // Contenedor principal de la semana
-            const weekDetailDiv = createElement('div', 'p-6 bg-white rounded-xl shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.005] border border-gray-100 print-no-shadow print-bg-white print-break-inside-avoid');
-            weekDetailDiv.setAttribute('id', `week-${weekData.week}`); // ID para anclaje
-
-            // Título de la semana
-            const titleH3 = createElement('h3', 'text-3xl font-extrabold text-blue-800 mb-2 flex items-center print-text-black');
-            titleH3.appendChild(createIconElement('Calendar', 'mr-3 text-blue-600 no-print', 32));
-            titleH3.innerHTML += `Semana ${weekData.week}: ${weekData.title}`;
-            weekDetailDiv.appendChild(titleH3);
-            
-            // Subtítulo con rango de fechas
-            const dateRangeP = createElement('p', 'text-lg font-semibold text-gray-500 mb-6 ml-12 print-text-black', weekData.dateRange);
-            weekDetailDiv.appendChild(dateRangeP);
-
-            const contentDiv = createElement('div', 'space-y-6');
-
-            // --- Sección de Objetivos ---
-            const objectivesDiv = createElement('div');
-            const objectivesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black');
-            objectivesH4.appendChild(createIconElement('Target', 'mr-2 text-green-500 no-print', 20));
-            objectivesH4.innerHTML += `Objetivos Clave`;
-            objectivesDiv.appendChild(objectivesH4);
-            const objectivesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black');
-            weekData.objectives.forEach(obj => {
-                const li = createElement('li', 'flex items-start');
-                li.appendChild(createIconElement('CheckCircle', 'text-green-400 mr-2 mt-1 flex-shrink-0 no-print', 16));
-                li.innerHTML += `<span>${obj}</span>`;
-                objectivesList.appendChild(li);
-            });
-            objectivesDiv.appendChild(objectivesList);
-            contentDiv.appendChild(objectivesDiv);
-
-            // --- Sección de Actividades ---
-            const activitiesDiv = createElement('div');
-            const activitiesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black');
-            activitiesH4.appendChild(createIconElement('Activity', 'mr-2 text-purple-500 no-print', 20));
-            activitiesH4.innerHTML += `Actividades en Clase`;
-            activitiesDiv.appendChild(activitiesH4);
-            const activitiesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black');
-            weekData.activities.forEach(act => {
-                const li = createElement('li', 'flex items-start');
-                li.appendChild(createIconElement('Lightbulb', 'text-purple-400 mr-2 mt-1 flex-shrink-0 no-print', 16));
-                li.innerHTML += `<span>${act}</span>`;
-                activitiesList.appendChild(li);
-            });
-            activitiesDiv.appendChild(activitiesList);
-            contentDiv.appendChild(activitiesDiv);
-
-            // --- Sección de Desafío Independiente ---
-            const independentWorkDiv = createElement('div');
-            const independentWorkH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black');
-            independentWorkH4.appendChild(createIconElement('ClipboardList', 'mr-2 text-orange-500 no-print', 20));
-            independentWorkH4.innerHTML += `Desafío Independiente`;
-            independentWorkDiv.appendChild(independentWorkH4);
-            const independentWorkList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black');
-            weekData.independentWork.forEach(work => {
-                const li = createElement('li', 'flex items-start');
-                li.appendChild(createIconElement('BookOpen', 'text-orange-400 mr-2 mt-1 flex-shrink-0 no-print', 16));
-                li.innerHTML += `<span>${work}</span>`;
-                independentWorkList.appendChild(li);
-            });
-            independentWorkDiv.appendChild(independentWorkList);
-            contentDiv.appendChild(independentWorkDiv);
-
-            // --- Sección de Repertorio ---
-            if (weekData.repertoire && weekData.repertoire.length > 0 && weekData.repertoire[0] !== "N/A") {
-                const repertoireDiv = createElement('div');
-                const repertoireH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black');
-                repertoireH4.appendChild(createIconElement('Music', 'mr-2 text-red-500 no-print', 20));
-                repertoireH4.innerHTML += `Repertorio Sugerido`;
-                repertoireDiv.appendChild(repertoireH4);
-                const repertoireList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black');
-                weekData.repertoire.forEach(rep => {
-                    const li = createElement('li', 'flex items-start');
-                    li.appendChild(createIconElement('Music', 'text-red-400 mr-2 mt-1 flex-shrink-0 no-print', 16));
-                    li.innerHTML += `<span>${rep}</span>`;
-                    repertoireList.appendChild(li);
-                });
-                repertoireDiv.appendChild(repertoireList);
-                contentDiv.appendChild(repertoireDiv);
-            }
-
-            weekDetailDiv.appendChild(contentDiv);
-            return weekDetailDiv;
-        }
-
-        /**
-         * Renderiza la sección de Fechas Importantes con AVISOS (ahora descartables).
-         * @returns {HTMLElement} El elemento section con las fechas.
-         */
-        function renderImportantDatesSection() {
-            const section = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-orange-500 print-no-shadow print-bg-white print-break-inside-avoid');
-            section.id = 'important-dates-section'; // Cachear
-            domElements.importantDatesSection = section; // Guardar en caché
-
-            const notificationArea = createElement('div', 'mb-6 space-y-2 no-print'); // Ocultar notificaciones al imprimir
-            let upcomingEvents = [];
-            let eventRows = ''; // String para construir el HTML de la tabla
-            let hasUpcomingEvents = false; // Flag para saber si mostrar el título "Avisos"
-
-            importantDates.forEach((item) => {
-                const eventDate = parseSpanishDate(item.date);
-                let badge = '';
-                let daysDiff = null;
-
-                if (eventDate) {
-                    daysDiff = daysUntil(TODAY, eventDate);
-
-                    if (daysDiff < 0) {
-                        badge = '<span class="ml-2 bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium no-print">Vencido</span>';
-                    } else if (daysDiff === 0) {
-                        badge = '<span class="ml-2 bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse no-print">¡Hoy!</span>';
-                        upcomingEvents.push({ ...item, daysDiff });
-                    } else if (daysDiff <= 7) {
-                        badge = `<span class="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full text-xs font-medium no-print">En ${daysDiff} días</span>`;
-                        upcomingEvents.push({ ...item, daysDiff });
-                    }
-                }
-                
-                eventRows += `
-                    <tr class="hover:bg-gray-50 print-bg-white">
-                        <td class="p-3 text-sm text-gray-800 border-b border-gray-100 print-text-black">${item.event}</td>
-                        <td class="p-3 text-sm text-gray-800 border-b border-gray-100 print-text-black">${item.date} ${badge}</td>
-                    </tr>
-                `;
-            });
-
-            // --- Añadir Notificaciones ---
-            if (upcomingEvents.length > 0) {
-                // Ordenar eventos por proximidad
-                upcomingEvents.sort((a, b) => a.daysDiff - b.daysDiff).forEach(item => {
-                    const isToday = item.daysDiff === 0;
-                    // Crear un ID único para la alerta
-                    const alertId = `alert-${item.event.replace(/\s/g, '-')}-${item.date.replace(/\s/g, '-')}`;
-                    
-                    // Si la alerta ya fue descartada, no la renderices
-                    if (dismissedAlerts.includes(alertId)) {
-                        return;
-                    }
-
-                    hasUpcomingEvents = true; // Hay al menos un aviso para mostrar
-                    const notifElement = createElement('div', `p-3 rounded-lg border flex items-center ${isToday ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'}`);
-                    
-                    const iconClass = isToday ? 'text-red-600' : 'text-orange-600';
-                    notifElement.appendChild(createIconElement('CalendarCheck', `mr-3 flex-shrink-0 ${iconClass}`, 20));
-                    
-                    const textDiv = createElement('div', 'flex-grow');
-                    const textTitle = createElement('strong', 'text-gray-900', item.event);
-                    const textBody = createElement('p', 'text-sm text-gray-700', `Vence ${isToday ? 'hoy' : `en ${item.daysDiff} días`} (${item.date})`);
-                    textDiv.appendChild(textTitle);
-                    textDiv.appendChild(textBody);
-                    notifElement.appendChild(textDiv);
-
-                    // Botón de descartar
-                    const dismissButton = createElement('button', 'ml-2 p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-200 no-print');
-                    dismissButton.setAttribute('aria-label', 'Descartar aviso');
-                    dismissButton.appendChild(createIconElement('X', '', 16));
-                    dismissButton.onclick = (e) => {
-                        e.stopPropagation();
-                        // Animación de salida
-                        notifElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease';
-                        notifElement.style.opacity = '0';
-                        notifElement.style.transform = 'scale(0.95)';
-                        notifElement.style.maxHeight = '0px';
-                        notifElement.style.paddingTop = '0px';
-                        notifElement.style.paddingBottom = '0px';
-                        notifElement.style.marginBottom = '0px';
-                        
-                        setTimeout(() => {
-                            notifElement.remove();
-                        }, 300);
-
-                        // Guardar en localStorage
-                        dismissedAlerts.push(alertId);
-                        localStorage.setItem('dismissedAlerts', JSON.stringify(dismissedAlerts));
-                    };
-                    notifElement.appendChild(dismissButton);
-                    
-                    notificationArea.appendChild(notifElement);
-                });
-
-                // Solo añadir el título si se renderizó al menos un aviso
-                if (hasUpcomingEvents) {
-                    const notifTitle = createElement('h3', 'text-xl font-bold text-orange-800 mb-2 flex items-center', '<span data-lucide="AlertTriangle" class="mr-2 text-orange-600" width="20" height="20"></span>Avisos Próximos');
-                    notificationArea.prepend(notifTitle); // Añadir al principio
-                    section.appendChild(notificationArea);
-                }
-            }
-
-
-            const h2 = createElement('h2', 'text-3xl font-bold text-orange-800 mb-4 flex items-center print-text-black');
-            h2.appendChild(createIconElement('Clock', 'mr-3 text-orange-600 no-print', 30));
-            h2.innerHTML += `Calendario de Fechas Importantes`;
-            section.appendChild(h2);
-
-            // Contenedor de la tabla
-            const tableContainer = createElement('div', 'overflow-x-auto rounded-lg shadow-md border border-gray-200 print-no-shadow');
-            const table = createElement('table', 'w-full text-left border-collapse');
-            tableContainer.appendChild(table);
-
-            // Encabezado de la tabla
-            const thead = createElement('thead');
-            thead.innerHTML = `
-                <tr class="bg-gray-100 print-bg-white">
-                    <th class="p-3 font-semibold text-sm text-gray-700 border-b border-gray-200 print-text-black">Evento</th>
-                    <th class="p-3 font-semibold text-sm text-gray-700 border-b border-gray-200 print-text-black">Fecha y Estado</th>
-                </tr>
-            `;
-            table.appendChild(thead);
-
-            // Cuerpo de la tabla
-            const tbody = createElement('tbody', 'bg-white');
-            tbody.innerHTML = eventRows; // Insertar las filas pre-construidas
-            table.appendChild(tbody);
-            section.appendChild(tableContainer);
-
-            return section;
-        }
+        function renderWeekDetail(weekData) { const weekDetailDiv = createElement('div', 'p-6 bg-white rounded-xl shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.005] border border-gray-100 print-no-shadow print-bg-white print-break-inside-avoid'); weekDetailDiv.setAttribute('id', `week-${weekData.week}`); const titleH3 = createElement('h3', 'text-3xl font-extrabold text-blue-800 mb-2 flex items-center print-text-black'); titleH3.appendChild(createIconPlaceholder('Calendar', 'mr-3 text-blue-600 no-print', 32)); titleH3.innerHTML += `Semana ${weekData.week}: ${weekData.title}`; weekDetailDiv.appendChild(titleH3); const dateRangeP = createElement('p', 'text-lg font-semibold text-gray-500 mb-6 ml-12 print-text-black', weekData.dateRange); weekDetailDiv.appendChild(dateRangeP); const contentDiv = createElement('div', 'space-y-6'); const objectivesDiv = createElement('div'); const objectivesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black'); objectivesH4.appendChild(createIconPlaceholder('Target', 'mr-2 text-green-500 no-print', 20)); objectivesH4.innerHTML += `Objetivos Clave`; objectivesDiv.appendChild(objectivesH4); const objectivesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black'); weekData.objectives.forEach(obj => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('CheckCircle', 'text-green-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${obj}</span>`; objectivesList.appendChild(li); }); objectivesDiv.appendChild(objectivesList); contentDiv.appendChild(objectivesDiv); const activitiesDiv = createElement('div'); const activitiesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black'); activitiesH4.appendChild(createIconPlaceholder('Activity', 'mr-2 text-purple-500 no-print', 20)); activitiesH4.innerHTML += `Actividades en Clase`; activitiesDiv.appendChild(activitiesH4); const activitiesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black'); weekData.activities.forEach(act => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('Lightbulb', 'text-purple-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${act}</span>`; activitiesList.appendChild(li); }); activitiesDiv.appendChild(activitiesList); contentDiv.appendChild(activitiesDiv); const independentWorkDiv = createElement('div'); const independentWorkH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black'); independentWorkH4.appendChild(createIconPlaceholder('ClipboardList', 'mr-2 text-orange-500 no-print', 20)); independentWorkH4.innerHTML += `Desafío Independiente`; independentWorkDiv.appendChild(independentWorkH4); const independentWorkList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black'); weekData.independentWork.forEach(work => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('BookOpen', 'text-orange-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${work}</span>`; independentWorkList.appendChild(li); }); independentWorkDiv.appendChild(independentWorkList); contentDiv.appendChild(independentWorkDiv); if (weekData.repertoire && weekData.repertoire.length > 0 && weekData.repertoire[0] !== "N/A") { const repertoireDiv = createElement('div'); const repertoireH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black'); repertoireH4.appendChild(createIconPlaceholder('Music', 'mr-2 text-red-500 no-print', 20)); repertoireH4.innerHTML += `Repertorio Sugerido`; repertoireDiv.appendChild(repertoireH4); const repertoireList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black'); weekData.repertoire.forEach(rep => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('Music', 'text-red-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${rep}</span>`; repertoireList.appendChild(li); }); repertoireDiv.appendChild(repertoireList); contentDiv.appendChild(repertoireDiv); } weekDetailDiv.appendChild(contentDiv); lucide.createIcons({ nodes: [weekDetailDiv] }); return weekDetailDiv; }
+        function renderImportantDatesSection() { const section = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-orange-500 print-no-shadow print-bg-white print-break-inside-avoid'); section.id = 'important-dates-section'; domElements.importantDatesSection = section; const notificationArea = createElement('div', 'mb-6 space-y-2 no-print'); let upcomingEvents = []; let eventRows = ''; let hasUpcomingEvents = false; importantDates.forEach((item) => { const eventDate = parseSpanishDate(item.date); let badge = ''; let daysDiff = null; if (eventDate) { daysDiff = daysUntil(TODAY, eventDate); if (daysDiff < 0) { badge = '<span class="ml-2 bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium no-print">Vencido</span>'; } else if (daysDiff === 0) { badge = '<span class="ml-2 bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse no-print">¡Hoy!</span>'; upcomingEvents.push({ ...item, daysDiff }); } else if (daysDiff <= 7) { badge = `<span class="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full text-xs font-medium no-print">En ${daysDiff} días</span>`; upcomingEvents.push({ ...item, daysDiff }); } } eventRows += ` <tr class="hover:bg-gray-50 print-bg-white"> <td class="p-3 text-sm text-gray-800 border-b border-gray-100 print-text-black">${item.event}</td> <td class="p-3 text-sm text-gray-800 border-b border-gray-100 print-text-black">${item.date} ${badge}</td> </tr> `; }); if (upcomingEvents.length > 0) { upcomingEvents.sort((a, b) => a.daysDiff - b.daysDiff).forEach(item => { const isToday = item.daysDiff === 0; const alertId = `alert-${item.event.replace(/\s/g, '-')}-${item.date.replace(/\s/g, '-')}`; if (dismissedAlerts.includes(alertId)) { return; } hasUpcomingEvents = true; const notifElement = createElement('div', `p-3 rounded-lg border flex items-center ${isToday ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'}`); const iconClass = isToday ? 'text-red-600' : 'text-orange-600'; notifElement.appendChild(createIconPlaceholder('CalendarCheck', `mr-3 flex-shrink-0 ${iconClass}`, 20)); const textDiv = createElement('div', 'flex-grow'); const textTitle = createElement('strong', 'text-gray-900', item.event); const textBody = createElement('p', 'text-sm text-gray-700', `Vence ${isToday ? 'hoy' : `en ${item.daysDiff} días`} (${item.date})`); textDiv.appendChild(textTitle); textDiv.appendChild(textBody); notifElement.appendChild(textDiv); const dismissButton = createElement('button', 'ml-2 p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-200 no-print'); dismissButton.setAttribute('aria-label', 'Descartar aviso'); dismissButton.appendChild(createIconPlaceholder('X', '', 16)); dismissButton.onclick = (e) => { e.stopPropagation(); notifElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease'; notifElement.style.opacity = '0'; notifElement.style.transform = 'scale(0.95)'; notifElement.style.maxHeight = '0px'; notifElement.style.paddingTop = '0px'; notifElement.style.paddingBottom = '0px'; notifElement.style.marginTop = '0px'; notifElement.style.marginBottom = '0px'; setTimeout(() => { notifElement.remove(); if (notificationArea.children.length === 1) { notificationArea.remove(); } }, 300); dismissedAlerts.push(alertId); localStorage.setItem('dismissedAlerts', JSON.stringify(dismissedAlerts)); }; notifElement.appendChild(dismissButton); notificationArea.appendChild(notifElement); }); if (hasUpcomingEvents) { const notifTitle = createElement('h3', 'text-xl font-bold text-orange-800 mb-2 flex items-center'); notifTitle.appendChild(createIconPlaceholder('AlertTriangle', 'mr-2 text-orange-600', 20)); notifTitle.innerHTML += 'Avisos Próximos'; notificationArea.prepend(notifTitle); section.appendChild(notificationArea); } } const h2 = createElement('h2', 'text-3xl font-bold text-orange-800 mb-4 flex items-center print-text-black'); h2.appendChild(createIconPlaceholder('Clock', 'mr-3 text-orange-600 no-print', 30)); h2.innerHTML += `Calendario de Fechas Importantes`; section.appendChild(h2); const tableContainer = createElement('div', 'overflow-x-auto rounded-lg shadow-md border border-gray-200 print-no-shadow'); const table = createElement('table', 'w-full text-left border-collapse'); tableContainer.appendChild(table); const thead = createElement('thead'); thead.innerHTML = ` <tr class="bg-gray-100 print-bg-white"> <th class="p-3 font-semibold text-sm text-gray-700 border-b border-gray-200 print-text-black">Evento</th> <th class="p-3 font-semibold text-sm text-gray-700 border-b border-gray-200 print-text-black">Fecha y Estado</th> </tr> `; table.appendChild(thead); const tbody = createElement('tbody', 'bg-white'); tbody.innerHTML = eventRows; table.appendChild(tbody); section.appendChild(tableContainer); lucide.createIcons({ nodes: [section] }); return section; }
 
 
         // --- Funciones de Búsqueda ---
+        function checkWeekForTerm(week, term) { if (!term) return true; if (week.title.toLowerCase().includes(term)) return true; if (week.objectives.some(item => item.toLowerCase().includes(term))) return true; if (week.activities.some(item => item.toLowerCase().includes(term))) return true; if (week.independentWork.some(item => item.toLowerCase().includes(term))) return true; if (week.repertoire && week.repertoire.some(item => item.toLowerCase().includes(term))) return true; return false; }
+        function handleSearch(e) { const searchTerm = e.target.value.toLowerCase().trim(); domElements.clearSearchButton.classList.toggle('hidden', !searchTerm); domElements.clearSearchButton.classList.toggle('flex', !!searchTerm); const currentSchedule = courses[selectedCourseId].scheduleData; const filteredWeeks = currentSchedule.filter(week => checkWeekForTerm(week, searchTerm)); renderWeekSelector(filteredWeeks); if (filteredWeeks.length === 0) { domElements.weekDetailContainer.classList.add('hidden'); domElements.noResultsMessage.classList.remove('hidden'); domElements.weekNavControls.classList.add('hidden'); } else { domElements.weekDetailContainer.classList.remove('hidden'); domElements.noResultsMessage.classList.add('hidden'); domElements.weekNavControls.classList.remove('hidden'); domElements.weekNavControls.classList.add('flex'); const newSelectedWeek = filteredWeeks.some(w => w.week === selectedWeek) ? selectedWeek : filteredWeeks[0].week; if (newSelectedWeek !== selectedWeek || searchTerm) { selectedWeek = newSelectedWeek; updateWeekView(selectedWeek, true); } else if (!searchTerm) { domElements.weekDetailContainer.classList.remove('hidden'); domElements.noResultsMessage.classList.add('hidden'); domElements.weekNavControls.classList.remove('hidden'); domElements.weekNavControls.classList.add('flex'); } } }
+        function clearSearch() { domElements.searchBox.value = ''; handleSearch({ target: { value: '' } }); }
+
         
-        /**
-         * Comprueba si una semana coincide con el término de búsqueda.
-         * @param {Object} week - El objeto de la semana.
-         * @param {string} term - El término de búsqueda (en minúsculas).
-         * @returns {boolean} True si hay coincidencia.
-         */
-        function checkWeekForTerm(week, term) {
-            if (!term) return true; // Si no hay término, todas coinciden
-            
-            // Comprobar título
-            if (week.title.toLowerCase().includes(term)) return true;
-            
-            // Comprobar objetivos
-            if (week.objectives.some(item => item.toLowerCase().includes(term))) return true;
-            
-            // Comprobar actividades
-            if (week.activities.some(item => item.toLowerCase().includes(term))) return true;
-            
-            // Comprobar trabajo independiente
-            if (week.independentWork.some(item => item.toLowerCase().includes(term))) return true;
-            
-            // Comprobar repertorio
-            if (week.repertoire.some(item => item.toLowerCase().includes(term))) return true;
-
-            return false; // No se encontraron coincidencias
-        }
-
-        /**
-         * Maneja el evento 'keyup' del campo de búsqueda.
-         * @param {Event} e - El evento del input.
-         */
-        function handleSearch(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            domElements.clearSearchButton.style.display = searchTerm ? 'flex' : 'none'; // Mostrar/ocultar 'X'
-
-            const currentSchedule = courses[selectedCourseId].scheduleData;
-            const filteredWeeks = currentSchedule.filter(week => checkWeekForTerm(week, searchTerm));
-
-            // Re-renderizar el selector con las semanas filtradas
-            renderWeekSelector(filteredWeeks);
-
-            if (filteredWeeks.length === 0) {
-                // No hay resultados
-                domElements.weekDetailContainer.style.display = 'none';
-                domElements.noResultsMessage.style.display = 'block';
-                domElements.weekNavControls.style.display = 'none';
-            } else {
-                // Hay resultados
-                domElements.weekDetailContainer.style.display = 'block';
-                domElements.noResultsMessage.style.display = 'none';
-                domElements.weekNavControls.style.display = 'flex';
-
-                // Comprobar si la semana seleccionada sigue estando en la lista filtrada
-                const newSelectedWeek = filteredWeeks.some(w => w.week === selectedWeek) ? selectedWeek : filteredWeeks[0].week;
+        // --- Funciones de Scroll y Teclado ---
+        function handleScroll() { const btn = domElements.scrollToTopButton; if (!btn) return; if (window.scrollY > 200) { if (btn.classList.contains('hidden')) { btn.classList.remove('hidden'); void btn.offsetWidth; btn.classList.remove('opacity-0', 'translate-y-2'); } } else { if (!btn.classList.contains('hidden')) { btn.classList.add('opacity-0', 'translate-y-2'); btn.addEventListener('transitionend', () => { if (window.scrollY <= 200) { btn.classList.add('hidden'); } }, { once: true }); } } }
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
                 
-                if (newSelectedWeek !== selectedWeek) {
-                    selectedWeek = newSelectedWeek;
-                }
-                
-                // Actualizar la vista (esto ajustará el select y renderizará la semana)
-                updateWeekView(newSelectedWeek, true); 
-            }
-        }
-
-        /**
-         * Limpia el campo de búsqueda y restaura la vista.
-         */
-        function clearSearch() {
-            domElements.searchBox.value = '';
-            handleSearch({ target: { value: '' } }); // Disparar búsqueda con valor vacío
-        }
-
+        // Funciones de Modo Oscuro ELIMINADAS (updateThemeIcons, toggleDarkMode)
+        
+        function handleKeydown(e) { if (e.key === 'Escape') { if (domElements.settingsModalPanel && !domElements.settingsModalPanel.classList.contains('hidden')) { closeSettingsModal(); } } }
 
         // --- Funciones de Actualización de Vista (Controladores) ---
-
-        /**
-         * Actualiza SOLAMENTE la vista de la semana.
-         * @param {number} weekNumber - El número de la semana a mostrar.
-         * @param {boolean} [updateHashFlag=true] - Si debe actualizar el hash de la URL.
-         */
-        function updateWeekView(weekNumber, updateHashFlag = true) {
-            selectedWeek = weekNumber;
-            if (updateHashFlag) {
-                updateHash();
-            }
-
-            const currentCourse = courses[selectedCourseId];
-            const currentScheduleData = currentCourse.scheduleData;
-            const currentWeekData = currentScheduleData.find(week => week.week === selectedWeek);
-
-            // Actualizar contenedor de detalles de la semana
-            if (currentWeekData) {
-                domElements.weekDetailContainer.innerHTML = ''; // Limpiar solo la semana
-                domElements.weekDetailContainer.appendChild(renderWeekDetail(currentWeekData));
-                domElements.weekDetailContainer.style.display = 'block';
-                domElements.noResultsMessage.style.display = 'none';
-                domElements.weekNavControls.style.display = 'flex';
-            } else if (domElements.searchBox && domElements.searchBox.value) {
-                // No hay data Y hay un término de búsqueda (la semana fue filtrada)
-                domElements.weekDetailContainer.style.display = 'none';
-                domElements.noResultsMessage.style.display = 'block';
-                domElements.weekNavControls.style.display = 'none';
-            }
-
-            // Actualizar etiqueta de navegación
-            domElements.weekNavLabel.textContent = `Semana ${selectedWeek} de ${currentScheduleData.length}`;
-
-            // Actualizar estado de botones de navegación
-            domElements.prevWeekButton.disabled = selectedWeek === 1;
-            domElements.nextWeekButton.disabled = selectedWeek === currentScheduleData.length;
-
-            // Actualizar el <select> de semanas
-            if(domElements.weekSelectorContainer) {
-                domElements.weekSelectorContainer.value = selectedWeek;
-            }
-
-
-            // Renderizar iconos solo en la sección actualizada
-            lucide.createIcons({
-                nodes: [domElements.weekDetailContainer]
-            });
-        }
-
-        /**
-         * (Re)Renderiza el selector de semanas (el <select>) con un set de semanas.
-         * @param {Array} weeksToRender - El array de semanas a mostrar (puede estar filtrado).
-         */
-        function renderWeekSelector(weeksToRender) {
-            domElements.weekSelectorContainer.innerHTML = ''; // Limpiar <option> anteriores
-            
-            if (weeksToRender.length === 0) {
-                const option = createElement('option', '', 'No se encontraron resultados');
-                option.disabled = true;
-                option.selected = true;
-                domElements.weekSelectorContainer.appendChild(option);
-                return;
-            }
-
-            weeksToRender.forEach(week => {
-                const option = createElement('option');
-                option.value = week.week;
-                
-                // Truncar título largo
-                const shortTitle = week.title.length > 40 ? week.title.substring(0, 40) + '...' : week.title;
-                let optionText = `Semana ${week.week} (${week.dateRange}): ${shortTitle}`;
-
-                // Resaltar semana actual
-                if (week.startDate && TODAY >= week.startDate && TODAY <= addDays(week.endDate, 2)) { // Da margen hasta el domingo
-                    optionText = `📍 ${optionText} (Semana Actual)`;
-                }
-
-                option.textContent = optionText;
-                
-                if (week.week === selectedWeek) {
-                    option.selected = true;
-                }
-                domElements.weekSelectorContainer.appendChild(option);
-            });
-            
-            // Asegurarse de que el valor del select coincide con la semana seleccionada
-            domElements.weekSelectorContainer.value = selectedWeek;
-        }
-
-
-        /**
-         * Actualiza toda la vista del curso (descripción, objetivos, etc.).
-         * @param {string} courseId - El ID del curso (ej. 'MUS4000').
-         * @param {boolean} [updateHashFlag=true] - Si debe actualizar el hash de la URL.
-         */
-        function updateCourseView(courseId, updateHashFlag = true) {
-            selectedCourseId = courseId;
-            const currentCourse = courses[selectedCourseId];
-            
-            // Si venimos de un cambio de curso, reseteamos a la semana 1 y limpiamos búsqueda
-            if (updateHashFlag) {
-                // Al cambiar de curso, recalcular la semana actual para ESE curso
-                selectedWeek = findCurrentWeek(currentCourse.scheduleData);
-                updateHash();
-                clearSearch(); // Limpiar búsqueda al cambiar de curso
-            }
-
-            // 1. Actualizar Header
-            domElements.courseTitle.innerHTML = ''; // Limpiar título
-            domElements.courseTitle.appendChild(createIconElement('GraduationCap', 'mr-4 text-blue-600 no-print', 48));
-            domElements.courseTitle.innerHTML += `Cronograma: ${currentCourse.name}`;
-
-            // 2. Actualizar botones de curso
-            if (selectedCourseId === 'MUS4000') {
-                domElements.btnMus4000.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg no-print';
-                domElements.btnMus4005.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 text-gray-700 hover:bg-purple-100 no-print';
-            } else {
-                domElements.btnMus4000.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 text-gray-700 hover:bg-blue-100 no-print';
-                domElements.btnMus4005.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg no-print';
-            }
-
-            // 3. Actualizar Descripción y Objetivos
-            domElements.courseDescription.innerHTML = currentCourse.description;
-            domElements.courseObjectivesList.innerHTML = ''; // Limpiar lista
-            currentCourse.generalObjectives.forEach(obj => {
-                domElements.courseObjectivesList.appendChild(createElement('li', '', obj));
-            });
-
-            // 4. Actualizar Resultados de Aprendizaje
-            domElements.learningOutcomesList.innerHTML = ''; // Limpiar lista
-            currentCourse.learningOutcomes.forEach(ra => {
-                const li = createElement('li');
-                li.innerHTML = `<strong>${ra.id}:</strong> ${ra.text}`;
-                domElements.learningOutcomesList.appendChild(li);
-            });
-            // El contenido de Evaluación es estático, no necesita actualizarse.
-
-            // 5. Actualizar Bibliografía
-            domElements.bibliographyList.innerHTML = ''; // Limpiar lista
-            currentCourse.bibliography.forEach(item => {
-                domElements.bibliographyList.appendChild(createElement('li', '', item));
-            });
-            
-            // 6. (Re)Renderizar el selector de semanas (con la data completa)
-            renderWeekSelector(currentCourse.scheduleData);
-
-            // 7. Actualizar la vista de la semana a la 'selectedWeek'
-            updateWeekView(selectedWeek, false); // false para evitar doble update de hash
-
-            // 8. Renderizar todos los iconos (ya que actualizamos varias secciones)
-            lucide.createIcons();
-        }
-        
-        /**
-         * Construye el contenido del modal de configuración.
-         */
-        function buildModalContent(savedStartDate, savedRecessStart, savedRecessEnd) {
-             // Contenedor de inputs
-            const dateSelectorContainer = domElements.dateSelectorContainer;
-            
-            // Columna 1: Inicio Semestre
-            const startDateDiv = createElement('div', 'flex flex-col');
-            const dateLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Inicio Semestre:');
-            dateLabel.htmlFor = 'start-date-input';
-            const dateInput = createElement('input', 'p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full');
-            dateInput.type = 'date';
-            dateInput.id = 'start-date-input';
-            dateInput.value = savedStartDate; // Setear el valor actual
-            startDateDiv.appendChild(dateLabel);
-            startDateDiv.appendChild(dateInput);
-            
-            // Columna 2: Inicio Receso
-            const recessStartDiv = createElement('div', 'flex flex-col');
-            const recessStartLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Inicio Receso:');
-            recessStartLabel.htmlFor = 'recess-start-date-input';
-            const recessStartInput = createElement('input', 'p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full');
-            recessStartInput.type = 'date';
-            recessStartInput.id = 'recess-start-date-input';
-            recessStartInput.value = savedRecessStart; // Setear el valor actual
-            recessStartDiv.appendChild(recessStartLabel);
-            recessStartDiv.appendChild(recessStartInput);
-
-            // Columna 3: Fin Receso (en una nueva fila en móvil)
-            const recessEndDiv = createElement('div', 'flex flex-col md:col-span-2'); // Ocupa 2 columnas en desktop para centrarlo
-            const recessEndLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Fin Receso:');
-            recessEndLabel.htmlFor = 'recess-end-date-input';
-            const recessEndInput = createElement('input', 'p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full');
-            recessEndInput.type = 'date';
-            recessEndInput.id = 'recess-end-date-input';
-            recessEndInput.value = savedRecessEnd; // Setear el valor actual
-            recessEndDiv.appendChild(recessEndLabel);
-            recessEndDiv.appendChild(recessEndInput);
-
-            dateSelectorContainer.appendChild(startDateDiv);
-            dateSelectorContainer.appendChild(recessStartDiv);
-            dateSelectorContainer.appendChild(recessEndDiv);
-
-            // Contenedor de botón
-            const dateButtonContainer = domElements.dateButtonContainer;
-            const dateButton = createElement('button', 'w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors flex items-center justify-center');
-            dateButton.innerHTML = '<span data-lucide="Save" class="mr-2" width="16" height="16"></span>Actualizar Fechas';
-            dateButton.onclick = handleDateUpdate; // Asignar handler
-            dateButtonContainer.appendChild(dateButton);
-
-            // Cachear elementos
-            domElements.dateSelectorInput = dateInput;
-            domElements.recessStartDateInput = recessStartInput;
-            domElements.recessEndDateInput = recessEndInput;
-            domElements.dateSelectorButton = dateButton;
-        }
+        function updateWeekView(weekNumber, updateHashFlag = true) { const maxWeeks = courses[selectedCourseId].scheduleData.length; if (weekNumber < 1 || weekNumber > maxWeeks) { console.warn(`Número de semana inválido: ${weekNumber}. Mostrando semana 1.`); weekNumber = 1; } selectedWeek = weekNumber; if (updateHashFlag) { updateHash(); } const currentCourse = courses[selectedCourseId]; const currentScheduleData = currentCourse.scheduleData; const currentWeekData = currentScheduleData.find(week => week.week === selectedWeek); if (currentWeekData) { domElements.weekDetailContainer.innerHTML = ''; domElements.weekDetailContainer.appendChild(renderWeekDetail(currentWeekData)); domElements.weekDetailContainer.classList.remove('hidden'); domElements.noResultsMessage.classList.add('hidden'); if (domElements.weekNavControls) { domElements.weekNavControls.classList.remove('hidden'); domElements.weekNavControls.classList.add('flex'); } } else if (domElements.searchBox && domElements.searchBox.value) { domElements.weekDetailContainer.classList.add('hidden'); domElements.noResultsMessage.classList.remove('hidden'); if (domElements.weekNavControls) domElements.weekNavControls.classList.add('hidden'); } else { domElements.weekDetailContainer.classList.add('hidden'); domElements.noResultsMessage.classList.remove('hidden'); if (domElements.weekNavControls) domElements.weekNavControls.classList.add('hidden'); console.warn("No se encontraron datos para la semana", selectedWeek, "y no hay término de búsqueda activo."); } if (domElements.weekNavLabel) { domElements.weekNavLabel.textContent = `Semana ${selectedWeek} de ${currentScheduleData.length}`; } if (domElements.prevWeekButton && domElements.nextWeekButton) { domElements.prevWeekButton.disabled = selectedWeek === 1; domElements.nextWeekButton.disabled = selectedWeek === currentScheduleData.length; } if(domElements.weekSelectorContainer) { domElements.weekSelectorContainer.value = selectedWeek; } }
+        function renderWeekSelector(weeksToRender) { if (!domElements.weekSelectorContainer) return; domElements.weekSelectorContainer.innerHTML = ''; if (weeksToRender.length === 0) { const option = createElement('option', '', 'No se encontraron resultados'); option.disabled = true; option.selected = true; domElements.weekSelectorContainer.appendChild(option); if(domElements.weekNavControls) domElements.weekNavControls.classList.add('hidden'); return; } else { if(domElements.weekNavControls) { domElements.weekNavControls.classList.remove('hidden'); domElements.weekNavControls.classList.add('flex'); } } weeksToRender.forEach(week => { const option = createElement('option'); option.value = week.week; const shortTitle = week.title.length > 40 ? week.title.substring(0, 40) + '...' : week.title; let optionText = `Semana ${week.week} (${week.dateRange}): ${shortTitle}`; if (week.startDate && TODAY >= week.startDate && TODAY <= addDays(week.endDate, 2)) { optionText = `📍 ${optionText} (Semana Actual)`; option.classList.add('font-bold'); } option.textContent = optionText; if (week.week === selectedWeek) { option.selected = true; } domElements.weekSelectorContainer.appendChild(option); }); domElements.weekSelectorContainer.value = selectedWeek; }
+        // Se eliminan clases dark: de los botones de curso
+        function updateCourseView(courseId, updateHashFlag = true, courseChanged = false) { selectedCourseId = courseId; const currentCourse = courses[selectedCourseId]; if (courseChanged) { selectedWeek = findCurrentWeek(currentCourse.scheduleData); if (updateHashFlag) { updateHash(); } clearSearch(); } else if (updateHashFlag) { updateHash(); } domElements.courseTitle.innerHTML = `<span data-lucide="GraduationCap" class="mr-4 text-blue-600 no-print" width="48" height="48"></span> Cronograma: ${currentCourse.name}`; if (selectedCourseId === 'MUS4000') { domElements.btnMus4000.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg no-print'; domElements.btnMus4005.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 text-gray-700 hover:bg-purple-100 no-print'; } else { domElements.btnMus4000.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 text-gray-700 hover:bg-blue-100 no-print'; domElements.btnMus4005.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg no-print'; } domElements.courseDescription.innerHTML = currentCourse.description; domElements.courseObjectivesList.innerHTML = ''; currentCourse.generalObjectives.forEach(obj => { domElements.courseObjectivesList.appendChild(createElement('li', '', obj)); }); domElements.learningOutcomesList.innerHTML = ''; currentCourse.learningOutcomes.forEach(ra => { const li = createElement('li'); li.innerHTML = `<strong>${ra.id}:</strong> ${ra.text}`; domElements.learningOutcomesList.appendChild(li); }); domElements.bibliographyList.innerHTML = ''; currentCourse.bibliography.forEach(item => { domElements.bibliographyList.appendChild(createElement('li', '', item)); }); renderWeekSelector(currentCourse.scheduleData); updateWeekView(selectedWeek, false); lucide.createIcons(); }
+        // Se eliminan clases dark: de los inputs y botones del modal
+        function buildModalContent(savedStartDate, savedRecessStart, savedRecessEnd) { const dateSelectorContainer = domElements.dateSelectorContainer; dateSelectorContainer.innerHTML = ''; const startDateDiv = createElement('div', 'flex flex-col'); const dateLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Inicio Semestre:'); dateLabel.htmlFor = 'start-date-input'; const dateInput = createElement('input', 'p-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 w-full'); dateInput.type = 'date'; dateInput.id = 'start-date-input'; dateInput.value = savedStartDate; startDateDiv.appendChild(dateLabel); startDateDiv.appendChild(dateInput); const recessStartDiv = createElement('div', 'flex flex-col'); const recessStartLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Inicio Receso:'); recessStartLabel.htmlFor = 'recess-start-date-input'; const recessStartInput = createElement('input', 'p-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 w-full'); recessStartInput.type = 'date'; recessStartInput.id = 'recess-start-date-input'; recessStartInput.value = savedRecessStart; recessStartDiv.appendChild(recessStartLabel); recessStartDiv.appendChild(recessStartInput); const recessEndDiv = createElement('div', 'flex flex-col md:col-span-2'); const recessEndLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Fin Receso:'); recessEndLabel.htmlFor = 'recess-end-date-input'; const recessEndInput = createElement('input', 'p-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 w-full'); recessEndInput.type = 'date'; recessEndInput.id = 'recess-end-date-input'; recessEndInput.value = savedRecessEnd; recessEndDiv.appendChild(recessEndLabel); recessEndDiv.appendChild(recessEndInput); dateSelectorContainer.appendChild(startDateDiv); dateSelectorContainer.appendChild(recessStartDiv); dateSelectorContainer.appendChild(recessEndDiv); const dateButtonContainer = domElements.dateButtonContainer; dateButtonContainer.innerHTML = ''; const dateButton = createElement('button', 'w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors flex items-center justify-center'); dateButton.appendChild(createIconPlaceholder('Save', 'mr-2', 16)); dateButton.innerHTML += 'Actualizar Fechas'; dateButton.onclick = handleDateUpdate; dateButtonContainer.appendChild(dateButton); lucide.createIcons({ nodes: [dateButton] }); domElements.dateSelectorInput = dateInput; domElements.recessStartDateInput = recessStartInput; domElements.recessEndDateInput = recessEndInput; domElements.dateSelectorButton = dateButton; }
 
 
         /**
          * Construye el esqueleto de la aplicación una sola vez.
+         * Modo oscuro ELIMINADO.
          */
         function initApp() {
             domElements.appRoot = document.getElementById('app-root');
@@ -1813,59 +214,65 @@
                 console.error("Error: Elemento #app-root no encontrado.");
                 return;
             }
+            
+            // Cachear elementos estáticos del HTML (Modal, Botón Scroll)
+            domElements.scrollToTopButton = document.getElementById('scroll-to-top');
+            domElements.settingsModalOverlay = document.getElementById('settings-modal-overlay');
+            domElements.settingsModalPanel = document.getElementById('settings-modal-panel');
+            domElements.settingsModalClose = document.getElementById('settings-modal-close');
+            domElements.dateSelectorContainer = document.getElementById('date-selector-container');
+            domElements.dateButtonContainer = document.getElementById('date-button-container');
 
             // --- 0. Set Initial Date ---
-            // Cargar fechas desde localStorage o usar defaults
             const savedStartDate = localStorage.getItem('courseStartDate') || DEFAULT_START_DATE;
             const savedRecessStart = localStorage.getItem('recessStartDate') || DEFAULT_RECESS_START;
             const savedRecessEnd = localStorage.getItem('recessEndDate') || DEFAULT_RECESS_END;
             
-            // Setear variables globales (como objetos Date UTC)
             courseStartDate = new Date(`${savedStartDate}T12:00:00Z`); 
             recessStartDate = new Date(`${savedRecessStart}T12:00:00Z`);
             recessEndDate = new Date(`${savedRecessEnd}T12:00:00Z`);
             
             // --- 1. Pre-procesar datos ---
-            // Calcular todos los rangos de fechas de las semanas
             preprocessScheduleData();
 
-            // --- 2. Header ---
+            // --- 2. Construir el DOM principal ---
+            domElements.appRoot.innerHTML = ''; // Limpiar
+
+            // --- Header ---
             const header = createElement('header', 'relative bg-white rounded-2xl shadow-xl p-6 mb-8 text-center border-b-4 border-blue-500 print-no-shadow print-bg-white');
             
-            // --- Contenedor de Botones de Herramientas (arriba a la derecha) ---
-            // --- MODIFICADO: Clases responsivas para evitar solapamiento ---
-            // En móvil: 'flex justify-end mb-4'
-            // En 'sm' y más: 'sm:absolute sm:top-6 sm:right-6 sm:mb-0'
             const toolsDiv = createElement('div', 'flex gap-2 no-print justify-end mb-4 sm:absolute sm:top-6 sm:right-6 sm:mb-0');
             
-            // Botón de Configuración
+            // Botón Modo Oscuro ELIMINADO
+            
+            // Botón Configuración
             const settingsButton = createElement('button', 'p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-blue-100 transition-all');
             settingsButton.setAttribute('aria-label', 'Configurar semestre');
-            settingsButton.innerHTML = '<span data-lucide="Settings" width="20" height="20"></span>';
+            settingsButton.appendChild(createIconPlaceholder('Settings', '', 20));
             settingsButton.onclick = openSettingsModal;
             toolsDiv.appendChild(settingsButton);
-            domElements.settingsButton = settingsButton; // Cachear
+            domElements.settingsButton = settingsButton; 
 
-            // Botón de Imprimir
+            // Botón Imprimir
             const printButton = createElement('button', 'p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-blue-100 transition-all');
             printButton.setAttribute('aria-label', 'Imprimir cronograma');
-            printButton.innerHTML = '<span data-lucide="Printer" width="20" height="20"></span>';
+            printButton.appendChild(createIconPlaceholder('Printer', '', 20));
             printButton.onclick = () => window.print();
             toolsDiv.appendChild(printButton);
             
-            // --- MODIFICADO: Añadir toolsDiv al principio del header ---
             header.appendChild(toolsDiv);
-            // --- FIN Botones de Herramientas ---
 
-
+            // Título Principal
             const h1 = createElement('h1', 'text-4xl sm:text-5xl font-extrabold text-blue-900 mb-2 flex items-center justify-center print-text-black');
-            h1.id = 'course-title'; // ID para actualizar
+            h1.id = 'course-title'; 
             header.appendChild(h1);
-            domElements.courseTitle = h1; // Cachear
+            domElements.courseTitle = h1; 
             
+            // Info Profesor
             const profInfo = createElement('p', 'text-lg text-gray-600 print-text-black', 'Profesor: Juan Miguel Ríos Redondo | Email: mrjuan@uninorte.edu.co');
             header.appendChild(profInfo);
 
+            // Info Curso (Créditos, etc.)
             const headerInfoDiv = createElement('div', 'mt-4 flex flex-wrap justify-center gap-4 text-gray-700 text-sm no-print');
             headerInfoDiv.innerHTML = `
                 <span class="flex items-center"><span data-lucide="Users" width="16" height="16" class="mr-1 text-gray-500"></span> Créditos: 2</span>
@@ -1877,18 +284,18 @@
             // Selector de Cursos
             const courseSelectorDiv = createElement('div', 'mt-6 pt-6 border-t border-gray-200 flex flex-wrap justify-center gap-4 no-print');
             const btnMus4000 = createElement('button', `px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center`);
-            btnMus4000.appendChild(createIconElement('SwatchBook', 'mr-2', 20));
+            btnMus4000.appendChild(createIconPlaceholder('SwatchBook', 'mr-2', 20));
             btnMus4000.innerHTML += `Conceptos I`;
-            btnMus4000.onclick = () => updateCourseView('MUS4000', true);
+            btnMus4000.onclick = () => updateCourseView('MUS4000', true, true); 
             courseSelectorDiv.appendChild(btnMus4000);
-            domElements.btnMus4000 = btnMus4000; // Cachear botón
+            domElements.btnMus4000 = btnMus4000;
 
             const btnMus4005 = createElement('button', `px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center`);
-            btnMus4005.appendChild(createIconElement('SwatchBook', 'mr-2', 20));
+            btnMus4005.appendChild(createIconPlaceholder('SwatchBook', 'mr-2', 20));
             btnMus4005.innerHTML += `Conceptos II`;
-            btnMus4005.onclick = () => updateCourseView('MUS4005', true);
+            btnMus4005.onclick = () => updateCourseView('MUS4005', true, true); 
             courseSelectorDiv.appendChild(btnMus4005);
-            domElements.btnMus4005 = btnMus4005; // Cachear botón
+            domElements.btnMus4005 = btnMus4005; 
 
             header.appendChild(courseSelectorDiv);
 
@@ -1897,203 +304,161 @@
             const searchLabel = createElement('label', 'sr-only', 'Buscar en el cronograma');
             searchLabel.htmlFor = 'search-box';
             
-            const searchIcon = createElement('div', 'absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none');
-            searchIcon.appendChild(createIconElement('Search', 'text-gray-400', 20));
+            const searchIconContainer = createElement('div', 'absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none');
+            searchIconContainer.appendChild(createIconPlaceholder('Search', 'text-gray-400', 20));
             
             const searchBox = createElement('input', 'w-full pl-10 pr-10 py-3 rounded-full bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500');
             searchBox.id = 'search-box';
             searchBox.type = 'search';
             searchBox.placeholder = 'Buscar término (ej. "Bartók", "Jazz")...';
-            searchBox.onkeyup = handleSearch;
-            domElements.searchBox = searchBox; // Cachear
+            searchBox.oninput = handleSearch; 
+            domElements.searchBox = searchBox; 
             
-            const clearSearchButton = createElement('button', 'absolute inset-y-0 right-0 pr-3 items-center hidden'); // Oculto por defecto
-            clearSearchButton.appendChild(createIconElement('XCircle', 'text-gray-400 hover:text-gray-600', 20));
+            const clearSearchButton = createElement('button', 'absolute inset-y-0 right-0 pr-3 items-center hidden'); 
+            clearSearchButton.appendChild(createIconPlaceholder('XCircle', 'text-gray-400 hover:text-gray-600', 20));
             clearSearchButton.setAttribute('aria-label', 'Limpiar búsqueda');
             clearSearchButton.onclick = clearSearch;
-            domElements.clearSearchButton = clearSearchButton; // Cachear
+            domElements.clearSearchButton = clearSearchButton; 
 
             searchDiv.appendChild(searchLabel);
-            searchDiv.appendChild(searchIcon);
+            searchDiv.appendChild(searchIconContainer);
             searchDiv.appendChild(searchBox);
             searchDiv.appendChild(clearSearchButton);
             header.appendChild(searchDiv);
             
             domElements.appRoot.appendChild(header);
 
-            // --- 3. Sección de Descripción y Objetivos ---
+            // --- Resto de las secciones ---
             const descriptionSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-purple-500 print-no-shadow print-bg-white print-break-inside-avoid');
             descriptionSection.id = 'course-description-section';
             const descH2 = createElement('h2', 'text-3xl font-bold text-purple-800 mb-4 flex items-center print-text-black');
-            descH2.innerHTML = '<span data-lucide="BookOpen" class="mr-3 text-purple-600 no-print" width="30" height="30"></span>Descripción General del Curso';
+            descH2.appendChild(createIconPlaceholder('BookOpen', 'mr-3 text-purple-600 no-print', 30));
+            descH2.innerHTML += 'Descripción General del Curso';
             descriptionSection.appendChild(descH2);
             const descP = createElement('p', 'text-gray-700 leading-relaxed mb-6 print-text-black');
-            descP.id = 'course-description'; // ID para actualizar
+            descP.id = 'course-description'; 
             descriptionSection.appendChild(descP);
-            domElements.courseDescription = descP; // Cachear
-
+            domElements.courseDescription = descP;
             const objectivesH2 = createElement('h2', 'text-3xl font-bold text-green-800 mb-4 flex items-center print-text-black');
-            objectivesH2.innerHTML = '<span data-lucide="Target" class="mr-3 text-green-600 no-print" width="30" height="30"></span>Objetivos del Curso';
+            objectivesH2.appendChild(createIconPlaceholder('Target', 'mr-3 text-green-600 no-print', 30));
+            objectivesH2.innerHTML += 'Objetivos del Curso';
             descriptionSection.appendChild(objectivesH2);
             const objList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
-            objList.id = 'course-objectives-list'; // ID para actualizar
+            objList.id = 'course-objectives-list'; 
             descriptionSection.appendChild(objList);
-            domElements.courseObjectivesList = objList; // Cachear
-
+            domElements.courseObjectivesList = objList;
             domElements.appRoot.appendChild(descriptionSection);
 
-            // --- 4. Resultados de Aprendizaje y Evaluación ---
             const raEvalSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-r-4 border-red-500 print-no-shadow print-bg-white print-break-inside-avoid');
             const raDiv = createElement('div');
             const raH2 = createElement('h2', 'text-3xl font-bold text-red-800 mb-4 flex items-center print-text-black');
-            raH2.innerHTML = '<span data-lucide="Award" class="mr-3 text-red-600 no-print" width="30" height="30"></span>Resultados de Aprendizaje Clave';
+            raH2.appendChild(createIconPlaceholder('Award', 'mr-3 text-red-600 no-print', 30));
+            raH2.innerHTML += 'Resultados de Aprendizaje Clave';
             raDiv.appendChild(raH2);
             const raList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
-            raList.id = 'learning-outcomes-list'; // ID para actualizar
+            raList.id = 'learning-outcomes-list'; 
             raDiv.appendChild(raList);
-            domElements.learningOutcomesList = raList; // Cachear
-
+            domElements.learningOutcomesList = raList; 
             const evalDiv = createElement('div');
             const evalH2 = createElement('h2', 'text-3xl font-bold text-indigo-800 mb-4 flex items-center print-text-black');
-            evalH2.innerHTML = '<span data-lucide="ClipboardList" class="mr-3 text-indigo-600 no-print" width="30" height="30"></span>Sistema de Evaluación';
+            evalH2.appendChild(createIconPlaceholder('ClipboardList', 'mr-3 text-indigo-600 no-print', 30));
+            evalH2.innerHTML += 'Sistema de Evaluación';
             evalDiv.appendChild(evalH2);
             const evalList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
-            // Contenido estático, no necesita ID
-            // --- MODIFICADO: Se usan <strong> en lugar de ** ---
-            evalList.innerHTML = `
-                <li><strong>Examen Parcial I:</strong> 25% (Cubre Semanas 1-5)</li>
-                <li><strong>Examen Parcial II:</strong> 25% (Cubre Semanas 7-11)</li>
-                <li><strong>Examen Parcial III (Final):</strong> 25% (Evaluación global del curso)</li>
-                <li><strong>Materiales (Trabajos, Tareas, Ejercicios):</strong> 15%</li>
-                <li><strong>Participación (Clase, Lecturas):</strong> 10%</li>
-                <li class="font-bold mt-2"><strong>TOTAL: 100%</strong></li>
-                <li class="text-red-600 font-semibold mt-4 flex items-start no-print">
-                    <span data-lucide="CheckCircle" width="16" height="16" class="text-red-500 mr-2 mt-1 flex-shrink-0"></span>
-                    <strong>Importante:</strong> La inasistencia a más del 25% de las clases (más de 8 horas o 4 faltas) resultará en la pérdida del derecho a presentar el examen parcial final.
-                </li>
-            `;
+            evalList.innerHTML = ` <li><strong>Examen Parcial I:</strong> 25% (Cubre Semanas 1-5)</li> <li><strong>Examen Parcial II:</strong> 25% (Cubre Semanas 7-11)</li> <li><strong>Examen Parcial III (Final):</strong> 25% (Evaluación global del curso)</li> <li><strong>Materiales (Trabajos, Tareas, Ejercicios):</strong> 15%</li> <li><strong>Participación (Clase, Lecturas):</strong> 10%</li> <li class="font-bold mt-2"><strong>TOTAL: 100%</strong></li> <li class="text-red-600 font-semibold mt-4 flex items-start no-print"> <span data-lucide="CheckCircle" width="16" height="16" class="text-red-500 mr-2 mt-1 flex-shrink-0"></span> <strong>Importante:</strong> La inasistencia a más del 25% de las clases (más de 8 horas o 4 faltas) resultará en la pérdida del derecho a presentar el examen parcial final. </li> `;
             evalDiv.appendChild(evalList);
-            
             raEvalSection.appendChild(raDiv);
             raEvalSection.appendChild(evalDiv);
-            
             domElements.appRoot.appendChild(raEvalSection);
 
-            // --- 5. Sección de Fechas Importantes ---
-            // Esta sección se renderiza con JS para incluir la lógica de alertas
-            domElements.appRoot.appendChild(renderImportantDatesSection());
+            const importantDatesElem = renderImportantDatesSection(); 
+            domElements.appRoot.appendChild(importantDatesElem);
 
-            // --- 6. Navegación y Contenido de Semanas ---
             const scheduleSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500 print-no-shadow print-bg-white');
-            scheduleSection.id = 'schedule-section'; // ID para anclaje
+            scheduleSection.id = 'schedule-section'; 
             const scheduleH2 = createElement('h2', 'text-3xl font-bold text-blue-800 mb-6 text-center flex items-center justify-center print-text-black');
-            scheduleH2.innerHTML = '<span data-lucide="Calendar" class="mr-3 text-blue-600 no-print" width="30" height="30"></span>Cronograma Semanal';
+            scheduleH2.appendChild(createIconPlaceholder('Calendar', 'mr-3 text-blue-600 no-print', 30));
+            scheduleH2.innerHTML += 'Cronograma Semanal';
             scheduleSection.appendChild(scheduleH2);
-
-            // Controles de Navegación (botones)
             const navControlsDiv = createElement('div', 'flex justify-between items-center mb-4 space-x-4 no-print');
-            navControlsDiv.id = 'week-nav-controls'; // ID para cachear
-            domElements.weekNavControls = navControlsDiv; // Cachear
-
-            const prevButton = createElement('button', 'p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105', `<span data-lucide="ChevronLeft" width="24" height="24"></span>`);
-            prevButton.setAttribute('aria-label', 'Semana anterior'); // MEJORA A11y
+            navControlsDiv.id = 'week-nav-controls'; 
+            domElements.weekNavControls = navControlsDiv; 
+            const prevButton = createElement('button', 'p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105');
+            prevButton.appendChild(createIconPlaceholder('ChevronLeft', '', 24));
+            prevButton.setAttribute('aria-label', 'Semana anterior'); 
             prevButton.onclick = () => updateWeekView(selectedWeek - 1, true);
             navControlsDiv.appendChild(prevButton);
-            domElements.prevWeekButton = prevButton; // Cachear
-
+            domElements.prevWeekButton = prevButton; 
             const weekNavLabel = createElement('span', 'text-2xl font-semibold text-blue-800 text-center');
-            weekNavLabel.id = 'week-nav-label'; // ID para actualizar
+            weekNavLabel.id = 'week-nav-label'; 
             navControlsDiv.appendChild(weekNavLabel);
-            domElements.weekNavLabel = weekNavLabel; // Cachear
-
-            const nextButton = createElement('button', 'p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105', `<span data-lucide="ChevronRight" width="24" height="24"></span>`);
-            nextButton.setAttribute('aria-label', 'Semana siguiente'); // MEJORA A11y
+            domElements.weekNavLabel = weekNavLabel; 
+            const nextButton = createElement('button', 'p-3 rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105');
+            nextButton.appendChild(createIconPlaceholder('ChevronRight', '', 24));
+            nextButton.setAttribute('aria-label', 'Semana siguiente'); 
             nextButton.onclick = () => updateWeekView(selectedWeek + 1, true);
             navControlsDiv.appendChild(nextButton);
-            domElements.nextWeekButton = nextButton; // Cachear
-
+            domElements.nextWeekButton = nextButton; 
             scheduleSection.appendChild(navControlsDiv);
-
-            // Selector de Semanas (Dropdown)
             const weekSelectorLabel = createElement('label', 'block text-sm font-medium text-gray-700 mb-1 no-print', 'Saltar a la semana:');
             weekSelectorLabel.htmlFor = 'week-selector-dropdown';
             scheduleSection.appendChild(weekSelectorLabel);
-            
             const weekSelector = createElement('select', 'w-full p-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-8 no-print');
             weekSelector.id = 'week-selector-dropdown';
             weekSelector.onchange = (e) => updateWeekView(parseInt(e.target.value), true);
             scheduleSection.appendChild(weekSelector);
-            domElements.weekSelectorContainer = weekSelector; // Cachear <select>
-
-            // Mensaje de No Resultados
+            domElements.weekSelectorContainer = weekSelector; 
             const noResultsMessage = createElement('div', 'hidden p-6 text-center text-gray-600 bg-gray-50 rounded-lg no-print');
             noResultsMessage.id = 'no-results-message';
-            noResultsMessage.appendChild(createIconElement('SearchX', 'mx-auto text-gray-400 mb-2', 40));
+            noResultsMessage.appendChild(createIconPlaceholder('SearchX', 'mx-auto text-gray-400 mb-2', 40));
             noResultsMessage.appendChild(createElement('p', 'font-semibold', 'No se encontraron resultados'));
             noResultsMessage.appendChild(createElement('p', 'text-sm', 'Intenta con un término de búsqueda diferente.'));
             scheduleSection.appendChild(noResultsMessage);
-            domElements.noResultsMessage = noResultsMessage; // Cachear
-
-            // Detalles de la Semana Actual (Contenedor)
+            domElements.noResultsMessage = noResultsMessage; 
             const weekDetailContainer = createElement('div');
-            weekDetailContainer.id = 'week-detail-container'; // ID para actualizar
+            weekDetailContainer.id = 'week-detail-container'; 
             scheduleSection.appendChild(weekDetailContainer);
-            domElements.weekDetailContainer = weekDetailContainer; // Cachear
-            
+            domElements.weekDetailContainer = weekDetailContainer; 
             domElements.appRoot.appendChild(scheduleSection);
 
-            // --- 7. Sección de Bibliografía ---
             const bibliographySection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mt-8 border-b-4 border-green-500 print-no-shadow print-bg-white print-break-inside-avoid');
             const biblioH2 = createElement('h2', 'text-3xl font-bold text-green-800 mb-4 flex items-center print-text-black');
-            biblioH2.innerHTML = '<span data-lucide="BookOpen" class="mr-3 text-green-600 no-print" width="30" height="30"></span>Bibliografía Recomendada';
+            biblioH2.appendChild(createIconPlaceholder('BookOpen', 'mr-3 text-green-600 no-print', 30));
+            biblioH2.innerHTML += 'Bibliografía Recomendada';
             bibliographySection.appendChild(biblioH2);
             const biblioList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
-            biblioList.id = 'bibliography-list'; // ID para actualizar
+            biblioList.id = 'bibliography-list'; 
             bibliographySection.appendChild(biblioList);
-            domElements.bibliographyList = biblioList; // Cachear
-
+            domElements.bibliographyList = biblioList; 
             domElements.appRoot.appendChild(bibliographySection);
 
-            // --- 8. Footer ---
             const footer = createElement('footer', 'text-center text-gray-500 text-sm py-4 print-text-black no-print');
             footer.innerHTML = '<p>© 2025 Juan Miguel Ríos Redondo. Todos los derechos reservados.</p>';
             domElements.appRoot.appendChild(footer);
+            // --- FIN Construcción DOM ---
 
-            // --- 9. Cachear y construir Modal ---
-            domElements.settingsModalOverlay = document.getElementById('settings-modal-overlay');
-            domElements.settingsModalPanel = document.getElementById('settings-modal-panel');
-            domElements.settingsModalClose = document.getElementById('settings-modal-close');
-            domElements.dateSelectorContainer = document.getElementById('date-selector-container');
-            domElements.dateButtonContainer = document.getElementById('date-button-container');
-            
-            // Construir el contenido del modal (inputs y botón)
+            // --- Construir Modal ---
             buildModalContent(savedStartDate, savedRecessStart, savedRecessEnd);
             
-            // --- 10. Estado Inicial y Event Listeners ---
-            
-            // Listeners para el Modal
-            domElements.settingsModalClose.onclick = closeSettingsModal;
-            domElements.settingsModalOverlay.onclick = closeSettingsModal;
-
-            // Obtener estado inicial del hash (esto setea 'selectedCourseId' y 'selectedWeek')
+            // --- Estado Inicial y Event Listeners ---
+            if (domElements.settingsModalClose) domElements.settingsModalClose.onclick = closeSettingsModal;
+            if (domElements.settingsModalOverlay) domElements.settingsModalOverlay.onclick = closeSettingsModal;
+            if (domElements.scrollToTopButton) { domElements.scrollToTopButton.onclick = scrollToTop; window.addEventListener('scroll', handleScroll); }
+            window.addEventListener('keydown', handleKeydown);
             getStateFromHash();
-            
-            // Renderizar el curso y semana iniciales
-            updateCourseView(selectedCourseId, false); // false para no escribir el hash
-            
-            // Escuchar cambios en el hash (botones atrás/adelante)
+            updateCourseView(selectedCourseId, false, false); 
             window.addEventListener('hashchange', handleHashChange);
 
-            // Renderizar todos los iconos de Lucide por primera vez
-            lucide.createIcons();
+            // Llamar a Lucide al final, después de construir todo
+            setTimeout(() => {
+                lucide.createIcons();
+                // Función de modo oscuro inicial ELIMINADA
+            }, 0);
         }
 
-
         // --- Ejecución ---
-        // Ejecutar la aplicación cuando el DOM esté completamente cargado
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
-
 
