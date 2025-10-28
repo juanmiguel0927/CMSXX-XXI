@@ -905,7 +905,7 @@
 
         // --- Variables de estado global ---
         let selectedCourseId = 'MUS4000';
-        let selectedWeek = 1;
+        let selectedWeek = 1; // Este valor se sobrescribirá al inicio
         let dismissedAlerts = JSON.parse(localStorage.getItem('dismissedAlerts')) || [];
 
         // --- CONSTANTES ---
@@ -1049,6 +1049,23 @@
             processArray(scheduleDataI);
             processArray(scheduleDataII);
         }
+        
+        /**
+         * NUEVA FUNCIÓN: Encuentra la semana en curso basada en la fecha de HOY.
+         * @param {Array} scheduleData - El array de schedule del curso.
+         * @returns {number} El número de la semana en curso, o 1 si no está en sesión.
+         */
+        function findCurrentWeek(scheduleData) {
+            const today = TODAY; // Usar la constante global
+            for (const week of scheduleData) {
+                // Comprueba si HOY está dentro del rango de la semana (Lun a Vie + 2 días de margen hasta Dom)
+                if (today >= week.startDate && today <= addDays(week.endDate, 2)) {
+                    return week.week;
+                }
+            }
+            // Si el loop termina, HOY no está en ninguna semana (antes o después del curso)
+            return 1; // Devolver 1 como predeterminado
+        }
 
 
         // --- Funciones de Utilidad de DOM ---
@@ -1101,8 +1118,11 @@
         function getStateFromHash() {
             const hash = window.location.hash.slice(1); // Quita el '#'
             if (!hash) {
-                selectedCourseId = 'MUS4000';
-                selectedWeek = 1;
+                selectedCourseId = 'MUS4000'; // Predeterminado al curso I
+                // --- CAMBIO AQUÍ ---
+                // Calcular la semana en curso en lugar de usar 1
+                selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData);
+                // --- FIN DEL CAMBIO ---
                 return;
             }
 
@@ -1113,10 +1133,11 @@
             if (course && courses[course]) {
                 selectedCourseId = course;
             }
+            // Si hay un hash, PERO no especifica la semana, calculamos la actual
             if (week && week >= 1 && week <= courses[selectedCourseId].scheduleData.length) {
                 selectedWeek = week;
             } else {
-                selectedWeek = 1; // Resetea a la semana 1 si no es válida
+                 selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData);
             }
         }
 
@@ -1535,7 +1556,8 @@
             
             // Si venimos de un cambio de curso, reseteamos a la semana 1 y limpiamos búsqueda
             if (updateHashFlag) {
-                selectedWeek = 1;
+                // Al cambiar de curso, recalcular la semana actual para ESE curso
+                selectedWeek = findCurrentWeek(currentCourse.scheduleData);
                 updateHash();
                 clearSearch(); // Limpiar búsqueda al cambiar de curso
             }
@@ -1546,8 +1568,6 @@
             domElements.courseTitle.innerHTML += `Cronograma: ${currentCourse.name}`;
 
             // 2. Actualizar botones de curso
-            // --- CORRECCIÓN AQUÍ ---
-            // Asegurarse de que no hay typos (btnMus400Go5)
             if (selectedCourseId === 'MUS4000') {
                 domElements.btnMus4000.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg no-print';
                 domElements.btnMus4005.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 text-gray-700 hover:bg-purple-100 no-print';
@@ -1555,7 +1575,6 @@
                 domElements.btnMus4000.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 text-gray-700 hover:bg-blue-100 no-print';
                 domElements.btnMus4005.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg no-print';
             }
-            // --- FIN CORRECCIÓN ---
 
             // 3. Actualizar Descripción y Objetivos
             domElements.courseDescription.innerHTML = currentCourse.description;
@@ -1582,7 +1601,7 @@
             // 6. (Re)Renderizar el selector de semanas (con la data completa)
             renderWeekSelector(currentCourse.scheduleData);
 
-            // 7. Actualizar la vista de la semana a la 'selectedWeek' (que es 1 si se cambió de curso)
+            // 7. Actualizar la vista de la semana a la 'selectedWeek'
             updateWeekView(selectedWeek, false); // false para evitar doble update de hash
 
             // 8. Renderizar todos los iconos (ya que actualizamos varias secciones)
@@ -1793,8 +1812,8 @@
             weekDetailContainer.id = 'week-detail-container'; // ID para actualizar
             scheduleSection.appendChild(weekDetailContainer);
             domElements.weekDetailContainer = weekDetailContainer; // Cachear
-
-D:            domElements.appRoot.appendChild(scheduleSection);
+            
+            domElements.appRoot.appendChild(scheduleSection);
 
             // --- 6. Sección de Bibliografía ---
             const bibliographySection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mt-8 border-b-4 border-green-500 print-no-shadow print-bg-white print-break-inside-avoid');
