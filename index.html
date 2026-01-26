@@ -6,6 +6,22 @@
     <title>Cronograma Musical y Asistencia</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#1a202c',
+                            card: '#2d3748',
+                            text: '#e2e8f0'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <!-- Google Fonts - Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Lucide Icons CDN -->
@@ -30,6 +46,10 @@
             padding-right: 3rem; 
         }
         
+        .dark select {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>');
+        }
+
         input[type="search"]::-webkit-search-cancel-button {
             -webkit-appearance: none;
             appearance: none;
@@ -60,7 +80,7 @@
             #course-title, #course-description-section { color: #000 !important; }
         }
         
-        /* Animaciones para Asistencia */
+        /* Animaciones */
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -76,6 +96,10 @@
                 background: white;
                 box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             }
+            .dark .mobile-card-view tbody tr {
+                background: #2d3748;
+                border-color: #4a5568;
+            }
             .mobile-card-view thead { display: none; }
             .mobile-card-view td {
                 display: flex;
@@ -87,94 +111,96 @@
             .mobile-card-view td:first-child {
                 font-weight: bold;
                 font-size: 1.1rem;
-                color: #1f2937;
                 border-bottom: 1px solid #f3f4f6;
                 margin-bottom: 0.5rem;
                 padding-bottom: 0.5rem;
             }
+            .dark .mobile-card-view td:first-child {
+                border-color: #4a5568;
+                color: #e2e8f0;
+            }
         }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800 transition-colors duration-300"> 
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-200 transition-colors duration-300"> 
 
-    <div id="app-root" class="container mx-auto py-8 px-4">
-        <!-- El contenido de la aplicación se construirá aquí por JS -->
-    </div>
+    <div id="app-root" class="container mx-auto py-8 px-4"></div>
     
-    <!-- Contenedor del Modal de Configuración -->
-    <div id="settings-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden no-print"></div> 
-    <div id="settings-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-xl z-50 w-full max-w-lg hidden no-print"> 
+    <!-- Tooltip Personalizado -->
+    <div id="custom-tooltip" class="fixed hidden bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg z-[100] pointer-events-none transition-opacity duration-200"></div>
+
+    <!-- Modales -->
+    <div id="settings-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden no-print backdrop-blur-sm"></div> 
+    <div id="settings-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-2xl shadow-xl z-50 w-full max-w-lg hidden no-print transition-all"> 
         <div class="p-6 relative">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-gray-800 flex items-center">
-                    <span data-lucide="Settings" class="mr-2 text-blue-600"></span> 
-                    Configuración del Semestre
-                </h2>
-                <button id="settings-modal-close" class="p-2 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100"> 
-                    <span data-lucide="X"></span>
-                </button>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center"><span data-lucide="Settings" class="mr-2 text-blue-600 dark:text-blue-400"></span> Configuración del Semestre</h2>
+                <button id="settings-modal-close" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><span data-lucide="X"></span></button>
             </div>
-            <p class="text-gray-600 mb-6">Ajusta las fechas de inicio del semestre y del receso. Estos cambios afectarán tanto al cronograma como a las fechas de asistencia.</p> 
+            <p class="text-gray-600 dark:text-gray-400 mb-6">Ajusta las fechas de inicio del semestre y del receso.</p> 
             <div id="date-selector-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             <div id="date-button-container" class="mt-6 flex justify-end"></div>
         </div>
     </div>
 
-    <!-- Modal de Autenticación para Asistencia -->
     <div id="auth-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[60] hidden no-print backdrop-blur-sm"></div>
-    <div id="auth-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl z-[70] w-full max-w-sm hidden no-print transform transition-all">
+    <div id="auth-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl z-[70] w-full max-w-sm hidden no-print transform transition-all">
         <div class="p-8 text-center">
-            <div class="mx-auto bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                <span data-lucide="Lock" class="text-blue-600" width="32" height="32"></span>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Acceso Restringido</h2>
-            <p class="text-gray-500 mb-6">Introduce la clave para acceder al control de asistencia.</p>
-            <input type="password" id="auth-password" class="w-full p-3 border border-gray-300 rounded-lg mb-4 text-center text-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••" maxlength="10">
+            <div class="mx-auto bg-blue-100 dark:bg-blue-900 w-16 h-16 rounded-full flex items-center justify-center mb-4"><span data-lucide="Lock" class="text-blue-600 dark:text-blue-300" width="32" height="32"></span></div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Acceso Restringido</h2>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">Introduce la clave para acceder.</p>
+            <input type="password" id="auth-password" class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg mb-4 text-center text-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••" maxlength="10">
             <p id="auth-error" class="text-red-500 text-sm mb-4 hidden">Clave incorrecta</p>
             <div class="flex gap-2">
-                <button id="auth-cancel" class="flex-1 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
-                <button id="auth-submit" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-lg">Entrar</button>
+                <button id="auth-cancel" class="flex-1 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancelar</button>
+                <button id="auth-submit" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-lg">Entrar</button>
             </div>
         </div>
     </div>
     
-    <!-- Modal para Agregar Nota Específica -->
-    <div id="note-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden no-print"></div>
-    <div id="note-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-xl z-[90] w-full max-w-md hidden no-print">
+    <div id="note-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden no-print backdrop-blur-sm"></div>
+    <div id="note-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-2xl shadow-xl z-[90] w-full max-w-md hidden no-print">
         <div class="p-6">
-            <h3 class="text-xl font-bold text-gray-800 mb-4" id="note-modal-title">Agregar Observación</h3>
-            <textarea id="note-input" class="w-full p-3 border border-gray-300 rounded-lg mb-4 h-32 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Escriba la novedad aquí..."></textarea>
+            <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4" id="note-modal-title">Agregar Observación</h3>
+            <textarea id="note-input" class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg mb-4 h-32 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Escriba la novedad aquí..."></textarea>
             <div class="flex justify-end gap-2">
-                <button id="note-cancel" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
-                <button id="note-save" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Guardar Nota</button>
+                <button id="note-cancel" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancelar</button>
+                <button id="note-save" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">Guardar Nota</button>
             </div>
         </div>
     </div>
 
-    <!-- Botón "Volver Arriba" -->
-    <button id="scroll-to-top" class="hidden no-print fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 opacity-0 transform translate-y-2 z-30"> 
-        <span data-lucide="ArrowUp" width="24" height="24"></span>
-    </button>
-
-    <!-- Toast de Notificación -->
-    <div id="toast-container" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[80] transition-all duration-300 opacity-0 translate-y-10 pointer-events-none">
-        <div class="bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl flex items-center space-x-3">
-            <span id="toast-icon"></span>
-            <span id="toast-message" class="font-medium"></span>
+    <div id="add-student-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden no-print backdrop-blur-sm"></div>
+    <div id="add-student-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-2xl shadow-xl z-[90] w-full max-w-md hidden no-print">
+        <div class="p-6">
+            <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center"><span data-lucide="UserPlus" class="mr-2 text-green-600"></span> Agregar Estudiante</h3>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre Completo</label>
+                <input type="text" id="new-student-name" class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 outline-none" placeholder="Ej: Pérez Juan">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button id="add-student-cancel" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancelar</button>
+                <button id="add-student-save" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold">Agregar</button>
+            </div>
         </div>
     </div>
 
+    <button id="scroll-to-top" class="hidden no-print fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 opacity-0 transform translate-y-2 z-30"><span data-lucide="ArrowUp" width="24" height="24"></span></button>
+
+    <div id="toast-container" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[80] transition-all duration-300 opacity-0 translate-y-10 pointer-events-none">
+        <div class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-3 rounded-full shadow-2xl flex items-center space-x-3"><span id="toast-icon"></span><span id="toast-message" class="font-medium"></span></div>
+    </div>
+
     <script>
-        // --- 1. CONFIGURACIÓN Y CONSTANTES GLOBALES ---
+        // --- 1. CONFIGURACIÓN Y CONSTANTES ---
         const AUTH_KEY = "72336565";
-        const DEFAULT_START_DATE = '2026-01-26'; // Inicio Primer Semestre 2026
-        const DEFAULT_RECESS_START = '2026-03-30'; // Semana Santa 2026
-        const DEFAULT_RECESS_END = '2026-04-05';   // Fin Semana Santa 2026
-        const TODAY = new Date(); // Fecha actual para validaciones
-        
+        const DEFAULT_START_DATE = '2026-01-26';
+        const DEFAULT_RECESS_START = '2026-03-30';
+        const DEFAULT_RECESS_END = '2026-04-05';
+        const TODAY = new Date();
         const spanishMonths = {"enero":0,"febrero":1,"marzo":2,"abril":3,"mayo":4,"junio":5,"julio":6,"agosto":7,"septiembre":8,"octubre":9,"noviembre":10,"diciembre":11};
 
-        // --- 2. CACHÉ DE ELEMENTOS DEL DOM ---
+        // --- 2. CACHÉ DEL DOM ---
         const domElements = {
             appRoot: null, courseTitle: null, btnMus4000: null, btnMus4005: null,
             settingsButton: null, settingsModalOverlay: null, settingsModalPanel: null, settingsModalClose: null,
@@ -187,16 +213,8 @@
         };
 
         // --- 3. DATOS ---
-        const studentsI = [
-            "Arcon Charris, Jorge", "Barake Lacouture, Nicholas", "Bujato Cequeira, Naren",
-            "Calderon Quintero, Sofia", "De La Ossa Giraldo, Martin", "Ebrath Lesmes, Daniel",
-            "Pinto Abadia, Juan", "Vasquez Amell, Valentina", "Villa Martinez, Paula"
-        ].sort();
-
-        const studentsII = [
-            "Davila Mendoza, Juztyn", "Leal Jimenez, Luis", "Martinez Guzman, Esteban",
-            "Nader Zapata, Shaiel", "Rodriguez Gonzalez, Jesus"
-        ].sort();
+        const studentsI = ["Arcon Charris, Jorge", "Barake Lacouture, Nicholas", "Bujato Cequeira, Naren", "Calderon Quintero, Sofia", "De La Ossa Giraldo, Martin", "Ebrath Lesmes, Daniel", "Pinto Abadia, Juan", "Vasquez Amell, Valentina", "Villa Martinez, Paula"].sort();
+        const studentsII = ["Davila Mendoza, Juztyn", "Leal Jimenez, Luis", "Martinez Guzman, Esteban", "Nader Zapata, Shaiel", "Rodriguez Gonzalez, Jesus"].sort();
 
         const scheduleDataI = [
             { "week": 1, "title": "El Crepúsculo Tonal y el Amanecer Modal", "objectives": ["Introducir el contexto musical de finales del siglo XIX.", "Comprender el concepto de transición de la tonalidad.", "Familiarizarse con los rudimentos teóricos de acordes y escalas modales."], "activities": ["Clase magistral: Presentación de lineamientos técnico-teóricos.", "Taller: Ejercicios de identificación de escalas y acordes modales básicos.", "Audición dirigida: Ejemplos de obras con elementos de transición tonal."], "independentWork": ["Lectura: Capítulo introductorio sobre la armonía de finales del siglo XIX y principios del XX (Persichetti, Ulehla).", "Ejercicios de escritura: Identificación de modos y construcción de acordes modales."], "repertoire": ["Richard Wagner: Preludio de Tristán e Isolda", "Franz Liszt: Nuages gris", "Modest Mussorgsky: Cuadros de una exposición (original para piano)"] },
@@ -213,7 +231,7 @@
             { "week": 12, "title": "Pianistas del Jazz Temprano II / EXAMEN PARCIAL II", "objectives": ["Continuar el reconocimiento de pianistas clave.", "Consolidar la comprensión de los conceptos de Jazz y la escuela francesa."], "activities": ["Clase magistral: Continuación de la presentación de pianistas.", "Examen Parcial II (25%): Incluye contenidos de las semanas 7-11."], "independentWork": ["Revisión de los temas para el parcial."], "repertoire": ["Fats Waller: 'Honeysuckle Rose'", "Teddy Wilson: Grabaciones con Billie Holiday o Benny Goodman.", "Duke Ellington (solos de piano): 'Solitude', 'Mood Indigo'", "Art Tatum: 'Tiger Rag', 'Tea for Two'", "Meade Lux Lewis: 'Honky Tonk Train Blues'", "Pete Johnson: 'Roll 'Em Pete'", "Jimmy Yancey: Grabaciones de boogie-woogie."] },
             { "week": 13, "title": "Armonía Funcional, Motivo y Conjunto en el Siglo XX", "objectives": ["Revisar y aplicar conceptos de armonía funcional en un contexto ampliado.","Comprender el uso del motivo y el conjunto en la música del siglo XX."], "activities": ["Clase magistral: Ejemplos de análisis de obras que demuestran el uso de motivo y conjunto.", "Taller: Ejercicios de desarrollo motívico.", "Discusión crítica: Sobre la persistencia de elementos tradicionales en la música moderna."], "independentWork": ["Lectura: Armonía funcional (Gabis).", "Análisis de partituras: Identificación de motivos y su desarrollo."], "repertoire": ["Arnold Schoenberg: Pierrot Lunaire (selecciones, para motivo y conjunto atonal)", "Alban Berg: Wozzeck (fragmentos, para leitmotivs y conjuntos)", "Anton Webern: Sinfonía, Op. 21 (para serialismo y organización motívica)"] },
             { "week": 14, "title": "Aplicación de Materiales en Composición: Forma Binaria y Ternaria", "objectives": ["Aplicar los materiales armónicos y melódicos aprendidos en composiciones formales.", "Realizar composiciones cortas en forma binaria y/o ternaria."], "activities": ["Clase magistral: Revisión de las formas binaria y ternaria.", "Taller: Sesión de composición guiada, trabajando en la estructura de las piezas.","Simulacro de examen: Presentación de avances de composición."], "independentWork": ["Composición: Desarrollo de una pieza corta en forma binaria o ternaria, aplicando los conceptos vistos."], "repertoire": ["Ejemplos de piezas cortas del siglo XX que utilizan estas formas con lenguajes modernos (ej. Béla Bartók Mikrokosmos, Paul Hindemith Ludus Tonalis)."] },
-            { "week": 15, "title": "Análisis de Repertorio Modal y Preparación Final", "objectives": ["Realizar un análisis profundo de repertorio modal.", "Consolidar todos los conocimientos adquiridos a lo largo del semestre."], "activities": ["Clase magistral: Análisis de obras complexas que integren varios conceptos.", "Taller: Sesión de preguntas y respuestas, resolución de dudas.", "Audición dirigida (con score): Análisis en clase."], "independentWork": ["Repaso general para el examen final.", "Pulir la composición final."], "repertoire": ["Olivier Messiaen: Quatuor pour la fin du temps (selecciones, para modos de transposición limitada)", "Béla Bartók: Concierto para Orquesta (movimientos selectos, para integración de elementos folcóricos y modales)", "Jazz modal avanzado: John Coltrane 'Giant Steps' (aunque complejo, para entender la progresión modal rápida), Bill Evans 'Waltz for Debby'."] },
+            { "week": 15, "title": "Análisis de Repertorio Modal y Preparación Final", "objectives": ["Realizar un análisis profundo de repertorio modal.", "Consolidar todos los conocimientos adquiridos a lo largo del semestre."], "activities": ["Clase magistral: Análisis de obras complexas que integren varios conceptos.", "Taller: Sesión de preguntas y respuestas, resolución de dudas.","Audición dirigida (con score): Análisis en clase."], "independentWork": ["Repaso general para el examen final.", "Pulir la composición final."], "repertoire": ["Olivier Messiaen: Quatuor pour la fin du temps (selecciones, para modos de transposición limitada)", "Béla Bartók: Concierto para Orquesta (movimientos selectos, para integración de elementos folcóricos y modales)", "Jazz modal avanzado: John Coltrane 'Giant Steps' (aunque complejo, para entender la progresión modal rápida), Bill Evans 'Waltz for Debby'."] },
             { "week": 16, "title": "EXAMEN FINAL y Presentación de Proyectos", "objectives": ["Evaluar la comprensión global de los conceptos del curso.", "Presentar y sustentar el proceso creativo de la composición final."], "activities": ["Examen Parcial III (25%): Evaluación final de los contenidos del curso.", "Presentación de composiciones: Cada estudiante sustentará su proceso creativo."], "independentWork": ["Finalización de la composición y preparación de la sustentación."], "repertoire": ["N/A"] }
         ];
 
@@ -281,6 +299,7 @@
         let viewMode = 'schedule';
         let attendanceData = JSON.parse(localStorage.getItem('attendanceData')) || {};
         let dismissedAlerts = JSON.parse(localStorage.getItem('dismissedAlerts')) || [];
+        let customStudents = JSON.parse(localStorage.getItem('customStudents')) || { 'MUS4000': [], 'MUS4005': [] };
         
         let courseStartDate, recessStartDate, recessEndDate; 
         
@@ -289,12 +308,118 @@
         let currentNoteStudent = null;
         let currentNoteDate = null;
 
+        // Estado para Dark Mode
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
         // --- 5. FUNCIONES ---
+        
+        // --- Tooltip Logic ---
+        let tooltipTimer;
+        
+        function attachTooltip(element, text) {
+            element.addEventListener('mouseenter', (e) => {
+                const tooltip = document.getElementById('custom-tooltip');
+                tooltipTimer = setTimeout(() => {
+                    tooltip.textContent = text;
+                    tooltip.classList.remove('hidden');
+                    
+                    // Position tooltip relative to element
+                    const rect = element.getBoundingClientRect();
+                    tooltip.style.top = `${rect.bottom + 5}px`;
+                    tooltip.style.left = `${rect.left + (rect.width/2) - (tooltip.offsetWidth/2)}px`;
+                    
+                }, 2000); // 2 seconds delay
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                clearTimeout(tooltipTimer);
+                document.getElementById('custom-tooltip').classList.add('hidden');
+            });
+        }
+
+        function getMergedStudents(courseId) {
+            // Updated to use studentsI and studentsII
+            const base = courseId === 'MUS4000' ? studentsI : studentsII;
+            const custom = customStudents[courseId] || [];
+            return [...base, ...custom].sort();
+        }
+
+        function addStudent() {
+            const nameInput = document.getElementById('new-student-name');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            if (!customStudents[selectedCourseId]) customStudents[selectedCourseId] = [];
+            customStudents[selectedCourseId].push(name);
+            localStorage.setItem('customStudents', JSON.stringify(customStudents));
+            
+            nameInput.value = '';
+            closeAddStudentModal();
+            showToast('Estudiante agregado correctamente', 'success');
+            
+            // Refresh view
+            if (viewMode === 'attendance') {
+                // Refresh list
+                const select = document.querySelector('#attendance-section select');
+                if (select) {
+                    const event = new Event('change');
+                    select.dispatchEvent(event);
+                }
+            }
+        }
+
+        function openAddStudentModal() {
+            document.getElementById('add-student-modal-overlay').classList.remove('hidden');
+            document.getElementById('add-student-modal-panel').classList.remove('hidden');
+            document.getElementById('new-student-name').focus();
+        }
+
+        function closeAddStudentModal() {
+            document.getElementById('add-student-modal-overlay').classList.add('hidden');
+            document.getElementById('add-student-modal-panel').classList.add('hidden');
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('darkMode', isDarkMode);
+            applyTheme();
+        }
+
+        function applyTheme() {
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            // Update icons if needed
+            lucide.createIcons();
+        }
+
         function addDays(date, days) {const newDate = new Date(date.valueOf());newDate.setDate(newDate.getDate() + days);return newDate;}
         function formatDate(date) {return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).replace('.', '');}
         function parseSpanishDate(dateString) { try { let cleanStr = dateString.toLowerCase().replace('del ', ''); const parts = cleanStr.split(' '); let day, monthName, year; const startYear = courseStartDate ? courseStartDate.getUTCFullYear() : new Date().getUTCFullYear(); if (parts.length === 4 && parts[1] === 'de') { day = parseInt(parts[0]); monthName = parts[2]; year = parseInt(parts[3]); } else if (parts.length === 3 && parts[1] === 'de') { day = parseInt(parts[0]); monthName = parts[2]; year = startYear; } else if (parts.length === 5 && parts[1] === 'al') { day = parseInt(parts[0]); monthName = parts[4]; year = startYear; } else { return null; } const month = spanishMonths[monthName]; if (month === undefined) return null; return new Date(Date.UTC(year, month, day, 12)); } catch (e) { console.error("Error parseando fecha:", dateString, e); return null; } }
         function daysUntil(date1, date2) { const msPerDay = 1000 * 60 * 60 * 24; const utc1 = Date.UTC(date1.getUTCFullYear(), date1.getUTCMonth(), date1.getUTCDate()); const utc2 = Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth(), date2.getUTCDate()); return Math.floor((utc2 - utc1) / msPerDay); }
-        function preprocessScheduleData() { const processArray = (scheduleArray) => { let currentDate = new Date(courseStartDate.valueOf()); for (const week of scheduleArray) { while (currentDate.getTime() >= recessStartDate.getTime() && currentDate.getTime() <= recessEndDate.getTime()) { currentDate = addDays(currentDate, 7); } const weekStart = new Date(currentDate.valueOf()); const weekEnd = addDays(weekStart, 4); week.startDate = weekStart; week.endDate = weekEnd; week.dateRange = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`; currentDate = addDays(currentDate, 7); } }; processArray(scheduleDataI); processArray(scheduleDataII); }
+        
+        // --- UPDATED PREPROCESS FUNCTION ---
+        function preprocessScheduleData() {
+            Object.values(courses).forEach(course => {
+                if (course.scheduleData) {
+                    let currentDate = new Date(courseStartDate.valueOf());
+                    for (const week of course.scheduleData) {
+                        while (currentDate.getTime() >= recessStartDate.getTime() && currentDate.getTime() <= recessEndDate.getTime()) {
+                            currentDate = addDays(currentDate, 7);
+                        }
+                        const weekStart = new Date(currentDate.valueOf());
+                        const weekEnd = addDays(weekStart, 4);
+                        week.startDate = weekStart;
+                        week.endDate = weekEnd;
+                        week.dateRange = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+                        currentDate = addDays(currentDate, 7);
+                    }
+                }
+            });
+        }
+
         function findCurrentWeek(scheduleData) { const today = TODAY; for (const week of scheduleData) { if (today >= week.startDate && today <= addDays(week.endDate, 2)) { return week.week; } } return 1; }
 
         function createElement(tagName, classes = '', innerHTML = '') { const element = document.createElement(tagName); if (classes) { element.className = classes; } if (innerHTML) { element.innerHTML = innerHTML; } return element; }
@@ -307,7 +432,6 @@
             
             msgSpan.textContent = message;
             
-            // Iconos y colores según tipo
             if (type === 'danger') {
                 container.firstElementChild.className = "bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center space-x-3";
                 iconSpan.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
@@ -315,7 +439,7 @@
                 container.firstElementChild.className = "bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center space-x-3";
                 iconSpan.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
             } else {
-                container.firstElementChild.className = "bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl flex items-center space-x-3";
+                container.firstElementChild.className = "bg-gray-800 dark:bg-gray-700 text-white px-6 py-3 rounded-full shadow-2xl flex items-center space-x-3";
             }
 
             container.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
@@ -343,11 +467,11 @@
 
         // --- Funciones de Gestión de Datos ---
         function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(attendanceData));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ attendance: attendanceData, customStudents: customStudents }));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
             downloadAnchorNode.setAttribute("download", "asistencia_backup.json");
-            document.body.appendChild(downloadAnchorNode); // required for firefox
+            document.body.appendChild(downloadAnchorNode); 
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
             showToast('Copia de seguridad descargada', 'success');
@@ -363,9 +487,16 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const importedData = JSON.parse(e.target.result);
-                    attendanceData = importedData;
+                    const imported = JSON.parse(e.target.result);
+                    // Support legacy format or new object format
+                    if (imported.attendance) {
+                        attendanceData = imported.attendance;
+                        customStudents = imported.customStudents || { 'MUS4000': [], 'MUS4005': [] };
+                    } else {
+                        attendanceData = imported;
+                    }
                     localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+                    localStorage.setItem('customStudents', JSON.stringify(customStudents));
                     showToast('Datos restaurados correctamente', 'success');
                     switchView('attendance'); // Refresh view
                 } catch (error) {
@@ -378,6 +509,7 @@
         function exportToCSV() {
             const config = courses[selectedCourseId];
             const dates = getAttendanceDates();
+            const allStudents = getMergedStudents(selectedCourseId);
             let csvContent = "data:text/csv;charset=utf-8,";
             
             // Header row
@@ -388,7 +520,7 @@
 
             // Data rows
             const courseData = attendanceData[selectedCourseId] || {};
-            config.students.forEach(student => {
+            allStudents.forEach(student => {
                 let row = [`"${student}"`];
                 let totalAbsence = 0;
                 
@@ -399,7 +531,7 @@
                     let statusText = "P";
                     if (status === 'absent') { statusText = "F"; totalAbsence += 2; }
                     else if (status === 'tardy') { statusText = "T"; totalAbsence += 1; }
-                    else if (status === 'excused') { statusText = "E"; totalAbsence += 2; } // E suma igual que F
+                    else if (status === 'excused') { statusText = "E"; totalAbsence += 2; } 
                     
                     row.push(statusText);
                 });
@@ -430,7 +562,7 @@
                     currentDate = addDays(currentDate, 7);
                 }
                 const isoDate = currentDate.toISOString().split('T')[0];
-                const isPast = currentDate <= TODAY; // Check if date is in past or today
+                const isPast = currentDate <= TODAY; 
                 
                 dates.push({ 
                     formatted: formatDate(currentDate), 
@@ -458,12 +590,9 @@
             
             if (type === 'general') {
                 title.textContent = `Novedad General - ${date}`;
-                const notes = attendanceData[selectedCourseId]?.[date]?.generalNotes || [];
-                // Solo muestra la última nota para edición simple, o vacío
                 input.value = ''; 
             } else {
                 title.textContent = `Novedad: ${student}`;
-                // No pre-load text to allow adding multiple distinct notes over time
                 input.value = ''; 
             }
             input.focus();
@@ -506,33 +635,27 @@
             closeNoteModal();
             showToast('Nota guardada correctamente', 'success');
             
-            // Re-render to show updated notes
-            const select = document.querySelector('#attendance-section select');
-            if (select) renderAttendanceContent(select.value); // Helper function needed or reuse logic
-            // For simplicity, just refresh the specific list view if we refactor renderAttendanceSection slightly
-            // But since renderAttendanceSection is monolithic, we'll re-call renderList logic inside it via event or simple refresh
-            // Ideally refactor renderAttendanceSection to separate list rendering.
-            // For now, let's just trigger a click on the currently selected option in select box to refresh the table part
              const event = new Event('change');
              document.querySelector('#attendance-section select').dispatchEvent(event);
         }
 
         function renderAttendanceSection() {
-            const container = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 border-t-4 border-green-500 fade-in');
+            const container = createElement('section', 'bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border-t-4 border-green-500 fade-in');
             container.id = 'attendance-section';
             const config = courses[selectedCourseId];
             const dates = getAttendanceDates();
+            const allStudents = getMergedStudents(selectedCourseId);
             
-            const headerDiv = createElement('div', 'flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4');
+            const headerDiv = createElement('div', 'flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b dark:border-gray-700 pb-4');
             const titleDiv = createElement('div');
             
-            titleDiv.innerHTML = `<h2 class="text-2xl font-bold text-gray-800 flex items-center mb-1"><span data-lucide="ClipboardList" class="mr-2 text-green-600"></span>${config.name}</h2><p class="text-gray-500 font-medium">Horario: ${config.scheduleTime}</p>`;
+            titleDiv.innerHTML = `<h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center mb-1"><span data-lucide="ClipboardList" class="mr-2 text-green-600 dark:text-green-400"></span>${config.name}</h2><p class="text-gray-500 dark:text-gray-400 font-medium">Horario: ${config.scheduleTime}</p>`;
             
             const courseSwitchDiv = createElement('div', 'flex gap-2 mt-2 mb-2');
-            const btn1 = createElement('button', `px-4 py-2 rounded-lg text-sm font-bold transition-colors ${selectedCourseId === 'MUS4000' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`);
+            const btn1 = createElement('button', `px-4 py-2 rounded-lg text-sm font-bold transition-colors ${selectedCourseId === 'MUS4000' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'}`);
             btn1.textContent = 'Conceptos I';
             btn1.onclick = () => { selectedCourseId = 'MUS4000'; switchView('attendance'); };
-            const btn2 = createElement('button', `px-4 py-2 rounded-lg text-sm font-bold transition-colors ${selectedCourseId === 'MUS4005' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`);
+            const btn2 = createElement('button', `px-4 py-2 rounded-lg text-sm font-bold transition-colors ${selectedCourseId === 'MUS4005' ? 'bg-purple-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'}`);
             btn2.textContent = 'Conceptos II';
             btn2.onclick = () => { selectedCourseId = 'MUS4005'; switchView('attendance'); };
             courseSwitchDiv.appendChild(btn1); courseSwitchDiv.appendChild(btn2);
@@ -540,15 +663,15 @@
             headerDiv.appendChild(titleDiv);
             
             const actionsDiv = createElement('div', 'flex flex-col gap-2');
-            const backBtn = createElement('button', 'px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center justify-center transition-colors');
+            const backBtn = createElement('button', 'px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center transition-colors');
             backBtn.innerHTML = `<span data-lucide="ArrowLeft" class="mr-2 w-4 h-4"></span> Volver`;
             backBtn.onclick = () => switchView('schedule');
             
-            const exportCsvBtn = createElement('button', 'px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 flex items-center justify-center transition-colors');
+            const exportCsvBtn = createElement('button', 'px-4 py-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 rounded-lg hover:bg-green-200 dark:hover:bg-green-800 flex items-center justify-center transition-colors');
             exportCsvBtn.innerHTML = `<span data-lucide="Sheet" class="mr-2 w-4 h-4"></span> Exportar Excel`;
             exportCsvBtn.onclick = exportToCSV;
 
-            const dataBtn = createElement('button', 'px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 flex items-center justify-center transition-colors');
+            const dataBtn = createElement('button', 'px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 flex items-center justify-center transition-colors');
             dataBtn.innerHTML = `<span data-lucide="Database" class="mr-2 w-4 h-4"></span> Copia Seguridad`;
             dataBtn.onclick = () => {
                 if(confirm("¿Qué desea hacer?\n\nAceptar: Descargar Copia de Seguridad\nCancelar: Restaurar Copia de Seguridad")) {
@@ -557,6 +680,12 @@
                     triggerImport();
                 }
             };
+            
+            // Add Student Button
+            const addStudentBtn = createElement('button', 'px-4 py-2 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-800 flex items-center justify-center transition-colors');
+            addStudentBtn.innerHTML = `<span data-lucide="UserPlus" class="mr-2 w-4 h-4"></span> Agregar Estudiante`;
+            addStudentBtn.onclick = openAddStudentModal;
+
             const fileInput = createElement('input', 'hidden');
             fileInput.type = 'file';
             fileInput.id = 'import-file';
@@ -567,13 +696,14 @@
             actionsDiv.appendChild(backBtn);
             actionsDiv.appendChild(exportCsvBtn);
             actionsDiv.appendChild(dataBtn);
+            actionsDiv.appendChild(addStudentBtn);
             headerDiv.appendChild(actionsDiv);
             
             container.appendChild(headerDiv);
 
-            const selectorContainer = createElement('div', 'mb-6 bg-green-50 p-4 rounded-xl border border-green-100');
-            const label = createElement('label', 'block text-sm font-semibold text-green-800 mb-2', 'Seleccionar Fecha de Clase:');
-            const select = createElement('select', 'w-full md:w-auto p-2 pr-10 border border-green-300 rounded-lg bg-white focus:ring-2 focus:ring-green-500 outline-none mb-4');
+            const selectorContainer = createElement('div', 'mb-6 bg-green-50 dark:bg-green-900/30 p-4 rounded-xl border border-green-100 dark:border-green-800');
+            const label = createElement('label', 'block text-sm font-semibold text-green-800 dark:text-green-300 mb-2', 'Seleccionar Fecha de Clase:');
+            const select = createElement('select', 'w-full md:w-auto p-2 pr-10 border border-green-300 dark:border-green-700 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none mb-4');
             
             let defaultDateIndex = 0;
             const now = new Date();
@@ -592,7 +722,7 @@
             });
 
             // General Notes Area
-            const generalNotesDiv = createElement('div', 'bg-white p-3 rounded-lg border border-green-200 mt-2');
+            const generalNotesDiv = createElement('div', 'bg-white dark:bg-gray-700 p-3 rounded-lg border border-green-200 dark:border-green-800 mt-2');
             generalNotesDiv.id = 'general-notes-area';
             
             selectorContainer.appendChild(label); 
@@ -610,28 +740,28 @@
                 const genNotes = attendanceData[selectedCourseId]?.[date]?.generalNotes || [];
                 generalNotesDiv.innerHTML = `
                     <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-semibold text-green-800 text-sm">Novedades del Día</h4>
-                        <button onclick="openNoteModal('general', '${date}')" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 border border-green-300 flex items-center">
+                        <h4 class="font-semibold text-green-800 dark:text-green-300 text-sm">Novedades del Día</h4>
+                        <button onclick="openNoteModal('general', '${date}')" class="text-xs bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-200 px-2 py-1 rounded hover:bg-green-200 dark:hover:bg-green-700 border border-green-300 dark:border-green-600 flex items-center">
                             <span data-lucide="PlusCircle" class="w-3 h-3 mr-1"></span> Agregar Novedad
                         </button>
                     </div>
                     ${genNotes.length > 0 ? 
-                        `<ul class="space-y-1 text-sm text-gray-600">${genNotes.map(n => `<li class="border-b border-gray-100 pb-1 last:border-0"><span class="text-xs text-gray-400">[${n.time}]</span> ${n.text}</li>`).join('')}</ul>` 
+                        `<ul class="space-y-1 text-sm text-gray-600 dark:text-gray-300">${genNotes.map(n => `<li class="border-b border-gray-100 dark:border-gray-600 pb-1 last:border-0"><span class="text-xs text-gray-400">[${n.time}]</span> ${n.text}</li>`).join('')}</ul>` 
                         : '<p class="text-xs text-gray-400 italic">No hay novedades registradas.</p>'}
                 `;
                 lucide.createIcons({ nodes: [generalNotesDiv] });
 
                 listContainer.innerHTML = '';
                 const table = createElement('table', 'w-full text-left border-collapse mobile-card-view');
-                const thead = createElement('thead', 'bg-gray-100');
-                thead.innerHTML = `<tr><th class="p-4 font-semibold text-gray-700 border-b">Estudiante</th><th class="p-4 font-semibold text-gray-700 border-b text-center">Asistencia</th><th class="p-4 font-semibold text-gray-700 border-b text-center w-32">Acumulado</th><th class="p-4 font-semibold text-gray-700 border-b text-center w-40">Estado</th></tr>`;
+                const thead = createElement('thead', 'bg-gray-100 dark:bg-gray-700');
+                thead.innerHTML = `<tr><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">Estudiante</th><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 text-center">Asistencia</th><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 text-center w-32">Acumulado</th><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 text-center w-40">Estado</th></tr>`;
                 table.appendChild(thead);
                 
-                const tbody = createElement('tbody', 'bg-white divide-y divide-gray-100');
+                const tbody = createElement('tbody', 'bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700');
                 const courseData = attendanceData[selectedCourseId] || {};
                 const dateData = courseData[date] || {};
 
-                config.students.forEach((student, idx) => {
+                allStudents.forEach((student, idx) => {
                     const status = dateData[student] ? dateData[student].status : 'present';
                     const studentNotes = dateData[student]?.notes || [];
                     
@@ -644,31 +774,31 @@
                         } 
                     });
 
-                    const tr = createElement('tr', 'hover:bg-gray-50 transition-colors');
-                    const tdName = createElement('td', 'p-4 font-medium text-gray-800');
+                    const tr = createElement('tr', 'hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors');
+                    const tdName = createElement('td', 'p-4 font-medium text-gray-800 dark:text-gray-200');
                     
                     // Name + Notes Display
                     const nameContainer = createElement('div');
                     nameContainer.innerHTML = `<div>${idx + 1}. ${student}</div>`;
                     if (studentNotes.length > 0) {
-                        const notesPreview = createElement('div', 'mt-1 text-xs text-blue-600 bg-blue-50 p-1 rounded border border-blue-100 max-w-xs');
+                        const notesPreview = createElement('div', 'mt-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 p-1 rounded border border-blue-100 dark:border-blue-800 max-w-xs');
                         notesPreview.innerHTML = studentNotes.map(n => `<div><span class="opacity-75">[${n.time}]</span> ${n.text}</div>`).join('');
                         nameContainer.appendChild(notesPreview);
                     }
                     tdName.appendChild(nameContainer);
                     
                     // Add Note Button for Student
-                    const addNoteBtn = createElement('button', 'ml-2 text-gray-400 hover:text-blue-500 transition-colors', '<span data-lucide="MessageSquarePlus" width="16" height="16"></span>');
+                    const addNoteBtn = createElement('button', 'ml-2 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors', '<span data-lucide="MessageSquarePlus" width="16" height="16"></span>');
                     addNoteBtn.title = "Agregar novedad al estudiante";
                     addNoteBtn.onclick = (e) => { e.stopPropagation(); openNoteModal('student', date, student); };
-                    tdName.firstElementChild.appendChild(addNoteBtn); // Add next to name text
+                    tdName.firstElementChild.appendChild(addNoteBtn); 
                     
                     tr.appendChild(tdName);
                     
                     const tdControls = createElement('td', 'p-4 flex justify-center gap-2');
                     
                     const createRadio = (val, labelText, colorClass, borderClass) => {
-                        const label = createElement('label', `flex items-center justify-center cursor-pointer p-2 rounded border ${borderClass} hover:bg-gray-50 transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`);
+                        const label = createElement('label', `flex items-center justify-center cursor-pointer p-2 rounded border ${borderClass} hover:bg-gray-50 dark:hover:bg-gray-600 transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`);
                         const radio = createElement('input', `w-4 h-4 ${colorClass}`);
                         radio.type = 'radio';
                         radio.name = `att-${idx}`;
@@ -680,7 +810,7 @@
                             if (!attendanceData[selectedCourseId]) attendanceData[selectedCourseId] = {};
                             if (!attendanceData[selectedCourseId][date]) attendanceData[selectedCourseId][date] = {};
                             
-                            // Preserve existing notes if any when updating status
+                            // Preserve existing notes
                             const existingNotes = attendanceData[selectedCourseId][date][student]?.notes;
                             attendanceData[selectedCourseId][date][student] = { status: val };
                             if (existingNotes) attendanceData[selectedCourseId][date][student].notes = existingNotes;
@@ -707,15 +837,14 @@
                         return label;
                     };
 
-                    tdControls.appendChild(createRadio('present', 'Presente', 'text-green-600', 'border-green-200 text-green-700'));
-                    tdControls.appendChild(createRadio('tardy', 'Tarde (1h)', 'text-yellow-600', 'border-yellow-200 text-yellow-700'));
-                    tdControls.appendChild(createRadio('absent', 'Falta (2h)', 'text-red-600', 'border-red-200 text-red-700'));
-                    // Excusa ahora suma horas (comportamiento similar a Falta en calculo, pero visualmente azul)
-                    tdControls.appendChild(createRadio('excused', 'Excusa (2h)', 'text-blue-600', 'border-blue-200 text-blue-700'));
+                    tdControls.appendChild(createRadio('present', 'Presente', 'text-green-600', 'border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'));
+                    tdControls.appendChild(createRadio('tardy', 'Tarde (1h)', 'text-yellow-600', 'border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400'));
+                    tdControls.appendChild(createRadio('absent', 'Falta (2h)', 'text-red-600', 'border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'));
+                    tdControls.appendChild(createRadio('excused', 'Excusa (2h)', 'text-blue-600', 'border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400'));
                     
                     tr.appendChild(tdControls);
 
-                    const tdTotal = createElement('td', 'p-4 text-center font-bold text-gray-700');
+                    const tdTotal = createElement('td', 'p-4 text-center font-bold text-gray-700 dark:text-gray-300');
                     tdTotal.textContent = `${totalAbsence} hrs`;
                     tr.appendChild(tdTotal);
 
@@ -727,23 +856,25 @@
                 });
                 table.appendChild(tbody);
                 listContainer.appendChild(table);
-                lucide.createIcons({ nodes: [listContainer, selectorContainer] }); // Refresh icons
+                lucide.createIcons({ nodes: [listContainer, selectorContainer] }); 
             };
 
             const updateStatusCell = (cell, total) => {
-                if (total < 6) { cell.textContent = "Normal"; cell.className = 'p-4 text-center font-bold text-green-600 bg-green-50 rounded-lg m-2'; }
-                else if (total >= 6 && total < 8) { cell.textContent = "Alerta"; cell.className = 'p-4 text-center font-bold text-orange-600 bg-orange-50 rounded-lg m-2'; }
-                else if (total === 8) { cell.textContent = "Límite"; cell.className = 'p-4 text-center font-bold text-red-600 bg-red-50 rounded-lg m-2'; }
-                else { cell.textContent = "PERDIDA"; cell.className = 'p-4 text-center font-bold text-white bg-red-600 rounded-lg m-2'; }
+                if (total < 6) { cell.textContent = "Normal"; cell.className = 'p-4 text-center font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 rounded-lg m-2'; }
+                else if (total >= 6 && total < 8) { cell.textContent = "Alerta"; cell.className = 'p-4 text-center font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 rounded-lg m-2'; }
+                else if (total === 8) { cell.textContent = "Límite"; cell.className = 'p-4 text-center font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg m-2'; }
+                else { cell.textContent = "PERDIDA"; cell.className = 'p-4 text-center font-bold text-white bg-red-600 dark:bg-red-800 rounded-lg m-2'; }
             };
 
             select.onchange = (e) => renderList(e.target.value);
             container.appendChild(listContainer);
             renderList(select.value);
             
-            // Listeners para modal de notas
+            // Listeners para modales
             document.getElementById('note-save').onclick = saveNote;
             document.getElementById('note-cancel').onclick = closeNoteModal;
+            document.getElementById('add-student-save').onclick = addStudent;
+            document.getElementById('add-student-cancel').onclick = closeAddStudentModal;
 
             return container;
         }
@@ -759,9 +890,9 @@
         function getStateFromHash() { const hash = window.location.hash.slice(1); const params = new URLSearchParams(hash); const course = params.get('course'); const week = parseInt(params.get('week'), 10); if (course && courses[course]) { selectedCourseId = course; } else { selectedCourseId = 'MUS4000'; } const maxWeeks = courses[selectedCourseId].scheduleData.length; if (week && week >= 1 && week <= maxWeeks) { selectedWeek = week; } else { selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData); } }
         function handleHashChange() { const currentHash = window.location.hash; const params = new URLSearchParams(currentHash.slice(1)); const courseFromHash = params.get('course') || 'MUS4000'; const weekFromHash = parseInt(params.get('week'), 10); const maxWeeks = courses[courseFromHash].scheduleData.length; const validWeekFromHash = (weekFromHash && weekFromHash >= 1 && weekFromHash <= maxWeeks) ? weekFromHash : findCurrentWeek(courses[courseFromHash].scheduleData); if (selectedCourseId === courseFromHash && selectedWeek === validWeekFromHash) { return; } const previousCourseId = selectedCourseId; selectedCourseId = courseFromHash; selectedWeek = validWeekFromHash; const courseChanged = previousCourseId !== selectedCourseId; updateCourseView(selectedCourseId, false, courseChanged); }
 
-        function renderWeekDetail(weekData) { const weekDetailDiv = createElement('div', 'p-6 bg-white rounded-xl shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.005] border border-gray-100 print-no-shadow print-bg-white print-break-inside-avoid'); weekDetailDiv.setAttribute('id', `week-${weekData.week}`); const titleH3 = createElement('h3', 'text-3xl font-extrabold text-blue-800 mb-2 flex items-center print-text-black'); titleH3.appendChild(createIconPlaceholder('Calendar', 'mr-3 text-blue-600 no-print', 32)); titleH3.innerHTML += `Semana ${weekData.week}: ${weekData.title}`; weekDetailDiv.appendChild(titleH3); const dateRangeP = createElement('p', 'text-lg font-semibold text-gray-500 mb-6 ml-12 print-text-black', weekData.dateRange); weekDetailDiv.appendChild(dateRangeP); const contentDiv = createElement('div', 'space-y-6'); const objectivesDiv = createElement('div'); const objectivesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black'); objectivesH4.appendChild(createIconPlaceholder('Target', 'mr-2 text-green-500 no-print', 20)); objectivesH4.innerHTML += `Objetivos Clave`; objectivesDiv.appendChild(objectivesH4); const objectivesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black'); weekData.objectives.forEach(obj => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('CheckCircle', 'text-green-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${obj}</span>`; objectivesList.appendChild(li); }); objectivesDiv.appendChild(objectivesList); contentDiv.appendChild(objectivesDiv); const activitiesDiv = createElement('div'); const activitiesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black'); activitiesH4.appendChild(createIconPlaceholder('Activity', 'mr-2 text-purple-500 no-print', 20)); activitiesH4.innerHTML += `Actividades en Clase`; activitiesDiv.appendChild(activitiesH4); const activitiesList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black'); weekData.activities.forEach(act => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('Lightbulb', 'text-purple-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${act}</span>`; activitiesList.appendChild(li); }); activitiesDiv.appendChild(activitiesList); contentDiv.appendChild(activitiesDiv); const independentWorkDiv = createElement('div'); const independentWorkH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black'); independentWorkH4.appendChild(createIconPlaceholder('ClipboardList', 'mr-2 text-orange-500 no-print', 20)); independentWorkH4.innerHTML += `Desafío Independiente`; independentWorkDiv.appendChild(independentWorkH4); const independentWorkList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black'); weekData.independentWork.forEach(work => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('BookOpen', 'text-orange-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${work}</span>`; independentWorkList.appendChild(li); }); independentWorkDiv.appendChild(independentWorkList); contentDiv.appendChild(independentWorkDiv); if (weekData.repertoire && weekData.repertoire.length > 0 && weekData.repertoire[0] !== "N/A") { const repertoireDiv = createElement('div'); const repertoireH4 = createElement('h4', 'text-xl font-semibold text-gray-700 mb-2 flex items-center print-text-black'); repertoireH4.appendChild(createIconPlaceholder('Music', 'mr-2 text-red-500 no-print', 20)); repertoireH4.innerHTML += `Repertorio Sugerido`; repertoireDiv.appendChild(repertoireH4); const repertoireList = createElement('ul', 'list-disc list-inside text-gray-600 space-y-1 print-text-black'); weekData.repertoire.forEach(rep => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('Music', 'text-red-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${rep}</span>`; repertoireList.appendChild(li); }); repertoireDiv.appendChild(repertoireList); contentDiv.appendChild(repertoireDiv); } weekDetailDiv.appendChild(contentDiv); lucide.createIcons({ nodes: [weekDetailDiv] }); return weekDetailDiv; }
+        function renderWeekDetail(weekData) { const weekDetailDiv = createElement('div', 'p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.005] border border-gray-100 dark:border-gray-700 print-no-shadow print-bg-white print-break-inside-avoid'); weekDetailDiv.setAttribute('id', `week-${weekData.week}`); const titleH3 = createElement('h3', 'text-3xl font-extrabold text-blue-800 dark:text-blue-300 mb-2 flex items-center print-text-black'); titleH3.appendChild(createIconPlaceholder('Calendar', 'mr-3 text-blue-600 dark:text-blue-400 no-print', 32)); titleH3.innerHTML += `Semana ${weekData.week}: ${weekData.title}`; weekDetailDiv.appendChild(titleH3); const dateRangeP = createElement('p', 'text-lg font-semibold text-gray-500 dark:text-gray-400 mb-6 ml-12 print-text-black', weekData.dateRange); weekDetailDiv.appendChild(dateRangeP); const contentDiv = createElement('div', 'space-y-6'); const objectivesDiv = createElement('div'); const objectivesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2 flex items-center print-text-black'); objectivesH4.appendChild(createIconPlaceholder('Target', 'mr-2 text-green-500 no-print', 20)); objectivesH4.innerHTML += `Objetivos Clave`; objectivesDiv.appendChild(objectivesH4); const objectivesList = createElement('ul', 'list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1 print-text-black'); weekData.objectives.forEach(obj => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('CheckCircle', 'text-green-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${obj}</span>`; objectivesList.appendChild(li); }); objectivesDiv.appendChild(objectivesList); contentDiv.appendChild(objectivesDiv); const activitiesDiv = createElement('div'); const activitiesH4 = createElement('h4', 'text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2 flex items-center print-text-black'); activitiesH4.appendChild(createIconPlaceholder('Activity', 'mr-2 text-purple-500 no-print', 20)); activitiesH4.innerHTML += `Actividades en Clase`; activitiesDiv.appendChild(activitiesH4); const activitiesList = createElement('ul', 'list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1 print-text-black'); weekData.activities.forEach(act => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('Lightbulb', 'text-purple-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${act}</span>`; activitiesList.appendChild(li); }); activitiesDiv.appendChild(activitiesList); contentDiv.appendChild(activitiesDiv); const independentWorkDiv = createElement('div'); const independentWorkH4 = createElement('h4', 'text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2 flex items-center print-text-black'); independentWorkH4.appendChild(createIconPlaceholder('ClipboardList', 'mr-2 text-orange-500 no-print', 20)); independentWorkH4.innerHTML += `Desafío Independiente`; independentWorkDiv.appendChild(independentWorkH4); const independentWorkList = createElement('ul', 'list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1 print-text-black'); weekData.independentWork.forEach(work => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('BookOpen', 'text-orange-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${work}</span>`; independentWorkList.appendChild(li); }); independentWorkDiv.appendChild(independentWorkList); contentDiv.appendChild(independentWorkDiv); if (weekData.repertoire && weekData.repertoire.length > 0 && weekData.repertoire[0] !== "N/A") { const repertoireDiv = createElement('div'); const repertoireH4 = createElement('h4', 'text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2 flex items-center print-text-black'); repertoireH4.appendChild(createIconPlaceholder('Music', 'mr-2 text-red-500 no-print', 20)); repertoireH4.innerHTML += `Repertorio Sugerido`; repertoireDiv.appendChild(repertoireH4); const repertoireList = createElement('ul', 'list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1 print-text-black'); weekData.repertoire.forEach(rep => { const li = createElement('li', 'flex items-start'); li.appendChild(createIconPlaceholder('Music', 'text-red-400 mr-2 mt-1 flex-shrink-0 no-print', 16)); li.innerHTML += `<span>${rep}</span>`; repertoireList.appendChild(li); }); repertoireDiv.appendChild(repertoireList); contentDiv.appendChild(repertoireDiv); } weekDetailDiv.appendChild(contentDiv); lucide.createIcons({ nodes: [weekDetailDiv] }); return weekDetailDiv; }
         
-        function renderImportantDatesSection() { const section = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-orange-500 print-no-shadow print-bg-white print-break-inside-avoid'); section.id = 'important-dates-section'; domElements.importantDatesSection = section; const notificationArea = createElement('div', 'mb-6 space-y-2 no-print'); let upcomingEvents = []; let eventRows = ''; let hasUpcomingEvents = false; importantDates.forEach((item) => { const eventDate = parseSpanishDate(item.date); let badge = ''; let daysDiff = null; if (eventDate) { daysDiff = daysUntil(TODAY, eventDate); if (daysDiff < 0) { badge = '<span class="ml-2 bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium no-print">Vencido</span>'; } else if (daysDiff === 0) { badge = '<span class="ml-2 bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse no-print">¡Hoy!</span>'; upcomingEvents.push({ ...item, daysDiff }); } else if (daysDiff <= 7) { badge = `<span class="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full text-xs font-medium no-print">En ${daysDiff} días</span>`; upcomingEvents.push({ ...item, daysDiff }); } } eventRows += ` <tr class="hover:bg-gray-50 print-bg-white"> <td class="p-3 text-sm text-gray-800 border-b border-gray-100 print-text-black">${item.event}</td> <td class="p-3 text-sm text-gray-800 border-b border-gray-100 print-text-black">${item.date} ${badge}</td> </tr> `; }); if (upcomingEvents.length > 0) { upcomingEvents.sort((a, b) => a.daysDiff - b.daysDiff).forEach(item => { const isToday = item.daysDiff === 0; const alertId = `alert-${item.event.replace(/\s/g, '-')}-${item.date.replace(/\s/g, '-')}`; if (dismissedAlerts.includes(alertId)) { return; } hasUpcomingEvents = true; const notifElement = createElement('div', `p-3 rounded-lg border flex items-center ${isToday ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'}`); const iconClass = isToday ? 'text-red-600' : 'text-orange-600'; notifElement.appendChild(createIconPlaceholder('CalendarCheck', `mr-3 flex-shrink-0 ${iconClass}`, 20)); const textDiv = createElement('div', 'flex-grow'); const textTitle = createElement('strong', 'text-gray-900', item.event); const textBody = createElement('p', 'text-sm text-gray-700', `Vence ${isToday ? 'hoy' : `en ${item.daysDiff} días`} (${item.date})`); textDiv.appendChild(textTitle); textDiv.appendChild(textBody); notifElement.appendChild(textDiv); const dismissButton = createElement('button', 'ml-2 p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-200 no-print'); dismissButton.setAttribute('aria-label', 'Descartar aviso'); dismissButton.appendChild(createIconPlaceholder('X', '', 16)); dismissButton.onclick = (e) => { e.stopPropagation(); notifElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease'; notifElement.style.opacity = '0'; notifElement.style.transform = 'scale(0.95)'; notifElement.style.maxHeight = '0px'; notifElement.style.paddingTop = '0px'; notifElement.style.paddingBottom = '0px'; notifElement.style.marginTop = '0px'; notifElement.style.marginBottom = '0px'; setTimeout(() => { notifElement.remove(); if (notificationArea.children.length === 1) { notificationArea.remove(); } }, 300); dismissedAlerts.push(alertId); localStorage.setItem('dismissedAlerts', JSON.stringify(dismissedAlerts)); }; notifElement.appendChild(dismissButton); notificationArea.appendChild(notifElement); }); if (hasUpcomingEvents) { const notifTitle = createElement('h3', 'text-xl font-bold text-orange-800 mb-2 flex items-center'); notifTitle.appendChild(createIconPlaceholder('AlertTriangle', 'mr-2 text-orange-600', 20)); notifTitle.innerHTML += 'Avisos Próximos'; notificationArea.prepend(notifTitle); section.appendChild(notificationArea); } } const h2 = createElement('h2', 'text-3xl font-bold text-orange-800 mb-4 flex items-center print-text-black'); h2.appendChild(createIconPlaceholder('Clock', 'mr-3 text-orange-600 no-print', 30)); h2.innerHTML += `Calendario de Fechas Importantes`; section.appendChild(h2); const tableContainer = createElement('div', 'overflow-x-auto rounded-lg shadow-md border border-gray-200 print-no-shadow'); const table = createElement('table', 'w-full text-left border-collapse'); tableContainer.appendChild(table); const thead = createElement('thead'); thead.innerHTML = ` <tr class="bg-gray-100 print-bg-white"> <th class="p-3 font-semibold text-sm text-gray-700 border-b border-gray-200 print-text-black">Evento</th> <th class="p-3 font-semibold text-sm text-gray-700 border-b border-gray-200 print-text-black">Fecha y Estado</th> </tr> `; table.appendChild(thead); const tbody = createElement('tbody', 'bg-white'); tbody.innerHTML = eventRows; table.appendChild(tbody); section.appendChild(tableContainer); lucide.createIcons({ nodes: [section] }); return section; }
+        function renderImportantDatesSection() { const section = createElement('section', 'bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-orange-500 print-no-shadow print-bg-white print-break-inside-avoid'); section.id = 'important-dates-section'; domElements.importantDatesSection = section; const notificationArea = createElement('div', 'mb-6 space-y-2 no-print'); let upcomingEvents = []; let eventRows = ''; let hasUpcomingEvents = false; importantDates.forEach((item) => { const eventDate = parseSpanishDate(item.date); let badge = ''; let daysDiff = null; if (eventDate) { daysDiff = daysUntil(TODAY, eventDate); if (daysDiff < 0) { badge = '<span class="ml-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium no-print">Vencido</span>'; } else if (daysDiff === 0) { badge = '<span class="ml-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse no-print">¡Hoy!</span>'; upcomingEvents.push({ ...item, daysDiff }); } else if (daysDiff <= 7) { badge = `<span class="ml-2 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-0.5 rounded-full text-xs font-medium no-print">En ${daysDiff} días</span>`; upcomingEvents.push({ ...item, daysDiff }); } } eventRows += ` <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 print-bg-white"> <td class="p-3 text-sm text-gray-800 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700 print-text-black">${item.event}</td> <td class="p-3 text-sm text-gray-800 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700 print-text-black">${item.date} ${badge}</td> </tr> `; }); if (upcomingEvents.length > 0) { upcomingEvents.sort((a, b) => a.daysDiff - b.daysDiff).forEach(item => { const isToday = item.daysDiff === 0; const alertId = `alert-${item.event.replace(/\s/g, '-')}-${item.date.replace(/\s/g, '-')}`; if (dismissedAlerts.includes(alertId)) { return; } hasUpcomingEvents = true; const notifElement = createElement('div', `p-3 rounded-lg border flex items-center ${isToday ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800' : 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800'}`); const iconClass = isToday ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'; notifElement.appendChild(createIconPlaceholder('CalendarCheck', `mr-3 flex-shrink-0 ${iconClass}`, 20)); const textDiv = createElement('div', 'flex-grow'); const textTitle = createElement('strong', 'text-gray-900 dark:text-gray-100', item.event); const textBody = createElement('p', 'text-sm text-gray-700 dark:text-gray-300', `Vence ${isToday ? 'hoy' : `en ${item.daysDiff} días`} (${item.date})`); textDiv.appendChild(textTitle); textDiv.appendChild(textBody); notifElement.appendChild(textDiv); const dismissButton = createElement('button', 'ml-2 p-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 no-print'); dismissButton.setAttribute('aria-label', 'Descartar aviso'); dismissButton.appendChild(createIconPlaceholder('X', '', 16)); dismissButton.onclick = (e) => { e.stopPropagation(); notifElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease'; notifElement.style.opacity = '0'; notifElement.style.transform = 'scale(0.95)'; notifElement.style.maxHeight = '0px'; notifElement.style.paddingTop = '0px'; notifElement.style.paddingBottom = '0px'; notifElement.style.marginTop = '0px'; notifElement.style.marginBottom = '0px'; setTimeout(() => { notifElement.remove(); if (notificationArea.children.length === 1) { notificationArea.remove(); } }, 300); dismissedAlerts.push(alertId); localStorage.setItem('dismissedAlerts', JSON.stringify(dismissedAlerts)); }; notifElement.appendChild(dismissButton); notificationArea.appendChild(notifElement); }); if (hasUpcomingEvents) { const notifTitle = createElement('h3', 'text-xl font-bold text-orange-800 dark:text-orange-300 mb-2 flex items-center'); notifTitle.appendChild(createIconPlaceholder('AlertTriangle', 'mr-2 text-orange-600 dark:text-orange-400', 20)); notifTitle.innerHTML += 'Avisos Próximos'; notificationArea.prepend(notifTitle); section.appendChild(notificationArea); } } const h2 = createElement('h2', 'text-3xl font-bold text-orange-800 dark:text-orange-300 mb-4 flex items-center print-text-black'); h2.appendChild(createIconPlaceholder('Clock', 'mr-3 text-orange-600 dark:text-orange-400 no-print', 30)); h2.innerHTML += `Calendario de Fechas Importantes`; section.appendChild(h2); const tableContainer = createElement('div', 'overflow-x-auto rounded-lg shadow-md border border-gray-200 dark:border-gray-700 print-no-shadow'); const table = createElement('table', 'w-full text-left border-collapse'); tableContainer.appendChild(table); const thead = createElement('thead'); thead.innerHTML = ` <tr class="bg-gray-100 dark:bg-gray-700 print-bg-white"> <th class="p-3 font-semibold text-sm text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 print-text-black">Evento</th> <th class="p-3 font-semibold text-sm text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 print-text-black">Fecha y Estado</th> </tr> `; table.appendChild(thead); const tbody = createElement('tbody', 'bg-white dark:bg-gray-800'); tbody.innerHTML = eventRows; table.appendChild(tbody); section.appendChild(tableContainer); lucide.createIcons({ nodes: [section] }); return section; }
 
         function renderWeekSelector(weeksToRender) { 
             if (!domElements.weekSelectorContainer) return; 
@@ -813,13 +944,13 @@
                 if (updateHashFlag) { updateHash(); } 
             } else if (updateHashFlag) { updateHash(); } 
             
-            domElements.courseTitle.innerHTML = `<span data-lucide="GraduationCap" class="mr-4 text-blue-600 no-print" width="48" height="48"></span> Cronograma: ${currentCourse.name}`; 
+            domElements.courseTitle.innerHTML = `<span data-lucide="GraduationCap" class="mr-4 text-blue-600 dark:text-blue-400 no-print" width="48" height="48"></span> Cronograma: ${currentCourse.name}`; 
             
             if (selectedCourseId === 'MUS4000') { 
                 domElements.btnMus4000.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg no-print'; 
-                domElements.btnMus4005.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 text-gray-700 hover:bg-purple-100 no-print'; 
+                domElements.btnMus4005.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-purple-100 dark:hover:bg-gray-600 no-print'; 
             } else { 
-                domElements.btnMus4000.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 text-gray-700 hover:bg-blue-100 no-print'; 
+                domElements.btnMus4000.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-gray-600 no-print'; 
                 domElements.btnMus4005.className = 'px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg no-print'; 
             } 
             
@@ -840,23 +971,23 @@
             const dateSelectorContainer = domElements.dateSelectorContainer; 
             dateSelectorContainer.innerHTML = ''; 
             const startDateDiv = createElement('div', 'flex flex-col'); 
-            const dateLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Inicio Semestre:'); 
+            const dateLabel = createElement('label', 'text-sm font-medium text-gray-700 dark:text-gray-300 mb-1', 'Inicio Semestre:'); 
             dateLabel.htmlFor = 'start-date-input'; 
-            const dateInput = createElement('input', 'p-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 w-full'); 
+            const dateInput = createElement('input', 'p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 w-full'); 
             dateInput.type = 'date'; dateInput.id = 'start-date-input'; dateInput.value = savedStartDate; 
             startDateDiv.appendChild(dateLabel); startDateDiv.appendChild(dateInput); 
             
             const recessStartDiv = createElement('div', 'flex flex-col'); 
-            const recessStartLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Inicio Receso:'); 
+            const recessStartLabel = createElement('label', 'text-sm font-medium text-gray-700 dark:text-gray-300 mb-1', 'Inicio Receso:'); 
             recessStartLabel.htmlFor = 'recess-start-date-input'; 
-            const recessStartInput = createElement('input', 'p-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 w-full'); 
+            const recessStartInput = createElement('input', 'p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 w-full'); 
             recessStartInput.type = 'date'; recessStartInput.id = 'recess-start-date-input'; recessStartInput.value = savedRecessStart; 
             recessStartDiv.appendChild(recessStartLabel); recessStartDiv.appendChild(recessStartInput); 
             
             const recessEndDiv = createElement('div', 'flex flex-col md:col-span-2'); 
-            const recessEndLabel = createElement('label', 'text-sm font-medium text-gray-700 mb-1', 'Fin Receso:'); 
+            const recessEndLabel = createElement('label', 'text-sm font-medium text-gray-700 dark:text-gray-300 mb-1', 'Fin Receso:'); 
             recessEndLabel.htmlFor = 'recess-end-date-input'; 
-            const recessEndInput = createElement('input', 'p-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 w-full'); 
+            const recessEndInput = createElement('input', 'p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 w-full'); 
             recessEndInput.type = 'date'; recessEndInput.id = 'recess-end-date-input'; recessEndInput.value = savedRecessEnd; 
             recessEndDiv.appendChild(recessEndLabel); recessEndDiv.appendChild(recessEndInput); 
             
@@ -919,6 +1050,10 @@
                 if (noteOverlay && !noteOverlay.classList.contains('hidden')) {
                     closeNoteModal();
                 }
+                const addStudentOverlay = document.getElementById('add-student-modal-overlay');
+                if (addStudentOverlay && !addStudentOverlay.classList.contains('hidden')) {
+                    closeAddStudentModal();
+                }
             } 
         }
 
@@ -937,40 +1072,58 @@
             const savedRecessEnd = localStorage.getItem('recessEndDate') || DEFAULT_RECESS_END;
             courseStartDate = new Date(`${savedStartDate}T12:00:00Z`); recessStartDate = new Date(`${savedRecessStart}T12:00:00Z`); recessEndDate = new Date(`${savedRecessEnd}T12:00:00Z`);
             
+            // Aplicar tema inicial
+            applyTheme();
+
             preprocessScheduleData();
             domElements.appRoot.innerHTML = '';
 
-            const header = createElement('header', 'relative bg-white rounded-2xl shadow-xl p-6 mb-8 text-center border-b-4 border-blue-500 print-no-shadow print-bg-white');
-            const toolsDiv = createElement('div', 'flex gap-2 no-print justify-end mb-4 sm:absolute sm:top-6 sm:right-6 sm:mb-0');
+            const header = createElement('header', 'relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8 text-center border-b-4 border-blue-500 print-no-shadow print-bg-white');
+            const toolsDiv = createElement('div', 'flex gap-2 no-print justify-end w-full mb-2');
             
-            const authButton = createElement('button', 'p-2 rounded-full bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800 transition-all');
-            authButton.setAttribute('aria-label', 'Control de Asistencia');
-            authButton.setAttribute('title', 'Control de Asistencia (Requiere Clave)');
+            // Botón Dark Mode
+            const themeButton = createElement('button', 'p-2 rounded-full bg-yellow-100 dark:bg-gray-700 text-yellow-600 dark:text-gray-300 hover:bg-yellow-200 dark:hover:bg-gray-600 transition-all');
+            themeButton.appendChild(createIconPlaceholder(isDarkMode ? 'Sun' : 'Moon', '', 20));
+            themeButton.onclick = () => {
+                toggleDarkMode();
+                themeButton.innerHTML = ''; // Clear icon
+                themeButton.appendChild(createIconPlaceholder(isDarkMode ? 'Sun' : 'Moon', '', 20));
+                lucide.createIcons({ nodes: [themeButton] });
+            };
+            attachTooltip(themeButton, 'Tema');
+            toolsDiv.appendChild(themeButton);
+
+            const authButton = createElement('button', 'p-2 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800 transition-all');
             authButton.appendChild(createIconPlaceholder('ClipboardList', '', 20));
             authButton.onclick = checkAuth;
+            attachTooltip(authButton, 'Lista');
             toolsDiv.appendChild(authButton);
 
-            const settingsButton = createElement('button', 'p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-blue-100 transition-all');
-            settingsButton.setAttribute('aria-label', 'Configurar semestre');
+            const settingsButton = createElement('button', 'p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-gray-600 transition-all');
             settingsButton.appendChild(createIconPlaceholder('Settings', '', 20));
             settingsButton.onclick = openSettingsModal;
+            attachTooltip(settingsButton, 'Herramienta');
             toolsDiv.appendChild(settingsButton);
-            const printButton = createElement('button', 'p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-blue-100 transition-all');
-            printButton.setAttribute('aria-label', 'Imprimir cronograma');
+            
+            const printButton = createElement('button', 'p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-gray-600 transition-all');
             printButton.appendChild(createIconPlaceholder('Printer', '', 20));
             printButton.onclick = () => window.print();
+            attachTooltip(printButton, 'Impresión');
             toolsDiv.appendChild(printButton);
+            
             header.appendChild(toolsDiv);
-            const h1 = createElement('h1', 'text-4xl sm:text-5xl font-extrabold text-blue-900 mb-2 flex items-center justify-center print-text-black');
+            
+            // ... (Resto del código de initApp se mantiene igual)
+            const h1 = createElement('h1', 'text-4xl sm:text-5xl font-extrabold text-blue-900 dark:text-blue-300 mb-2 flex items-center justify-center print-text-black');
             h1.id = 'course-title'; 
             header.appendChild(h1);
             domElements.courseTitle = h1; 
-            const profInfo = createElement('p', 'text-lg text-gray-600 print-text-black', 'Profesor: Juan Miguel Ríos Redondo | Email: mrjuan@uninorte.edu.co');
+            const profInfo = createElement('p', 'text-lg text-gray-600 dark:text-gray-400 print-text-black', 'Profesor: Juan Miguel Ríos Redondo | Email: mrjuan@uninorte.edu.co');
             header.appendChild(profInfo);
-            const headerInfoDiv = createElement('div', 'mt-4 flex flex-wrap justify-center gap-4 text-gray-700 text-sm no-print');
-            headerInfoDiv.innerHTML = `<span class="flex items-center"><span data-lucide="Users" width="16" height="16" class="mr-1 text-gray-500"></span> Créditos: 2</span><span class="flex items-center"><span data-lucide="Calendar" width="16" height="16" class="mr-1 text-gray-500"></span> Horas Semanales: 2h Teóricas / 2h Prácticas</span><span class="flex items-center"><span data-lucide="Home" width="16" height="16" class="mr-1 text-gray-500"></span> Modalidad: Presencial</span>`;
+            const headerInfoDiv = createElement('div', 'mt-4 flex flex-wrap justify-center gap-4 text-gray-700 dark:text-gray-300 text-sm no-print');
+            headerInfoDiv.innerHTML = `<span class="flex items-center"><span data-lucide="Users" width="16" height="16" class="mr-1 text-gray-500 dark:text-gray-400"></span> Créditos: 2</span><span class="flex items-center"><span data-lucide="Calendar" width="16" height="16" class="mr-1 text-gray-500 dark:text-gray-400"></span> Horas Semanales: 2h Teóricas / 2h Prácticas</span><span class="flex items-center"><span data-lucide="Home" width="16" height="16" class="mr-1 text-gray-500 dark:text-gray-400"></span> Modalidad: Presencial</span>`;
             header.appendChild(headerInfoDiv);
-            const courseSelectorDiv = createElement('div', 'mt-6 pt-6 border-t border-gray-200 flex flex-wrap justify-center gap-4 no-print');
+            const courseSelectorDiv = createElement('div', 'mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-center gap-4 no-print');
             const btnMus4000 = createElement('button', `px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center`);
             btnMus4000.appendChild(createIconPlaceholder('SwatchBook', 'mr-2', 20));
             btnMus4000.innerHTML += `Conceptos I`;
@@ -986,43 +1139,43 @@
             header.appendChild(courseSelectorDiv);
             domElements.appRoot.appendChild(header);
 
-            const descriptionSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-purple-500 print-no-shadow print-bg-white print-break-inside-avoid');
+            const descriptionSection = createElement('section', 'bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8 border-l-4 border-purple-500 print-no-shadow print-bg-white print-break-inside-avoid');
             descriptionSection.id = 'course-description-section';
-            const descH2 = createElement('h2', 'text-3xl font-bold text-purple-800 mb-4 flex items-center print-text-black');
-            descH2.appendChild(createIconPlaceholder('BookOpen', 'mr-3 text-purple-600 no-print', 30));
+            const descH2 = createElement('h2', 'text-3xl font-bold text-purple-800 dark:text-purple-300 mb-4 flex items-center print-text-black');
+            descH2.appendChild(createIconPlaceholder('BookOpen', 'mr-3 text-purple-600 dark:text-purple-400 no-print', 30));
             descH2.innerHTML += 'Descripción General del Curso';
             descriptionSection.appendChild(descH2);
-            const descP = createElement('p', 'text-gray-700 leading-relaxed mb-6 print-text-black');
+            const descP = createElement('p', 'text-gray-700 dark:text-gray-300 leading-relaxed mb-6 print-text-black');
             descP.id = 'course-description'; 
             descriptionSection.appendChild(descP);
             domElements.courseDescription = descP;
-            const objectivesH2 = createElement('h2', 'text-3xl font-bold text-green-800 mb-4 flex items-center print-text-black');
-            objectivesH2.appendChild(createIconPlaceholder('Target', 'mr-3 text-green-600 no-print', 30));
+            const objectivesH2 = createElement('h2', 'text-3xl font-bold text-green-800 dark:text-green-300 mb-4 flex items-center print-text-black');
+            objectivesH2.appendChild(createIconPlaceholder('Target', 'mr-3 text-green-600 dark:text-green-400 no-print', 30));
             objectivesH2.innerHTML += 'Objetivos del Curso';
             descriptionSection.appendChild(objectivesH2);
-            const objList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
+            const objList = createElement('ul', 'list-disc list-inside text-gray-700 dark:text-gray-300 leading-relaxed space-y-2 print-text-black');
             objList.id = 'course-objectives-list'; 
             descriptionSection.appendChild(objList);
             domElements.courseObjectivesList = objList;
             domElements.appRoot.appendChild(descriptionSection);
 
-            const raEvalSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-r-4 border-red-500 print-no-shadow print-bg-white print-break-inside-avoid');
+            const raEvalSection = createElement('section', 'bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-r-4 border-red-500 print-no-shadow print-bg-white print-break-inside-avoid');
             const raDiv = createElement('div');
-            const raH2 = createElement('h2', 'text-3xl font-bold text-red-800 mb-4 flex items-center print-text-black');
-            raH2.appendChild(createIconPlaceholder('Award', 'mr-3 text-red-600 no-print', 30));
+            const raH2 = createElement('h2', 'text-3xl font-bold text-red-800 dark:text-red-300 mb-4 flex items-center print-text-black');
+            raH2.appendChild(createIconPlaceholder('Award', 'mr-3 text-red-600 dark:text-red-400 no-print', 30));
             raH2.innerHTML += 'Resultados de Aprendizaje Clave';
             raDiv.appendChild(raH2);
-            const raList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
+            const raList = createElement('ul', 'list-disc list-inside text-gray-700 dark:text-gray-300 leading-relaxed space-y-2 print-text-black');
             raList.id = 'learning-outcomes-list'; 
             raDiv.appendChild(raList);
             domElements.learningOutcomesList = raList; 
             const evalDiv = createElement('div');
-            const evalH2 = createElement('h2', 'text-3xl font-bold text-indigo-800 mb-4 flex items-center print-text-black');
-            evalH2.appendChild(createIconPlaceholder('ClipboardList', 'mr-3 text-indigo-600 no-print', 30));
+            const evalH2 = createElement('h2', 'text-3xl font-bold text-indigo-800 dark:text-indigo-300 mb-4 flex items-center print-text-black');
+            evalH2.appendChild(createIconPlaceholder('ClipboardList', 'mr-3 text-indigo-600 dark:text-indigo-400 no-print', 30));
             evalH2.innerHTML += 'Sistema de Evaluación';
             evalDiv.appendChild(evalH2);
-            const evalList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
-            evalList.innerHTML = ` <li><strong>Examen Parcial I:</strong> 25% (Cubre Semanas 1-5)</li> <li><strong>Examen Parcial II:</strong> 25% (Cubre Semanas 7-11)</li> <li><strong>Examen Parcial III (Final):</strong> 25% (Evaluación global del curso)</li> <li><strong>Materiales (Trabajos, Tareas, Ejercicios):</strong> 15%</li> <li><strong>Participación (Clase, Lecturas):</strong> 10%</li> <li class="font-bold mt-2"><strong>TOTAL: 100%</strong></li> <li class="text-red-600 font-semibold mt-4 flex items-start no-print"> <span data-lucide="CheckCircle" width="16" height="16" class="text-red-500 mr-2 mt-1 flex-shrink-0"></span> <strong>Importante:</strong> La inasistencia a más del 25% de las clases (más de 8 horas o 4 faltas) resultará en la pérdida del derecho a presentar el examen parcial final. </li> `;
+            const evalList = createElement('ul', 'list-disc list-inside text-gray-700 dark:text-gray-300 leading-relaxed space-y-2 print-text-black');
+            evalList.innerHTML = ` <li><strong>Examen Parcial I:</strong> 25% (Cubre Semanas 1-5)</li> <li><strong>Examen Parcial II:</strong> 25% (Cubre Semanas 7-11)</li> <li><strong>Examen Parcial III (Final):</strong> 25% (Evaluación global del curso)</li> <li><strong>Materiales (Trabajos, Tareas, Ejercicios):</strong> 15%</li> <li><strong>Participación (Clase, Lecturas):</strong> 10%</li> <li class="font-bold mt-2"><strong>TOTAL: 100%</strong></li> <li class="text-red-600 dark:text-red-400 font-semibold mt-4 flex items-start no-print"> <span data-lucide="CheckCircle" width="16" height="16" class="text-red-500 dark:text-red-400 mr-2 mt-1 flex-shrink-0"></span> <strong>Importante:</strong> La inasistencia a más del 25% de las clases (más de 8 horas o 4 faltas) resultará en la pérdida del derecho a presentar el examen parcial final. </li> `;
             evalDiv.appendChild(evalList);
             raEvalSection.appendChild(raDiv);
             raEvalSection.appendChild(evalDiv);
@@ -1031,10 +1184,10 @@
             const importantDatesElem = renderImportantDatesSection(); 
             domElements.appRoot.appendChild(importantDatesElem);
 
-            const scheduleSection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500 print-no-shadow print-bg-white');
+            const scheduleSection = createElement('section', 'bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border-t-4 border-blue-500 print-no-shadow print-bg-white');
             scheduleSection.id = 'schedule-section'; 
-            const scheduleH2 = createElement('h2', 'text-3xl font-bold text-blue-800 mb-6 text-center flex items-center justify-center print-text-black');
-            scheduleH2.appendChild(createIconPlaceholder('Calendar', 'mr-3 text-blue-600 no-print', 30));
+            const scheduleH2 = createElement('h2', 'text-3xl font-bold text-blue-800 dark:text-blue-300 mb-6 text-center flex items-center justify-center print-text-black');
+            scheduleH2.appendChild(createIconPlaceholder('Calendar', 'mr-3 text-blue-600 dark:text-blue-400 no-print', 30));
             scheduleH2.innerHTML += 'Cronograma Semanal';
             scheduleSection.appendChild(scheduleH2);
             const navControlsDiv = createElement('div', 'flex justify-between items-center mb-4 space-x-4 no-print');
@@ -1046,7 +1199,7 @@
             prevButton.onclick = () => updateWeekView(selectedWeek - 1, true);
             navControlsDiv.appendChild(prevButton);
             domElements.prevButton = prevButton; 
-            const weekNavLabel = createElement('span', 'text-2xl font-semibold text-blue-800 text-center');
+            const weekNavLabel = createElement('span', 'text-2xl font-semibold text-blue-800 dark:text-blue-300 text-center');
             weekNavLabel.id = 'week-nav-label'; 
             navControlsDiv.appendChild(weekNavLabel);
             domElements.weekNavLabel = weekNavLabel; 
@@ -1057,10 +1210,10 @@
             navControlsDiv.appendChild(nextButton);
             domElements.nextButton = nextButton; 
             scheduleSection.appendChild(navControlsDiv);
-            const weekSelectorLabel = createElement('label', 'block text-sm font-medium text-gray-700 mb-1 no-print', 'Saltar a la semana:');
+            const weekSelectorLabel = createElement('label', 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 no-print', 'Saltar a la semana:');
             weekSelectorLabel.htmlFor = 'week-selector-dropdown';
             scheduleSection.appendChild(weekSelectorLabel);
-            const weekSelector = createElement('select', 'w-full p-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-8 no-print');
+            const weekSelector = createElement('select', 'w-full p-3 rounded-lg bg-gray-50 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white dark:bg-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-8 no-print');
             weekSelector.id = 'week-selector-dropdown';
             weekSelector.onchange = (e) => updateWeekView(parseInt(e.target.value), true);
             scheduleSection.appendChild(weekSelector);
@@ -1071,19 +1224,20 @@
             domElements.weekDetailContainer = weekDetailContainer; 
             domElements.appRoot.appendChild(scheduleSection);
 
-            const bibliographySection = createElement('section', 'bg-white rounded-2xl shadow-xl p-6 mt-8 border-b-4 border-green-500 print-no-shadow print-bg-white print-break-inside-avoid');
-            const biblioH2 = createElement('h2', 'text-3xl font-bold text-green-800 mb-4 flex items-center print-text-black');
-            biblioH2.appendChild(createIconPlaceholder('BookOpen', 'mr-3 text-green-600 no-print', 30));
+            const bibliographySection = createElement('section', 'bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mt-8 border-b-4 border-green-500 print-no-shadow print-bg-white print-break-inside-avoid');
+            const biblioH2 = createElement('h2', 'text-3xl font-bold text-green-800 dark:text-green-300 mb-4 flex items-center print-text-black');
+            biblioH2.appendChild(createIconPlaceholder('BookOpen', 'mr-3 text-green-600 dark:text-green-400 no-print', 30));
             biblioH2.innerHTML += 'Bibliografía Recomendada';
             bibliographySection.appendChild(biblioH2);
-            const biblioList = createElement('ul', 'list-disc list-inside text-gray-700 leading-relaxed space-y-2 print-text-black');
+            const biblioList = createElement('ul', 'list-disc list-inside text-gray-700 dark:text-gray-300 leading-relaxed space-y-2 print-text-black');
             biblioList.id = 'bibliography-list'; 
             bibliographySection.appendChild(biblioList);
             domElements.bibliographyList = biblioList; 
             domElements.appRoot.appendChild(bibliographySection);
 
-            const footer = createElement('footer', 'text-center text-gray-500 text-sm py-4 print-text-black no-print');
-            footer.innerHTML = '<p>© 2025 Juan Miguel Ríos Redondo. Todos los derechos reservados.</p>';
+            const footer = createElement('footer', 'text-center text-gray-500 dark:text-gray-400 text-sm py-4 print-text-black no-print');
+            const currentYear = new Date().getFullYear(); // Dynamic year
+            footer.innerHTML = `<p>© ${currentYear} Juan Miguel Ríos Redondo. Todos los derechos reservados.</p>`;
             domElements.appRoot.appendChild(footer);
 
             buildModalContent(savedStartDate, savedRecessStart, savedRecessEnd);
