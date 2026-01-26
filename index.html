@@ -203,7 +203,6 @@
         </div>
     </div>
 
-
     <button id="scroll-to-top" class="hidden no-print fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 opacity-0 transform translate-y-2 z-30"><span data-lucide="ArrowUp" width="24" height="24"></span></button>
 
     <div id="toast-container" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[80] transition-all duration-300 opacity-0 translate-y-10 pointer-events-none">
@@ -357,6 +356,7 @@
         }
 
         function getMergedStudents(courseId) {
+            // Updated to use studentsI and studentsII
             const base = courseId === 'MUS4000' ? studentsI : studentsII;
             const custom = customStudents[courseId] || [];
             return [...base, ...custom].sort();
@@ -418,26 +418,35 @@
         function parseSpanishDate(dateString) { try { let cleanStr = dateString.toLowerCase().replace('del ', ''); const parts = cleanStr.split(' '); let day, monthName, year; const startYear = courseStartDate ? courseStartDate.getUTCFullYear() : new Date().getUTCFullYear(); if (parts.length === 4 && parts[1] === 'de') { day = parseInt(parts[0]); monthName = parts[2]; year = parseInt(parts[3]); } else if (parts.length === 3 && parts[1] === 'de') { day = parseInt(parts[0]); monthName = parts[2]; year = startYear; } else if (parts.length === 5 && parts[1] === 'al') { day = parseInt(parts[0]); monthName = parts[4]; year = startYear; } else { return null; } const month = spanishMonths[monthName]; if (month === undefined) return null; return new Date(Date.UTC(year, month, day, 12)); } catch (e) { console.error("Error parseando fecha:", dateString, e); return null; } }
         function daysUntil(date1, date2) { const msPerDay = 1000 * 60 * 60 * 24; const utc1 = Date.UTC(date1.getUTCFullYear(), date1.getUTCMonth(), date1.getUTCDate()); const utc2 = Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth(), date2.getUTCDate()); return Math.floor((utc2 - utc1) / msPerDay); }
         
+        // --- UPDATED PREPROCESS FUNCTION ---
         function preprocessScheduleData() {
             Object.values(courses).forEach(course => {
                 if (course.scheduleData) {
                     let currentDate = new Date(courseStartDate.valueOf());
+                    
+                    // Align to first Wednesday
+                    const targetDay = 3; // Wednesday
+                    const currentDay = currentDate.getDay();
+                    const daysToAdd = (targetDay - currentDay + 7) % 7;
+                    currentDate.setDate(currentDate.getDate() + daysToAdd);
+
                     for (const week of course.scheduleData) {
                         while (currentDate.getTime() >= recessStartDate.getTime() && currentDate.getTime() <= recessEndDate.getTime()) {
                             currentDate = addDays(currentDate, 7);
                         }
                         const weekStart = new Date(currentDate.valueOf());
-                        const weekEnd = addDays(weekStart, 4);
+                        // weekEnd isn't strictly necessary for single-day classes, but keeping for range display if needed
+                        const weekEnd = addDays(weekStart, 0); // Same day for Wednesday class
                         week.startDate = weekStart;
                         week.endDate = weekEnd;
-                        week.dateRange = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+                        week.dateRange = `${formatDate(weekStart)}`;
                         currentDate = addDays(currentDate, 7);
                     }
                 }
             });
         }
 
-        function findCurrentWeek(scheduleData) { const today = TODAY; for (const week of scheduleData) { if (today >= week.startDate && today <= addDays(week.endDate, 2)) { return week.week; } } return 1; }
+        function findCurrentWeek(scheduleData) { const today = TODAY; for (const week of scheduleData) { if (today >= week.startDate && today <= addDays(week.endDate, 6)) { return week.week; } } return 1; }
 
         function createElement(tagName, classes = '', innerHTML = '') { const element = document.createElement(tagName); if (classes) { element.className = classes; } if (innerHTML) { element.innerHTML = innerHTML; } return element; }
         function createIconPlaceholder(iconName, classes = '', size = 24) { const iconSpan = createElement('span', classes); iconSpan.setAttribute('data-lucide', iconName); iconSpan.setAttribute('width', size); iconSpan.setAttribute('height', size); return iconSpan; }
@@ -574,6 +583,13 @@
         function getAttendanceDates() {
             let dates = [];
             let currentDate = new Date(courseStartDate.valueOf());
+            
+            // Align to first Wednesday
+            const targetDay = 3; // Wednesday
+            const currentDay = currentDate.getDay();
+            const daysToAdd = (targetDay - currentDay + 7) % 7;
+            currentDate.setDate(currentDate.getDate() + daysToAdd);
+
             for (let i = 0; i < 16; i++) {
                 while (currentDate.getTime() >= recessStartDate.getTime() && currentDate.getTime() <= recessEndDate.getTime()) {
                     currentDate = addDays(currentDate, 7);
@@ -810,6 +826,7 @@
                 }
             };
             
+            // Add Student Button
             const addStudentBtn = createElement('button', 'px-4 py-2 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-800 flex items-center justify-center transition-colors');
             addStudentBtn.innerHTML = `<span data-lucide="UserPlus" class="mr-2 w-4 h-4"></span> Agregar Estudiante`;
             addStudentBtn.onclick = openAddStudentModal;
@@ -953,6 +970,7 @@
                             if (!attendanceData[selectedCourseId]) attendanceData[selectedCourseId] = {};
                             if (!attendanceData[selectedCourseId][date]) attendanceData[selectedCourseId][date] = {};
                             
+                            // Preserve existing notes
                             const existingNotes = attendanceData[selectedCourseId][date][student]?.notes;
                             attendanceData[selectedCourseId][date][student] = { status: val };
                             if (existingNotes) attendanceData[selectedCourseId][date][student].notes = existingNotes;
@@ -964,7 +982,7 @@
                                 if(d[student]) { 
                                     if(d[student].status === 'absent') newTotal += 2; 
                                     if(d[student].status === 'tardy') newTotal += 1;
-                                    if(d[student].status === 'excused') newTotal += 2; 
+                                    if(d[student].status === 'excused') newTotal += 2; // Excusa SUMA
                                 } 
                             });
                             
@@ -1012,12 +1030,11 @@
             container.appendChild(listContainer);
             renderList(select.value);
             
-            // Listeners
+            // Listeners para modales
             document.getElementById('note-save').onclick = saveNote;
             document.getElementById('note-cancel').onclick = closeNoteModal;
             document.getElementById('add-student-save').onclick = addStudent;
             document.getElementById('add-student-cancel').onclick = closeAddStudentModal;
-            document.getElementById('all-notes-close').onclick = closeAllNotesModal;
 
             return container;
         }
