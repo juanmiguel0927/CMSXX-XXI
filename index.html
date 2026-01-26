@@ -185,6 +185,25 @@
         </div>
     </div>
 
+    <!-- Modal Consolidado de Novedades -->
+    <div id="all-notes-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden no-print backdrop-blur-sm"></div>
+    <div id="all-notes-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-2xl shadow-xl z-[90] w-full max-w-2xl hidden no-print h-[80vh] flex flex-col">
+        <div class="p-6 flex-grow flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white flex items-center">
+                    <span data-lucide="Book" class="mr-2 text-purple-600"></span> Registro de Novedades
+                </h3>
+                <button id="all-notes-close" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <span data-lucide="X"></span>
+                </button>
+            </div>
+            <div id="all-notes-list" class="flex-grow overflow-y-auto space-y-4 custom-scrollbar pr-2">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+
     <button id="scroll-to-top" class="hidden no-print fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 opacity-0 transform translate-y-2 z-30"><span data-lucide="ArrowUp" width="24" height="24"></span></button>
 
     <div id="toast-container" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[80] transition-all duration-300 opacity-0 translate-y-10 pointer-events-none">
@@ -338,7 +357,6 @@
         }
 
         function getMergedStudents(courseId) {
-            // Updated to use studentsI and studentsII
             const base = courseId === 'MUS4000' ? studentsI : studentsII;
             const custom = customStudents[courseId] || [];
             return [...base, ...custom].sort();
@@ -400,7 +418,6 @@
         function parseSpanishDate(dateString) { try { let cleanStr = dateString.toLowerCase().replace('del ', ''); const parts = cleanStr.split(' '); let day, monthName, year; const startYear = courseStartDate ? courseStartDate.getUTCFullYear() : new Date().getUTCFullYear(); if (parts.length === 4 && parts[1] === 'de') { day = parseInt(parts[0]); monthName = parts[2]; year = parseInt(parts[3]); } else if (parts.length === 3 && parts[1] === 'de') { day = parseInt(parts[0]); monthName = parts[2]; year = startYear; } else if (parts.length === 5 && parts[1] === 'al') { day = parseInt(parts[0]); monthName = parts[4]; year = startYear; } else { return null; } const month = spanishMonths[monthName]; if (month === undefined) return null; return new Date(Date.UTC(year, month, day, 12)); } catch (e) { console.error("Error parseando fecha:", dateString, e); return null; } }
         function daysUntil(date1, date2) { const msPerDay = 1000 * 60 * 60 * 24; const utc1 = Date.UTC(date1.getUTCFullYear(), date1.getUTCMonth(), date1.getUTCDate()); const utc2 = Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth(), date2.getUTCDate()); return Math.floor((utc2 - utc1) / msPerDay); }
         
-        // --- UPDATED PREPROCESS FUNCTION ---
         function preprocessScheduleData() {
             Object.values(courses).forEach(course => {
                 if (course.scheduleData) {
@@ -614,7 +631,7 @@
             if (!attendanceData[selectedCourseId][currentNoteDate]) attendanceData[selectedCourseId][currentNoteDate] = {};
 
             const timestamp = new Date().toLocaleString('es-CO');
-            const noteEntry = { text: text, time: timestamp };
+            const noteEntry = { text: text, time: timestamp, id: Date.now() }; // Added unique ID
 
             if (currentNoteType === 'general') {
                 if (!attendanceData[selectedCourseId][currentNoteDate].generalNotes) {
@@ -635,8 +652,120 @@
             closeNoteModal();
             showToast('Nota guardada correctamente', 'success');
             
+             // Refresh views
              const event = new Event('change');
-             document.querySelector('#attendance-section select').dispatchEvent(event);
+             const select = document.querySelector('#attendance-section select');
+             if(select) select.dispatchEvent(event);
+        }
+
+        function deleteNote(type, date, noteId, student = null) {
+            if (!confirm('¿Estás seguro de que quieres eliminar esta nota?')) return;
+
+            const courseData = attendanceData[selectedCourseId];
+            if (!courseData || !courseData[date]) return;
+
+            if (type === 'general') {
+                if (courseData[date].generalNotes) {
+                    courseData[date].generalNotes = courseData[date].generalNotes.filter(n => n.id !== noteId);
+                }
+            } else {
+                if (courseData[date][student] && courseData[date][student].notes) {
+                    courseData[date][student].notes = courseData[date][student].notes.filter(n => n.id !== noteId);
+                }
+            }
+            
+            localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+            showToast('Nota eliminada', 'success');
+            
+            // Refresh views
+            const select = document.querySelector('#attendance-section select');
+            if(select) {
+                const event = new Event('change');
+                select.dispatchEvent(event);
+            }
+            // If all notes modal is open, refresh it
+            const allNotesPanel = document.getElementById('all-notes-modal-panel');
+            if (!allNotesPanel.classList.contains('hidden')) {
+                openAllNotesModal();
+            }
+        }
+
+        // --- Consolidated Notes Logic ---
+        function openAllNotesModal() {
+            const overlay = document.getElementById('all-notes-modal-overlay');
+            const panel = document.getElementById('all-notes-modal-panel');
+            const list = document.getElementById('all-notes-list');
+            
+            overlay.classList.remove('hidden');
+            panel.classList.remove('hidden');
+            list.innerHTML = '';
+            
+            const config = courses[selectedCourseId];
+            const courseData = attendanceData[selectedCourseId] || {};
+            let allNotes = [];
+            
+            // Gather all notes
+            Object.keys(courseData).forEach(date => {
+                const dayData = courseData[date];
+                
+                // General Notes
+                if (dayData.generalNotes) {
+                    dayData.generalNotes.forEach(note => {
+                        allNotes.push({ ...note, date: date, type: 'General', student: null });
+                    });
+                }
+                
+                // Student Notes
+                Object.keys(dayData).forEach(key => {
+                    if (key !== 'generalNotes' && dayData[key].notes) {
+                        dayData[key].notes.forEach(note => {
+                            allNotes.push({ ...note, date: date, type: 'Estudiante', student: key });
+                        });
+                    }
+                });
+            });
+            
+            // Sort by time (newest first) - assuming time string format or use ID
+            allNotes.sort((a, b) => b.id - a.id);
+            
+            if (allNotes.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 py-8">No hay novedades registradas en este curso.</div>';
+                return;
+            }
+            
+            allNotes.forEach(note => {
+                const item = createElement('div', 'bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600 relative');
+                
+                const header = createElement('div', 'flex justify-between items-start mb-2');
+                const meta = createElement('div');
+                meta.innerHTML = `<span class="font-bold text-gray-800 dark:text-white block">${note.date}</span>`;
+                if (note.type === 'General') {
+                    meta.innerHTML += `<span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium">General</span>`;
+                } else {
+                     meta.innerHTML += `<span class="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-medium mr-1">Estudiante</span> <span class="text-sm text-gray-600 dark:text-gray-300">${note.student}</span>`;
+                }
+                
+                const delBtn = createElement('button', 'text-red-500 hover:text-red-700 p-1', '<span data-lucide="Trash2" width="16" height="16"></span>');
+                delBtn.onclick = () => deleteNote(note.type === 'General' ? 'general' : 'student', note.date, note.id, note.student);
+                
+                header.appendChild(meta);
+                header.appendChild(delBtn);
+                
+                const content = createElement('p', 'text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap', note.text);
+                const time = createElement('div', 'text-right mt-2 text-xs text-gray-400', note.time);
+                
+                item.appendChild(header);
+                item.appendChild(content);
+                item.appendChild(time);
+                list.appendChild(item);
+            });
+            
+            lucide.createIcons({ nodes: [list] });
+        }
+        
+        function closeAllNotesModal() {
+            document.getElementById('all-notes-modal-overlay').classList.add('hidden');
+            document.getElementById('all-notes-modal-panel').classList.add('hidden');
         }
 
         function renderAttendanceSection() {
@@ -681,10 +810,14 @@
                 }
             };
             
-            // Add Student Button
             const addStudentBtn = createElement('button', 'px-4 py-2 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-800 flex items-center justify-center transition-colors');
             addStudentBtn.innerHTML = `<span data-lucide="UserPlus" class="mr-2 w-4 h-4"></span> Agregar Estudiante`;
             addStudentBtn.onclick = openAddStudentModal;
+            
+            // New "View All Notes" Button
+            const allNotesBtn = createElement('button', 'px-4 py-2 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800 flex items-center justify-center transition-colors');
+            allNotesBtn.innerHTML = `<span data-lucide="Book" class="mr-2 w-4 h-4"></span> Ver Novedades`;
+            allNotesBtn.onclick = openAllNotesModal;
 
             const fileInput = createElement('input', 'hidden');
             fileInput.type = 'file';
@@ -697,6 +830,7 @@
             actionsDiv.appendChild(exportCsvBtn);
             actionsDiv.appendChild(dataBtn);
             actionsDiv.appendChild(addStudentBtn);
+            actionsDiv.appendChild(allNotesBtn);
             headerDiv.appendChild(actionsDiv);
             
             container.appendChild(headerDiv);
@@ -746,7 +880,11 @@
                         </button>
                     </div>
                     ${genNotes.length > 0 ? 
-                        `<ul class="space-y-1 text-sm text-gray-600 dark:text-gray-300">${genNotes.map(n => `<li class="border-b border-gray-100 dark:border-gray-600 pb-1 last:border-0"><span class="text-xs text-gray-400">[${n.time}]</span> ${n.text}</li>`).join('')}</ul>` 
+                        `<ul class="space-y-1 text-sm text-gray-600 dark:text-gray-300">${genNotes.map(n => `
+                            <li class="border-b border-gray-100 dark:border-gray-600 pb-1 last:border-0 flex justify-between items-start group">
+                                <span><span class="text-xs text-gray-400">[${n.time}]</span> ${n.text}</span>
+                                <button onclick="deleteNote('general', '${date}', ${n.id})" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-2"><span data-lucide="Trash2" width="12" height="12"></span></button>
+                            </li>`).join('')}</ul>` 
                         : '<p class="text-xs text-gray-400 italic">No hay novedades registradas.</p>'}
                 `;
                 lucide.createIcons({ nodes: [generalNotesDiv] });
@@ -782,7 +920,12 @@
                     nameContainer.innerHTML = `<div>${idx + 1}. ${student}</div>`;
                     if (studentNotes.length > 0) {
                         const notesPreview = createElement('div', 'mt-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 p-1 rounded border border-blue-100 dark:border-blue-800 max-w-xs');
-                        notesPreview.innerHTML = studentNotes.map(n => `<div><span class="opacity-75">[${n.time}]</span> ${n.text}</div>`).join('');
+                        const notesHtml = studentNotes.map(n => `
+                            <div class="flex justify-between group/note">
+                                <span><span class="opacity-75">[${n.time}]</span> ${n.text}</span>
+                                <button onclick="deleteNote('student', '${date}', ${n.id}, '${student}')" class="text-red-400 hover:text-red-600 opacity-0 group-hover/note:opacity-100 transition-opacity ml-1"><span data-lucide="Trash2" width="10" height="10"></span></button>
+                            </div>`).join('');
+                        notesPreview.innerHTML = notesHtml;
                         nameContainer.appendChild(notesPreview);
                     }
                     tdName.appendChild(nameContainer);
@@ -810,7 +953,6 @@
                             if (!attendanceData[selectedCourseId]) attendanceData[selectedCourseId] = {};
                             if (!attendanceData[selectedCourseId][date]) attendanceData[selectedCourseId][date] = {};
                             
-                            // Preserve existing notes
                             const existingNotes = attendanceData[selectedCourseId][date][student]?.notes;
                             attendanceData[selectedCourseId][date][student] = { status: val };
                             if (existingNotes) attendanceData[selectedCourseId][date][student].notes = existingNotes;
@@ -822,7 +964,7 @@
                                 if(d[student]) { 
                                     if(d[student].status === 'absent') newTotal += 2; 
                                     if(d[student].status === 'tardy') newTotal += 1;
-                                    if(d[student].status === 'excused') newTotal += 2; // Excusa SUMA
+                                    if(d[student].status === 'excused') newTotal += 2; 
                                 } 
                             });
                             
@@ -870,11 +1012,12 @@
             container.appendChild(listContainer);
             renderList(select.value);
             
-            // Listeners para modales
+            // Listeners
             document.getElementById('note-save').onclick = saveNote;
             document.getElementById('note-cancel').onclick = closeNoteModal;
             document.getElementById('add-student-save').onclick = addStudent;
             document.getElementById('add-student-cancel').onclick = closeAddStudentModal;
+            document.getElementById('all-notes-close').onclick = closeAllNotesModal;
 
             return container;
         }
@@ -1053,6 +1196,10 @@
                 const addStudentOverlay = document.getElementById('add-student-modal-overlay');
                 if (addStudentOverlay && !addStudentOverlay.classList.contains('hidden')) {
                     closeAddStudentModal();
+                }
+                const allNotesOverlay = document.getElementById('all-notes-modal-overlay');
+                if (allNotesOverlay && !allNotesOverlay.classList.contains('hidden')) {
+                    closeAllNotesModal();
                 }
             } 
         }
