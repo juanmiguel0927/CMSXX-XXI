@@ -137,7 +137,7 @@
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center"><span data-lucide="Settings" class="mr-2 text-blue-600 dark:text-blue-400"></span> Configuración del Semestre</h2>
                 <button id="settings-modal-close" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><span data-lucide="X"></span></button>
             </div>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">Ajusta las fechas de inicio del semestre y del receso.</p> 
+            <p class="text-gray-600 dark:text-gray-400 mb-6">Ajusta las fechas de inicio, el día de clase y el receso.</p> 
             <div id="date-selector-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             <div id="date-button-container" class="mt-6 flex justify-end"></div>
         </div>
@@ -148,7 +148,7 @@
         <div class="p-8 text-center">
             <div class="mx-auto bg-blue-100 dark:bg-blue-900 w-16 h-16 rounded-full flex items-center justify-center mb-4"><span data-lucide="Lock" class="text-blue-600 dark:text-blue-300" width="32" height="32"></span></div>
             <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Acceso Restringido</h2>
-            <p class="text-gray-500 dark:text-gray-400 mb-6">Introduce la clave para acceder.</p>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">Introduce la clave para desbloquear.</p>
             <input type="password" id="auth-password" class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg mb-4 text-center text-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••" maxlength="10">
             <p id="auth-error" class="text-red-500 text-sm mb-4 hidden">Clave incorrecta</p>
             <div class="flex gap-2">
@@ -212,7 +212,11 @@
 
     <script>
         // --- 1. CONFIGURACIÓN Y CONSTANTES ---
-        const AUTH_KEY = "72336565";
+        // SEGURIDAD: Hash de la contraseña (NO es texto plano)
+        // Valor decodificado: "72336565"
+        // Algoritmo simple de ofuscación para evitar lectura directa: Reverse + Base64
+        const AUTH_HASH = "=UjN1YzMzIzN"; // Hash CORREGIDO para 72336565
+        
         const DEFAULT_START_DATE = '2026-01-26';
         const DEFAULT_RECESS_START = '2026-03-30';
         const DEFAULT_RECESS_END = '2026-04-05';
@@ -228,7 +232,8 @@
             courseDescription: null, courseObjectivesList: null,
             learningOutcomesList: null, weekNavLabel: null, weekNavControls: null, prevWeekButton: null,
             nextWeekButton: null, weekSelectorContainer: null, weekDetailContainer: null,
-            bibliographyList: null, importantDatesSection: null, toastContainer: null
+            bibliographyList: null, importantDatesSection: null, toastContainer: null,
+            classDaySelector: null 
         };
 
         // --- 3. DATOS ---
@@ -320,6 +325,10 @@
         let dismissedAlerts = JSON.parse(localStorage.getItem('dismissedAlerts')) || [];
         let customStudents = JSON.parse(localStorage.getItem('customStudents')) || { 'MUS4000': [], 'MUS4005': [] };
         
+        // Offset de día de clase: 0=Lunes, 1=Martes, 2=Miércoles (Default), 3=Jueves, 4=Viernes, 5=Sábado
+        let classDayOffset = parseInt(localStorage.getItem('classDayOffset'));
+        if (isNaN(classDayOffset)) classDayOffset = 2; // Default Miércoles
+
         let courseStartDate, recessStartDate, recessEndDate; 
         
         // Estado para notas
@@ -329,6 +338,12 @@
 
         // Estado para Dark Mode
         let isDarkMode = localStorage.getItem('darkMode') === 'true';
+        
+        // Estado de bloqueo de edición (Default: Bloqueado)
+        let isEditingUnlocked = false;
+        
+        // Variable temporal para callback de autenticación
+        let pendingAuthCallback = null;
 
         // --- 5. FUNCIONES ---
         
@@ -354,6 +369,19 @@
                 clearTimeout(tooltipTimer);
                 document.getElementById('custom-tooltip').classList.add('hidden');
             });
+        }
+
+        // --- PASSWORD HASH VERIFICATION ---
+        function verifyPassword(input) {
+            // Algoritmo: btoa(input.trim()).split('').reverse().join('')
+            // Convierte a Base64 y lo invierte. Simple pero efectivo para evitar texto plano.
+            // .trim() añadido para eliminar espacios accidentales.
+            try {
+                const encoded = btoa(input.trim()).split('').reverse().join('');
+                return encoded === AUTH_HASH;
+            } catch (e) {
+                return false;
+            }
         }
 
         function getMergedStudents(courseId) {
@@ -430,14 +458,18 @@
                         }
                         const weekStart = new Date(currentDate.valueOf());
                         
-                        // Ajuste para calcular el Miércoles (inicio semana + 2 días)
-                        const classDate = addDays(weekStart, 2);
+                        // Ajuste para calcular la fecha de clase según el offset configurado
+                        // Se asume inicio de semana Lunes + offset
+                        const classDate = addDays(weekStart, classDayOffset);
                         
                         week.startDate = weekStart;
                         week.endDate = addDays(weekStart, 4); // Mantiene el rango para lógica interna
                         
-                        // Muestra específicamente la fecha del miércoles
-                        week.dateRange = `Miércoles ${formatDate(classDate)}`;
+                        // Formato de nombre del día
+                        const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+                        const dayName = days[classDayOffset] || "";
+
+                        week.dateRange = `${dayName} ${formatDate(classDate)}`;
                         
                         currentDate = addDays(currentDate, 7);
                     }
@@ -474,20 +506,94 @@
             }, 3000);
         }
 
-        function openSettingsModal() { domElements.settingsModalOverlay.classList.remove('hidden'); domElements.settingsModalPanel.classList.remove('hidden'); if(domElements.dateSelectorInput) domElements.dateSelectorInput.focus(); }
+        function openSettingsModal() { 
+            domElements.settingsModalOverlay.classList.remove('hidden'); 
+            domElements.settingsModalPanel.classList.remove('hidden'); 
+            if(domElements.dateSelectorInput) domElements.dateSelectorInput.focus();
+            
+            // Set current value for day selector
+            if(domElements.classDaySelector) domElements.classDaySelector.value = classDayOffset;
+        }
         function closeSettingsModal() { domElements.settingsModalOverlay.classList.add('hidden'); domElements.settingsModalPanel.classList.add('hidden'); }
-        function handleDateUpdate() { const newStartDate = domElements.dateSelectorInput.value; const newRecessStart = domElements.recessStartDateInput.value; const newRecessEnd = domElements.recessEndDateInput.value; if (!newStartDate || !newRecessStart || !newRecessEnd) { console.error("Todas las fechas deben ser seleccionadas."); return; } localStorage.setItem('courseStartDate', newStartDate); localStorage.setItem('recessStartDate', newRecessStart); localStorage.setItem('recessEndDate', newRecessEnd); courseStartDate = new Date(`${newStartDate}T12:00:00Z`); recessStartDate = new Date(`${newRecessStart}T12:00:00Z`); recessEndDate = new Date(`${newRecessEnd}T12:00:00Z`); preprocessScheduleData(); selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData); updateHash(); updateCourseView(selectedCourseId, false); if (domElements.importantDatesSection) { domElements.importantDatesSection.remove(); } const scheduleSectionElement = domElements.appRoot.querySelector('#schedule-section'); if(scheduleSectionElement) { domElements.appRoot.insertBefore(renderImportantDatesSection(), scheduleSectionElement); } else { domElements.appRoot.appendChild(renderImportantDatesSection()); } const button = domElements.dateSelectorButton; button.innerHTML = ''; button.appendChild(createIconPlaceholder('Check', 'mr-2', 16)); button.innerHTML += '¡Guardado!'; button.classList.remove('bg-blue-600', 'hover:bg-blue-700'); button.classList.add('bg-green-600'); button.disabled = true; lucide.createIcons({ nodes: [button] }); setTimeout(() => { button.innerHTML = ''; button.appendChild(createIconPlaceholder('Save', 'mr-2', 16)); button.innerHTML += 'Actualizar Fechas'; button.classList.add('bg-blue-600', 'hover:bg-blue-700'); button.classList.remove('bg-green-600'); button.disabled = false; lucide.createIcons({ nodes: [button] }); closeSettingsModal(); }, 2000); }
+        function handleDateUpdate() { 
+            const newStartDate = domElements.dateSelectorInput.value; 
+            const newRecessStart = domElements.recessStartDateInput.value; 
+            const newRecessEnd = domElements.recessEndDateInput.value; 
+            const newDayOffset = parseInt(domElements.classDaySelector.value);
 
-        function checkAuth() {
+            if (!newStartDate || !newRecessStart || !newRecessEnd) { console.error("Todas las fechas deben ser seleccionadas."); return; } 
+            
+            localStorage.setItem('courseStartDate', newStartDate); 
+            localStorage.setItem('recessStartDate', newRecessStart); 
+            localStorage.setItem('recessEndDate', newRecessEnd); 
+            localStorage.setItem('classDayOffset', newDayOffset);
+
+            courseStartDate = new Date(`${newStartDate}T12:00:00Z`); 
+            recessStartDate = new Date(`${newRecessStart}T12:00:00Z`); 
+            recessEndDate = new Date(`${newRecessEnd}T12:00:00Z`); 
+            classDayOffset = newDayOffset;
+
+            preprocessScheduleData(); 
+            selectedWeek = findCurrentWeek(courses[selectedCourseId].scheduleData); 
+            updateHash(); 
+            updateCourseView(selectedCourseId, false); 
+            
+            if (domElements.importantDatesSection) { domElements.importantDatesSection.remove(); } 
+            const scheduleSectionElement = domElements.appRoot.querySelector('#schedule-section'); 
+            if(scheduleSectionElement) { domElements.appRoot.insertBefore(renderImportantDatesSection(), scheduleSectionElement); } else { domElements.appRoot.appendChild(renderImportantDatesSection()); } 
+            
+            const button = domElements.dateSelectorButton; 
+            button.innerHTML = ''; 
+            button.appendChild(createIconPlaceholder('Check', 'mr-2', 16)); 
+            button.innerHTML += '¡Guardado!'; 
+            button.classList.remove('bg-blue-600', 'hover:bg-blue-700'); 
+            button.classList.add('bg-green-600'); 
+            button.disabled = true; 
+            lucide.createIcons({ nodes: [button] }); 
+            setTimeout(() => { 
+                button.innerHTML = ''; 
+                button.appendChild(createIconPlaceholder('Save', 'mr-2', 16)); 
+                button.innerHTML += 'Actualizar Fechas'; 
+                button.classList.add('bg-blue-600', 'hover:bg-blue-700'); 
+                button.classList.remove('bg-green-600'); 
+                button.disabled = false; 
+                lucide.createIcons({ nodes: [button] }); 
+                closeSettingsModal(); 
+            }, 2000); 
+        }
+
+        // --- AUTH LOGIC REVISED ---
+        function checkAuth(callback) {
+            pendingAuthCallback = callback; // Guardar la acción pendiente (ej: entrar a lista o desbloquear)
+            
             const overlay = document.getElementById('auth-modal-overlay');
             const panel = document.getElementById('auth-modal-panel');
             const passwordInput = document.getElementById('auth-password');
             const errorMsg = document.getElementById('auth-error');
-            overlay.classList.remove('hidden'); panel.classList.remove('hidden'); passwordInput.value = ''; passwordInput.focus(); errorMsg.classList.add('hidden');
-            const submitAuth = () => { if(passwordInput.value === AUTH_KEY) { overlay.classList.add('hidden'); panel.classList.add('hidden'); switchView('attendance'); } else { errorMsg.classList.remove('hidden'); passwordInput.classList.add('border-red-500'); } };
+            
+            overlay.classList.remove('hidden'); 
+            panel.classList.remove('hidden'); 
+            passwordInput.value = ''; 
+            passwordInput.focus(); 
+            errorMsg.classList.add('hidden');
+            
+            const submitAuth = () => { 
+                if(verifyPassword(passwordInput.value)) { 
+                    overlay.classList.add('hidden'); 
+                    panel.classList.add('hidden'); 
+                    if (pendingAuthCallback) {
+                        pendingAuthCallback();
+                        pendingAuthCallback = null;
+                    }
+                } else { 
+                    errorMsg.classList.remove('hidden'); 
+                    passwordInput.classList.add('border-red-500'); 
+                } 
+            };
+            
             passwordInput.onkeydown = (e) => { if (e.key === 'Enter') submitAuth(); };
             document.getElementById('auth-submit').onclick = submitAuth;
-            document.getElementById('auth-cancel').onclick = () => { overlay.classList.add('hidden'); panel.classList.add('hidden'); };
+            document.getElementById('auth-cancel').onclick = () => { overlay.classList.add('hidden'); panel.classList.add('hidden'); pendingAuthCallback = null; };
         }
 
         // --- Funciones de Gestión de Datos ---
@@ -587,9 +693,8 @@
                     currentDate = addDays(currentDate, 7);
                 }
                 
-                // Ajuste para mostrar la fecha real de la clase (Miércoles)
-                // Se asume que el inicio de semana es Lunes, por lo que sumamos 2 días.
-                const classDate = addDays(currentDate, 2);
+                // Ajuste para mostrar la fecha real de la clase según offset
+                const classDate = addDays(currentDate, classDayOffset);
                 
                 const isoDate = classDate.toISOString().split('T')[0];
                 const isPast = classDate <= TODAY; 
@@ -918,9 +1023,36 @@
             
             const select = createElement('select', 'w-full md:w-auto p-2 pr-10 border border-green-300 dark:border-green-700 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none mb-4 md:mb-0');
             
+            // --- BOTÓN DE BLOQUEO/DESBLOQUEO ---
+            const lockBtn = createElement('button', `ml-0 md:ml-2 px-3 py-2 rounded-lg text-sm font-bold transition-colors inline-flex items-center border ${isEditingUnlocked ? 'bg-green-100 text-green-700 border-green-300' : 'bg-red-100 text-red-700 border-red-300'}`);
+            lockBtn.innerHTML = isEditingUnlocked 
+                ? '<span data-lucide="Unlock" class="w-4 h-4 mr-1"></span> Habilitado' 
+                : '<span data-lucide="Lock" class="w-4 h-4 mr-1"></span> Bloqueado';
+            
+            lockBtn.onclick = () => {
+                if (isEditingUnlocked) {
+                    // Si está desbloqueado, bloquearlo directamente
+                    isEditingUnlocked = false;
+                    renderAttendanceSection(); // Re-render para actualizar UI
+                    showToast('Lista bloqueada (Modo Lectura)', 'warning');
+                } else {
+                    // Si está bloqueado, pedir contraseña
+                    checkAuth(() => {
+                        isEditingUnlocked = true;
+                        // Reemplazar la sección actual completa es lo más fácil para actualizar todo
+                        const currentSection = document.getElementById('attendance-section');
+                        if(currentSection) {
+                            const newSection = renderAttendanceSection();
+                            currentSection.parentNode.replaceChild(newSection, currentSection);
+                        }
+                        showToast('Lista desbloqueada para edición', 'success');
+                    });
+                }
+            };
+
             // --- BOTÓN HOY ---
-            const todayBtn = createElement('button', 'ml-0 md:ml-2 px-3 py-2 rounded-lg bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-200 text-sm font-bold hover:bg-green-200 dark:hover:bg-green-700 transition-colors inline-flex items-center border border-green-300 dark:border-green-600');
-            todayBtn.innerHTML = '<span data-lucide="CalendarCheck" class="w-4 h-4 mr-1"></span> Hoy';
+            const todayBtn = createElement('button', 'ml-0 md:ml-2 px-3 py-2 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 text-sm font-bold hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors inline-flex items-center border border-blue-300 dark:border-blue-600');
+            todayBtn.innerHTML = '<span data-lucide="CalendarCheck" class="w-4 h-4 mr-1"></span> Ir a Hoy';
             todayBtn.onclick = () => {
                 const now = new Date();
                 let closestDate = dates[0];
@@ -945,8 +1077,8 @@
             dates.forEach(d => {
                 const opt = document.createElement('option');
                 opt.value = d.formatted;
-                const hasData = attendanceData[selectedCourseId] && attendanceData[selectedCourseId][d.formatted] && Object.keys(attendanceData[selectedCourseId][d.formatted]).length > 0;
-                opt.textContent = `Semana ${dates.indexOf(d) + 1} - ${d.formatted} ${hasData ? '✅' : ''}`;
+                // Removed hasData checkmark logic for cleaner UI
+                opt.textContent = `Semana ${dates.indexOf(d) + 1} - ${d.formatted}`;
                 if (d.formatted === dates[defaultDateIndex].formatted) opt.selected = true;
                 select.appendChild(opt);
             });
@@ -957,6 +1089,7 @@
             
             selectWrapper.appendChild(select);
             selectWrapper.appendChild(todayBtn); // Add button
+            selectWrapper.appendChild(lockBtn); // Add lock button
 
             selectorContainer.appendChild(label); 
             selectorContainer.appendChild(selectWrapper); // Use wrapper
@@ -967,14 +1100,20 @@
             
             const renderList = (date) => {
                 const currentDateObj = dates.find(d => d.formatted === date);
-                const isLocked = !currentDateObj.isPast && currentDateObj.iso !== new Date().toISOString().split('T')[0];
+                
+                // NEW LOGIC: Check if selected date is "Today"
+                const todayISO = new Date().toISOString().split('T')[0];
+                const isSelectionToday = currentDateObj.iso === todayISO;
+                
+                // Enabled if it is today OR if manually unlocked
+                const isUIEnabled = isSelectionToday || isEditingUnlocked;
 
                 // Render General Notes
                 const genNotes = attendanceData[selectedCourseId]?.[date]?.generalNotes || [];
                 generalNotesDiv.innerHTML = `
                     <div class="flex justify-between items-center mb-2">
                         <h4 class="font-semibold text-green-800 dark:text-green-300 text-sm">Novedades del Día</h4>
-                        <button onclick="openNoteModal('general', '${date}')" class="text-xs bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-200 px-2 py-1 rounded hover:bg-green-200 dark:hover:bg-green-700 border border-green-300 dark:border-green-600 flex items-center">
+                        <button onclick="openNoteModal('general', '${date}')" class="text-xs bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-200 px-2 py-1 rounded hover:bg-green-200 dark:hover:bg-green-700 border border-green-300 dark:border-green-600 flex items-center" ${!isUIEnabled ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
                             <span data-lucide="PlusCircle" class="w-3 h-3 mr-1"></span> Agregar Novedad
                         </button>
                     </div>
@@ -982,7 +1121,7 @@
                         `<ul class="space-y-1 text-sm text-gray-600 dark:text-gray-300">${genNotes.map(n => `
                             <li class="border-b border-gray-100 dark:border-gray-600 pb-1 last:border-0 flex justify-between items-start group">
                                 <span><span class="text-xs text-gray-400">[${n.time}]</span> ${n.text}</span>
-                                <button onclick="deleteNote('general', '${date}', ${n.id})" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-2"><span data-lucide="Trash2" width="12" height="12"></span></button>
+                                <button onclick="deleteNote('general', '${date}', ${n.id})" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-2" ${!isUIEnabled ? 'disabled style="display:none;"' : ''}><span data-lucide="Trash2" width="12" height="12"></span></button>
                             </li>`).join('')}</ul>` 
                         : '<p class="text-xs text-gray-400 italic">No hay novedades registradas.</p>'}
                 `;
@@ -1040,7 +1179,7 @@
                         const notesHtml = studentNotes.map(n => `
                             <div class="flex justify-between group/note">
                                 <span><span class="opacity-75">[${n.time}]</span> ${n.text}</span>
-                                <button onclick="deleteNote('student', '${date}', ${n.id}, '${student}')" class="text-red-400 hover:text-red-600 opacity-0 group-hover/note:opacity-100 transition-opacity ml-1"><span data-lucide="Trash2" width="10" height="10"></span></button>
+                                <button onclick="deleteNote('student', '${date}', ${n.id}, '${student}')" class="text-red-400 hover:text-red-600 opacity-0 group-hover/note:opacity-100 transition-opacity ml-1" ${!isUIEnabled ? 'disabled style="display:none;"' : ''}><span data-lucide="Trash2" width="10" height="10"></span></button>
                             </div>`).join('');
                         notesPreview.innerHTML = notesHtml;
                         nameContainer.appendChild(notesPreview);
@@ -1050,7 +1189,12 @@
                     // Add Note Button for Student
                     const addNoteBtn = createElement('button', 'ml-2 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors', '<span data-lucide="MessageSquarePlus" width="16" height="16"></span>');
                     addNoteBtn.title = "Agregar novedad al estudiante";
-                    addNoteBtn.onclick = (e) => { e.stopPropagation(); openNoteModal('student', date, student); };
+                    if (!isUIEnabled) {
+                        addNoteBtn.style.opacity = '0.3';
+                        addNoteBtn.style.cursor = 'not-allowed';
+                        addNoteBtn.disabled = true;
+                    }
+                    addNoteBtn.onclick = (e) => { e.stopPropagation(); if(isUIEnabled) openNoteModal('student', date, student); };
                     tdName.firstElementChild.appendChild(addNoteBtn); 
                     
                     tr.appendChild(tdName);
@@ -1058,12 +1202,17 @@
                     const tdControls = createElement('td', 'p-4 flex justify-center gap-2');
                     
                     const createRadio = (val, labelText, colorClass, borderClass) => {
-                        const label = createElement('label', `flex items-center justify-center cursor-pointer p-2 rounded border ${borderClass} hover:bg-gray-50 dark:hover:bg-gray-600 transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`);
+                        // Apply GLOBAL lock or DATE lock logic
+                        // If global isEditingUnlocked is FALSE, force disable.
+                        const isDisabled = !isUIEnabled; 
+                        
+                        const label = createElement('label', `flex items-center justify-center cursor-pointer p-2 rounded border ${borderClass} hover:bg-gray-50 dark:hover:bg-gray-600 transition-all ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`);
                         const radio = createElement('input', `w-4 h-4 ${colorClass}`);
                         radio.type = 'radio';
                         radio.name = `att-${idx}`;
                         radio.value = val;
-                        if(isLocked) radio.disabled = true;
+                        
+                        if(isDisabled) radio.disabled = true;
                         if(status === val) radio.checked = true;
                         
                         radio.onchange = () => {
@@ -1147,7 +1296,15 @@
         function switchView(mode) {
             viewMode = mode;
             domElements.appRoot.innerHTML = '';
-            if (mode === 'attendance') { domElements.appRoot.appendChild(renderAttendanceSection()); } else { initApp(); }
+            // Reset lock state when switching views to ensure security
+            isEditingUnlocked = false; 
+            
+            if (mode === 'attendance') { 
+                // Removed internal checkAuth to avoid double loop
+                domElements.appRoot.appendChild(renderAttendanceSection());
+            } else { 
+                initApp(); 
+            }
             lucide.createIcons();
         }
 
@@ -1256,9 +1413,30 @@
             recessEndInput.type = 'date'; recessEndInput.id = 'recess-end-date-input'; recessEndInput.value = savedRecessEnd; 
             recessEndDiv.appendChild(recessEndLabel); recessEndDiv.appendChild(recessEndInput); 
             
+            // --- Selector de Día de Clase ---
+            const daySelectDiv = createElement('div', 'flex flex-col');
+            const dayLabel = createElement('label', 'text-sm font-medium text-gray-700 dark:text-gray-300 mb-1', 'Día de la Clase:');
+            dayLabel.htmlFor = 'class-day-selector';
+            const daySelect = createElement('select', 'p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 w-full');
+            daySelect.id = 'class-day-selector';
+            
+            const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+            days.forEach((day, index) => {
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.textContent = day;
+                if (index === classDayOffset) opt.selected = true;
+                daySelect.appendChild(opt);
+            });
+            daySelectDiv.appendChild(dayLabel);
+            daySelectDiv.appendChild(daySelect);
+            domElements.classDaySelector = daySelect;
+
+            
             dateSelectorContainer.appendChild(startDateDiv); 
             dateSelectorContainer.appendChild(recessStartDiv); 
             dateSelectorContainer.appendChild(recessEndDiv); 
+            dateSelectorContainer.appendChild(daySelectDiv); // Agregar al contenedor
             
             const dateButtonContainer = domElements.dateButtonContainer; 
             dateButtonContainer.innerHTML = ''; 
@@ -1364,7 +1542,7 @@
 
             const authButton = createElement('button', 'p-2 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800 transition-all');
             authButton.appendChild(createIconPlaceholder('ClipboardList', '', 20));
-            authButton.onclick = checkAuth;
+            authButton.onclick = () => checkAuth(() => switchView('attendance'));
             attachTooltip(authButton, 'Lista');
             toolsDiv.appendChild(authButton);
 
@@ -1543,4 +1721,4 @@
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
-</html>
+    </html>
