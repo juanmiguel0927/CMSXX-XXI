@@ -429,10 +429,16 @@
                             currentDate = addDays(currentDate, 7);
                         }
                         const weekStart = new Date(currentDate.valueOf());
-                        const weekEnd = addDays(weekStart, 4);
+                        
+                        // Ajuste para calcular el Miércoles (inicio semana + 2 días)
+                        const classDate = addDays(weekStart, 2);
+                        
                         week.startDate = weekStart;
-                        week.endDate = weekEnd;
-                        week.dateRange = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+                        week.endDate = addDays(weekStart, 4); // Mantiene el rango para lógica interna
+                        
+                        // Muestra específicamente la fecha del miércoles
+                        week.dateRange = `Miércoles ${formatDate(classDate)}`;
+                        
                         currentDate = addDays(currentDate, 7);
                     }
                 }
@@ -580,11 +586,16 @@
                 while (currentDate.getTime() >= recessStartDate.getTime() && currentDate.getTime() <= recessEndDate.getTime()) {
                     currentDate = addDays(currentDate, 7);
                 }
-                const isoDate = currentDate.toISOString().split('T')[0];
-                const isPast = currentDate <= TODAY; 
+                
+                // Ajuste para mostrar la fecha real de la clase (Miércoles)
+                // Se asume que el inicio de semana es Lunes, por lo que sumamos 2 días.
+                const classDate = addDays(currentDate, 2);
+                
+                const isoDate = classDate.toISOString().split('T')[0];
+                const isPast = classDate <= TODAY; 
                 
                 dates.push({ 
-                    formatted: formatDate(currentDate), 
+                    formatted: formatDate(classDate), 
                     iso: isoDate,
                     isPast: isPast
                 });
@@ -822,6 +833,49 @@
             allNotesBtn.innerHTML = `<span data-lucide="Book" class="mr-2 w-4 h-4"></span> Ver Novedades`;
             allNotesBtn.onclick = openAllNotesModal;
 
+            // --- BOTÓN ESTADÍSTICAS ---
+            const chartBtn = createElement('button', 'px-4 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800 flex items-center justify-center transition-colors');
+            chartBtn.innerHTML = `<span data-lucide="PieChart" class="mr-2 w-4 h-4"></span> Ver Estadísticas`;
+            chartBtn.onclick = () => {
+                const statsPanel = document.getElementById('stats-panel');
+                statsPanel.classList.toggle('hidden');
+                
+                // Logic to render chart
+                if(!statsPanel.classList.contains('hidden')){
+                    const courseData = attendanceData[selectedCourseId] || {};
+                    let counts = { present: 0, tardy: 0, absent: 0, excused: 0 };
+                    
+                    allStudents.forEach(st => {
+                        Object.values(courseData).forEach(day => {
+                            if(day[st]) {
+                                counts[day[st].status]++;
+                            }
+                        });
+                    });
+                    
+                    const total = counts.present + counts.tardy + counts.absent + counts.excused;
+                    if(total > 0) {
+                        const pP = (counts.present / total) * 100;
+                        const pT = (counts.tardy / total) * 100;
+                        const pA = (counts.absent / total) * 100;
+                        const pE = (counts.excused / total) * 100;
+                        
+                        document.getElementById('chart-donut').style.background = `conic-gradient(
+                            #16a34a 0% ${pP}%, 
+                            #ca8a04 ${pP}% ${pP + pT}%, 
+                            #dc2626 ${pP + pT}% ${pP + pT + pA}%, 
+                            #2563eb ${pP + pT + pA}% 100%
+                        )`;
+                        
+                        document.getElementById('legend-present').textContent = `${Math.round(pP)}% (${counts.present})`;
+                        document.getElementById('legend-tardy').textContent = `${Math.round(pT)}% (${counts.tardy})`;
+                        document.getElementById('legend-absent').textContent = `${Math.round(pA)}% (${counts.absent})`;
+                        document.getElementById('legend-excused').textContent = `${Math.round(pE)}% (${counts.excused})`;
+                    }
+                }
+            };
+
+
             const fileInput = createElement('input', 'hidden');
             fileInput.type = 'file';
             fileInput.id = 'import-file';
@@ -834,14 +888,53 @@
             actionsDiv.appendChild(dataBtn);
             actionsDiv.appendChild(addStudentBtn);
             actionsDiv.appendChild(allNotesBtn);
+            actionsDiv.appendChild(chartBtn); // Agregar botón de gráfico
             headerDiv.appendChild(actionsDiv);
             
             container.appendChild(headerDiv);
 
+            // --- PANEL ESTADÍSTICAS ---
+            const statsPanel = createElement('div', 'hidden bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-600 mb-6 flex flex-col md:flex-row items-center justify-around gap-6 transition-all');
+            statsPanel.id = 'stats-panel';
+            statsPanel.innerHTML = `
+                <div class="flex flex-col items-center">
+                    <h4 class="font-bold text-gray-700 dark:text-gray-200 mb-4">Resumen General del Curso</h4>
+                    <div id="chart-donut" class="w-48 h-48 rounded-full border-4 border-white dark:border-gray-600 shadow-lg" style="background: conic-gradient(#e5e7eb 0% 100%);"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center"><div class="w-4 h-4 bg-green-600 rounded mr-2"></div><span class="text-sm dark:text-gray-300">Asistencia: <b id="legend-present">0</b></span></div>
+                    <div class="flex items-center"><div class="w-4 h-4 bg-yellow-600 rounded mr-2"></div><span class="text-sm dark:text-gray-300">Retardo: <b id="legend-tardy">0</b></span></div>
+                    <div class="flex items-center"><div class="w-4 h-4 bg-red-600 rounded mr-2"></div><span class="text-sm dark:text-gray-300">Falta: <b id="legend-absent">0</b></span></div>
+                    <div class="flex items-center"><div class="w-4 h-4 bg-blue-600 rounded mr-2"></div><span class="text-sm dark:text-gray-300">Excusa: <b id="legend-excused">0</b></span></div>
+                </div>
+            `;
+            container.appendChild(statsPanel);
+
+
             const selectorContainer = createElement('div', 'mb-6 bg-green-50 dark:bg-green-900/30 p-4 rounded-xl border border-green-100 dark:border-green-800');
             const label = createElement('label', 'block text-sm font-semibold text-green-800 dark:text-green-300 mb-2', 'Seleccionar Fecha de Clase:');
-            const select = createElement('select', 'w-full md:w-auto p-2 pr-10 border border-green-300 dark:border-green-700 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none mb-4');
             
+            const selectWrapper = createElement('div', 'flex items-center flex-wrap gap-2'); // Wrapper for select + button
+            
+            const select = createElement('select', 'w-full md:w-auto p-2 pr-10 border border-green-300 dark:border-green-700 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none mb-4 md:mb-0');
+            
+            // --- BOTÓN HOY ---
+            const todayBtn = createElement('button', 'ml-0 md:ml-2 px-3 py-2 rounded-lg bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-200 text-sm font-bold hover:bg-green-200 dark:hover:bg-green-700 transition-colors inline-flex items-center border border-green-300 dark:border-green-600');
+            todayBtn.innerHTML = '<span data-lucide="CalendarCheck" class="w-4 h-4 mr-1"></span> Hoy';
+            todayBtn.onclick = () => {
+                const now = new Date();
+                let closestDate = dates[0];
+                let minDiff = Infinity;
+                dates.forEach(d => {
+                    const dateObj = new Date(d.iso);
+                    const diff = Math.abs(now - dateObj);
+                    if (diff < minDiff) { minDiff = diff; closestDate = d; }
+                });
+                select.value = closestDate.formatted;
+                renderList(closestDate.formatted); // Trigger render
+                showToast(`Mostrando: ${closestDate.formatted}`, 'success');
+            };
+
             let defaultDateIndex = 0;
             const now = new Date();
             dates.forEach((d, index) => {
@@ -859,11 +952,14 @@
             });
 
             // General Notes Area
-            const generalNotesDiv = createElement('div', 'bg-white dark:bg-gray-700 p-3 rounded-lg border border-green-200 dark:border-green-800 mt-2');
+            const generalNotesDiv = createElement('div', 'bg-white dark:bg-gray-700 p-3 rounded-lg border border-green-200 dark:border-green-800 mt-2 w-full');
             generalNotesDiv.id = 'general-notes-area';
             
+            selectWrapper.appendChild(select);
+            selectWrapper.appendChild(todayBtn); // Add button
+
             selectorContainer.appendChild(label); 
-            selectorContainer.appendChild(select);
+            selectorContainer.appendChild(selectWrapper); // Use wrapper
             selectorContainer.appendChild(generalNotesDiv);
             container.appendChild(selectorContainer);
             
@@ -895,25 +991,43 @@
                 listContainer.innerHTML = '';
                 const table = createElement('table', 'w-full text-left border-collapse mobile-card-view');
                 const thead = createElement('thead', 'bg-gray-100 dark:bg-gray-700');
-                thead.innerHTML = `<tr><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">Estudiante</th><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 text-center">Asistencia</th><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 text-center w-32">Acumulado</th><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 text-center w-40">Estado</th></tr>`;
+                // --- COLUMNA NUEVA AGREGADA AQUI ---
+                thead.innerHTML = `<tr><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">Estudiante</th><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 text-center">Asistencia</th><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 text-center w-24">% Asist.</th><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 text-center w-32">Acumulado</th><th class="p-4 font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 text-center w-40">Estado</th></tr>`;
                 table.appendChild(thead);
                 
                 const tbody = createElement('tbody', 'bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700');
                 const courseData = attendanceData[selectedCourseId] || {};
                 const dateData = courseData[date] || {};
 
+                // Calculate total possible hours so far (simple logic: all dates where at least one person has data OR dates before tomorrow)
+                // Actually, just calculating per student based on their history is safer.
+                
                 allStudents.forEach((student, idx) => {
                     const status = dateData[student] ? dateData[student].status : 'present';
                     const studentNotes = dateData[student]?.notes || [];
                     
                     let totalAbsence = 0;
+                    let totalRecordedSessions = 0; // Number of sessions where data exists or is past
+                    
                     Object.values(courseData).forEach(d => { 
-                        if(d[student]) { 
+                         // Check if this date has an entry for this student
+                         if(d[student]) {
+                            totalRecordedSessions++;
                             if(d[student].status === 'absent') totalAbsence += 2; 
                             if(d[student].status === 'tardy') totalAbsence += 1;
-                            if(d[student].status === 'excused') totalAbsence += 2; // Excusa suma 2 horas también
-                        } 
+                            if(d[student].status === 'excused') totalAbsence += 2; 
+                         }
                     });
+
+                    // Fallback: If no data but dates are past, assume perfect attendance? 
+                    // No, let's strictly count recorded data + current session context to be safe.
+                    // To simplify for the UI: We assume 2 hours per session.
+                    const totalPossibleHours = totalRecordedSessions * 2;
+                    let attendancePct = 100;
+                    if (totalPossibleHours > 0) {
+                        attendancePct = ((totalPossibleHours - totalAbsence) / totalPossibleHours) * 100;
+                    }
+                    if (attendancePct < 0) attendancePct = 0; // Just in case
 
                     const tr = createElement('tr', 'hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors');
                     const tdName = createElement('td', 'p-4 font-medium text-gray-800 dark:text-gray-200');
@@ -963,19 +1077,12 @@
 
                             localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
                             
-                            let newTotal = 0;
-                            Object.values(attendanceData[selectedCourseId]).forEach(d => { 
-                                if(d[student]) { 
-                                    if(d[student].status === 'absent') newTotal += 2; 
-                                    if(d[student].status === 'tardy') newTotal += 1;
-                                    if(d[student].status === 'excused') newTotal += 2; // Excusa SUMA
-                                } 
-                            });
+                            // Re-calculate local for instant UI update
+                            // (To properly update the chart and other rows, we re-render the list is safest, but for speed we update local cells)
+                            renderList(date); // Re-render to update stats column instantly
                             
-                            tdTotal.textContent = `${newTotal} hrs`;
-                            updateStatusCell(tdStatus, newTotal);
-
-                            if (newTotal >= 8) showToast(`${student} ha perdido por fallas (${newTotal}h)`, 'danger');
+                            if (val === 'absent' || val === 'excused') showToast('Registro actualizado', 'warning');
+                            else showToast('Registro actualizado', 'success');
                         };
                         label.appendChild(radio);
                         label.title = labelText;
@@ -989,6 +1096,17 @@
                     tdControls.appendChild(createRadio('excused', 'Excusa (2h)', 'text-blue-600', 'border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400'));
                     
                     tr.appendChild(tdControls);
+
+                    // --- NUEVA CELDA ESTADÍSTICA ---
+                    const tdStats = createElement('td', 'p-4 text-center align-middle');
+                    const colorBar = attendancePct >= 80 ? 'bg-green-500' : (attendancePct >= 60 ? 'bg-yellow-500' : 'bg-red-500');
+                    tdStats.innerHTML = `
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1 overflow-hidden">
+                            <div class="${colorBar} h-2.5 rounded-full" style="width: ${attendancePct}%"></div>
+                        </div>
+                        <span class="text-xs font-bold text-gray-600 dark:text-gray-400">${Math.round(attendancePct)}%</span>
+                    `;
+                    tr.appendChild(tdStats);
 
                     const tdTotal = createElement('td', 'p-4 text-center font-bold text-gray-700 dark:text-gray-300');
                     tdTotal.textContent = `${totalAbsence} hrs`;
