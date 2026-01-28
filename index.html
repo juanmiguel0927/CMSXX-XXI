@@ -37,6 +37,9 @@
         select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>'); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1.25em; padding-right: 3rem; }
         .dark select { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>'); }
         input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+        .grade-input { width: 60px; text-align: center; padding: 4px; border-radius: 4px; border: 1px solid #e2e8f0; }
+        .dark .grade-input { background-color: #4a5568; border-color: #2d3748; color: white; }
+        
         @media print { 
             body { background-color: #ffffff !important; color: #000000 !important; } 
             #app-root { width: 100%; margin: 0; padding: 0; box-shadow: none; } 
@@ -145,6 +148,55 @@
         </div>
     </div>
 
+    <!-- Student Report Modal (Individual) -->
+    <div id="student-report-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[95] hidden no-print backdrop-blur-sm"></div>
+    <div id="student-report-modal-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl z-[100] w-full max-w-3xl hidden no-print h-[90vh] flex flex-col">
+        <div class="p-6 flex-grow flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-4">
+                        <span data-lucide="User" class="text-blue-600 dark:text-blue-300"></span>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white" id="report-student-name"></h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400" id="report-course-name"></p>
+                    </div>
+                </div>
+                <button id="student-report-close" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"><span data-lucide="X"></span></button>
+            </div>
+            
+            <div class="flex-grow overflow-y-auto custom-scrollbar pr-2">
+                <!-- Resumen de Asistencia -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-100 dark:border-gray-600">
+                        <span class="block text-sm text-gray-500 dark:text-gray-400">Porcentaje Asistencia</span>
+                        <span class="block text-3xl font-bold text-gray-800 dark:text-white mt-1" id="report-attendance-pct"></span>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-100 dark:border-gray-600">
+                        <span class="block text-sm text-gray-500 dark:text-gray-400">Total Fallas (Horas)</span>
+                        <span class="block text-3xl font-bold text-red-600 dark:text-red-400 mt-1" id="report-total-hours"></span>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-100 dark:border-gray-600">
+                        <span class="block text-sm text-gray-500 dark:text-gray-400">Nota Definitiva</span>
+                        <span class="block text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1" id="report-final-grade"></span>
+                    </div>
+                </div>
+
+                <!-- Historial de Faltas -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-3 flex items-center"><span data-lucide="CalendarX" class="mr-2 text-red-500"></span> Historial de Inasistencias</h4>
+                    <div id="report-attendance-history" class="bg-white dark:bg-gray-700 rounded-lg border dark:border-gray-600 overflow-hidden"></div>
+                </div>
+
+                <!-- Observaciones -->
+                <div>
+                    <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-3 flex items-center"><span data-lucide="MessageSquare" class="mr-2 text-yellow-500"></span> Observaciones</h4>
+                    <div id="report-notes-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Confirm Modal -->
     <div id="confirm-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[110] hidden no-print backdrop-blur-sm flex items-center justify-center">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 transform scale-100 transition-transform border dark:border-gray-700">
@@ -170,7 +222,9 @@
                 <h3 class="text-xl font-bold text-gray-800 dark:text-white flex items-center">
                     <span data-lucide="Book" class="mr-2 text-purple-600"></span> Registro de Novedades
                 </h3>
-                <button id="all-notes-close" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"><span data-lucide="X"></span></button>
+                <button id="all-notes-close" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <span data-lucide="X"></span>
+                </button>
             </div>
             <div id="all-notes-list" class="flex-grow overflow-y-auto space-y-4 custom-scrollbar pr-2"></div>
         </div>
@@ -184,7 +238,7 @@
 
     <script>
         // --- 1. CONFIGURACIÓN Y CONSTANTES ---
-        const AUTH_HASH = "=UjN1YzMzIzN"; 
+        const AUTH_HASH = "=UjN1YzMzIzN"; // Hash para 72336565
         const DEFAULT_START_DATE = '2026-01-26';
         const DEFAULT_RECESS_START = '2026-03-30';
         const DEFAULT_RECESS_END = '2026-04-05';
@@ -290,6 +344,7 @@
         let selectedWeek = 1; 
         let viewMode = 'schedule';
         let attendanceData = JSON.parse(localStorage.getItem('attendanceData')) || {};
+        let gradesData = JSON.parse(localStorage.getItem('gradesData')) || {}; // NUEVO: Estado para notas
         let dismissedAlerts = JSON.parse(localStorage.getItem('dismissedAlerts')) || [];
         let customStudents = JSON.parse(localStorage.getItem('customStudents')) || { 'MUS4000': [], 'MUS4005': [] };
         
@@ -455,6 +510,210 @@
                     select.dispatchEvent(event);
                 }
             }
+        }
+        
+        // --- FUNCIONES PARA REPORTES Y GRÁFICOS ---
+
+        function openStudentReport(studentName) {
+            const reportOverlay = document.getElementById('student-report-modal-overlay');
+            const reportPanel = document.getElementById('student-report-modal-panel');
+            
+            document.getElementById('report-student-name').textContent = studentName;
+            document.getElementById('report-course-name').textContent = courses[selectedCourseId].name;
+            
+            // Calculate stats
+            const courseData = attendanceData[selectedCourseId] || {};
+            const dates = getAttendanceDates();
+            let totalAbsence = 0;
+            const historyContainer = document.getElementById('report-attendance-history');
+            historyContainer.innerHTML = '';
+            
+            const table = createElement('table', 'w-full text-sm text-left');
+            table.innerHTML = '<thead class="bg-gray-100 dark:bg-gray-700"><tr><th class="p-2">Fecha</th><th class="p-2">Estado</th></tr></thead><tbody class="divide-y dark:divide-gray-600"></tbody>';
+            const tbody = table.querySelector('tbody');
+
+            let notesList = [];
+
+            dates.forEach(d => {
+                const dateKey = d.formatted;
+                const dayData = courseData[dateKey] || {};
+                let status = 'present';
+                if (dayData[studentName] && dayData[studentName].status) status = dayData[studentName].status;
+                
+                // Notes collection
+                if (dayData[studentName] && dayData[studentName].notes) {
+                    dayData[studentName].notes.forEach(note => {
+                        notesList.push({ date: dateKey, text: note.text, time: note.time });
+                    });
+                }
+
+                if (status === 'absent') totalAbsence += 2;
+                else if (status === 'tardy') totalAbsence += 1;
+                else if (status === 'excused') totalAbsence += 2;
+
+                if (status !== 'present') {
+                    const row = createElement('tr');
+                    let statusText = status === 'absent' ? 'Falta' : (status === 'tardy' ? 'Retardo' : 'Excusa');
+                    let statusColor = status === 'absent' ? 'text-red-600' : (status === 'tardy' ? 'text-yellow-600' : 'text-blue-600');
+                    row.innerHTML = `<td class="p-2 text-gray-700 dark:text-gray-300">${dateKey}</td><td class="p-2 font-bold ${statusColor}">${statusText}</td>`;
+                    tbody.appendChild(row);
+                }
+            });
+            
+            if(tbody.children.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-gray-400">Sin inasistencias registradas.</td></tr>';
+            }
+            historyContainer.appendChild(table);
+
+            const totalHours = 16 * 2;
+            const pct = Math.round(((totalHours - totalAbsence) / totalHours) * 100);
+            
+            document.getElementById('report-attendance-pct').textContent = `${pct}%`;
+            document.getElementById('report-total-hours').textContent = totalAbsence;
+
+            // Get Final Grade
+            const sGrades = (gradesData[selectedCourseId] && gradesData[selectedCourseId][studentName]) ? gradesData[selectedCourseId][studentName] : {};
+            const def = calculateFinalGrade(sGrades);
+            document.getElementById('report-final-grade').textContent = def;
+
+            // Render Notes
+            const notesContainer = document.getElementById('report-notes-list');
+            notesContainer.innerHTML = '';
+            if (notesList.length > 0) {
+                notesList.forEach(n => {
+                    const div = createElement('div', 'bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded border border-yellow-100 dark:border-yellow-800');
+                    div.innerHTML = `<p class="text-xs text-gray-400 mb-1">${n.date} - ${n.time}</p><p class="text-sm text-gray-700 dark:text-gray-200">${n.text}</p>`;
+                    notesContainer.appendChild(div);
+                });
+            } else {
+                notesContainer.innerHTML = '<p class="text-sm text-gray-400 italic">No hay observaciones.</p>';
+            }
+
+            reportOverlay.classList.remove('hidden');
+            reportPanel.classList.remove('hidden');
+            
+            // Close logic
+            document.getElementById('student-report-close').onclick = () => {
+                 reportOverlay.classList.add('hidden');
+                 reportPanel.classList.add('hidden');
+            };
+        }
+
+        function calculateFinalGrade(g) {
+            const p1 = parseFloat(g.p1) || 0;
+            const p2 = parseFloat(g.p2) || 0;
+            const p3 = parseFloat(g.p3) || 0;
+            const mat = parseFloat(g.mat) || 0;
+            const part = parseFloat(g.part) || 0;
+            return ((p1 * 0.25) + (p2 * 0.25) + (p3 * 0.25) + (mat * 0.15) + (part * 0.10)).toFixed(1);
+        }
+
+        function markAllPresent() {
+             // Logic to mark all students present for the current visible date in the list
+             // This requires knowing the current date being viewed. We can get it from the select value.
+             const select = document.querySelector('#attendance-section select');
+             if (!select) return;
+             
+             const date = select.value;
+             const allStudents = getMergedStudents(selectedCourseId);
+             
+             if (!attendanceData[selectedCourseId]) attendanceData[selectedCourseId] = {};
+             if (!attendanceData[selectedCourseId][date]) attendanceData[selectedCourseId][date] = {};
+
+             allStudents.forEach(student => {
+                 const existingNotes = attendanceData[selectedCourseId][date][student]?.notes;
+                 attendanceData[selectedCourseId][date][student] = { status: 'present' };
+                 if(existingNotes) attendanceData[selectedCourseId][date][student].notes = existingNotes;
+             });
+             
+             localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+             
+             // Trigger update
+             const event = new Event('change');
+             select.dispatchEvent(event);
+             showToast('Todos marcados como Presente', 'success');
+        }
+
+        // --- GRADEBOOK SECTION ---
+        function renderGradesSection() {
+             const container = document.getElementById('attendance-section');
+             if (!container) return; // Should allow switching back
+             // We can replace the list container content with the grades table
+             // But let's create a toggle.
+             
+             // Simplest approach: Use a variable `isGradesView` inside renderAttendanceSection context? 
+             // Better: Separate function that replaces the HTML content of the list area.
+             
+             const listContainer = container.querySelector('.overflow-x-auto'); // This targets the table container
+             if (!listContainer) return;
+             
+             listContainer.innerHTML = '';
+             
+             const allStudents = getMergedStudents(selectedCourseId);
+             const currentGrades = gradesData[selectedCourseId] || {};
+
+             const table = createElement('table', 'w-full text-left border-collapse');
+             const thead = createElement('thead', 'bg-gray-800 text-white');
+             thead.innerHTML = `
+                <tr>
+                    <th class="p-3">Estudiante</th>
+                    <th class="p-3 text-center">P1 (25%)</th>
+                    <th class="p-3 text-center">P2 (25%)</th>
+                    <th class="p-3 text-center">P3 (25%)</th>
+                    <th class="p-3 text-center">Mat (15%)</th>
+                    <th class="p-3 text-center">Part (10%)</th>
+                    <th class="p-3 text-center font-bold">DEF</th>
+                </tr>
+             `;
+             table.appendChild(thead);
+             
+             const tbody = createElement('tbody', 'bg-white dark:bg-gray-800 divide-y dark:divide-gray-700');
+             
+             allStudents.forEach(student => {
+                 const sGrades = currentGrades[student] || {};
+                 const tr = createElement('tr', 'hover:bg-gray-50 dark:hover:bg-gray-700');
+                 
+                 const tdName = createElement('td', 'p-3 font-medium text-gray-800 dark:text-gray-200', student);
+                 tr.appendChild(tdName);
+                 
+                 const createInput = (key) => {
+                     const td = createElement('td', 'p-2 text-center');
+                     const input = createElement('input', 'grade-input');
+                     input.type = 'number';
+                     input.step = '0.1';
+                     input.min = '0';
+                     input.max = '5';
+                     input.value = sGrades[key] || '';
+                     input.onchange = (e) => {
+                         if (!gradesData[selectedCourseId]) gradesData[selectedCourseId] = {};
+                         if (!gradesData[selectedCourseId][student]) gradesData[selectedCourseId][student] = {};
+                         gradesData[selectedCourseId][student][key] = e.target.value;
+                         localStorage.setItem('gradesData', JSON.stringify(gradesData));
+                         // Update final grade cell
+                         const newDef = calculateFinalGrade(gradesData[selectedCourseId][student]);
+                         tr.lastElementChild.textContent = newDef;
+                         // Add color class
+                         tr.lastElementChild.className = `p-3 text-center font-bold ${parseFloat(newDef) < 3.0 ? 'text-red-600' : 'text-green-600'}`;
+                     };
+                     td.appendChild(input);
+                     return td;
+                 };
+
+                 tr.appendChild(createInput('p1'));
+                 tr.appendChild(createInput('p2'));
+                 tr.appendChild(createInput('p3'));
+                 tr.appendChild(createInput('mat'));
+                 tr.appendChild(createInput('part'));
+                 
+                 const def = calculateFinalGrade(sGrades);
+                 const tdDef = createElement('td', `p-3 text-center font-bold ${parseFloat(def) < 3.0 ? 'text-red-600' : 'text-green-600'}`, def);
+                 tr.appendChild(tdDef);
+                 
+                 tbody.appendChild(tr);
+             });
+             
+             table.appendChild(tbody);
+             listContainer.appendChild(table);
         }
 
         function exportToPDF() {
@@ -1098,11 +1357,15 @@
                 if(!statsPanel.classList.contains('hidden')){ renderStatsChart(); }
             };
 
+            const gradesBtn = createElement('button', 'px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 flex items-center justify-center transition-colors');
+            gradesBtn.innerHTML = `<span data-lucide="GraduationCap" class="mr-2 w-4 h-4"></span> Ir a Notas`;
+            gradesBtn.onclick = renderGradesSection;
+
             const fileInput = createElement('input', 'hidden');
             fileInput.type = 'file'; fileInput.id = 'import-file'; fileInput.accept = '.json'; fileInput.onchange = importData;
             container.appendChild(fileInput);
 
-            actionsDiv.appendChild(backBtn); actionsDiv.appendChild(exportCsvBtn); actionsDiv.appendChild(exportPdfBtn); actionsDiv.appendChild(dataBtn); actionsDiv.appendChild(addStudentBtn); actionsDiv.appendChild(allNotesBtn); actionsDiv.appendChild(chartBtn);
+            actionsDiv.appendChild(backBtn); actionsDiv.appendChild(gradesBtn); actionsDiv.appendChild(exportCsvBtn); actionsDiv.appendChild(exportPdfBtn); actionsDiv.appendChild(dataBtn); actionsDiv.appendChild(addStudentBtn); actionsDiv.appendChild(allNotesBtn); actionsDiv.appendChild(chartBtn);
             headerDiv.appendChild(actionsDiv);
             container.appendChild(headerDiv);
 
@@ -1167,6 +1430,10 @@
                 showToast(`Mostrando: ${closestDate.formatted}`, 'success');
             };
 
+            const markAllBtn = createElement('button', 'ml-0 md:ml-2 px-3 py-2 rounded-lg bg-green-100 text-green-700 text-sm font-bold hover:bg-green-200 transition-colors inline-flex items-center border border-green-300');
+            markAllBtn.innerHTML = '<span data-lucide="CheckSquare" class="w-4 h-4 mr-1"></span> Todos Presentes';
+            markAllBtn.onclick = markAllPresent;
+
             let defaultDateIndex = 0;
             const now = new Date();
             dates.forEach((d, index) => {
@@ -1185,10 +1452,31 @@
             const generalNotesDiv = createElement('div', 'bg-white dark:bg-gray-700 p-3 rounded-lg border border-green-200 dark:border-green-800 mt-2 w-full');
             generalNotesDiv.id = 'general-notes-area';
             
-            selectWrapper.appendChild(select); selectWrapper.appendChild(todayBtn); selectWrapper.appendChild(lockBtn);
-            selectorContainer.appendChild(label); selectorContainer.appendChild(selectWrapper); selectorContainer.appendChild(generalNotesDiv);
+            selectWrapper.appendChild(select);
+            selectWrapper.appendChild(todayBtn); 
+            selectWrapper.appendChild(lockBtn); 
+            selectWrapper.appendChild(markAllBtn);
+
+            selectorContainer.appendChild(label); 
+            selectorContainer.appendChild(selectWrapper); 
+            selectorContainer.appendChild(generalNotesDiv);
             container.appendChild(selectorContainer);
             
+            // BUSCADOR
+            const searchContainer = createElement('div', 'mb-4');
+            const searchInput = createElement('input', 'w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white', '');
+            searchInput.placeholder = "Buscar estudiante...";
+            searchInput.onkeyup = (e) => {
+                const term = e.target.value.toLowerCase();
+                const rows = listContainer.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(term) ? '' : 'none';
+                });
+            };
+            searchContainer.appendChild(searchInput);
+            container.appendChild(searchContainer);
+
             const listContainer = createElement('div', 'overflow-x-auto');
             
             const renderList = (date) => {
@@ -1248,10 +1536,20 @@
                     if (totalPossibleHours > 0) { attendancePct = ((totalPossibleHours - totalAbsence) / totalPossibleHours) * 100; }
                     if (attendancePct < 0) attendancePct = 0; 
 
-                    const tr = createElement('tr', 'hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors');
+                    // ALERTA VISUAL EN FILAS
+                    let rowClass = 'hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors';
+                    if (totalAbsence >= 8) rowClass = 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 transition-colors';
+                    else if (totalAbsence >= 6) rowClass = 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/30 transition-colors';
+
+                    const tr = createElement('tr', rowClass);
                     const tdName = createElement('td', 'p-4 font-medium text-gray-800 dark:text-gray-200');
+                    
                     const nameContainer = createElement('div');
-                    nameContainer.innerHTML = `<div>${idx + 1}. ${student}</div>`;
+                    // NOMBRE CLICKEABLE
+                    const nameLink = createElement('a', 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 hover:underline', `${idx + 1}. ${student}`);
+                    nameLink.onclick = () => openStudentReport(student);
+                    nameContainer.appendChild(nameLink);
+
                     if (studentNotes.length > 0) {
                         const notesPreview = createElement('div', 'mt-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 p-1 rounded border border-blue-100 dark:border-blue-800 max-w-xs');
                         const notesHtml = studentNotes.map(n => `
@@ -1774,4 +2072,4 @@
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
-    </html>
+</html>
